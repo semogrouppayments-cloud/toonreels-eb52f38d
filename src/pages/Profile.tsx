@@ -220,8 +220,8 @@ const Profile = () => {
     <div className="min-h-screen bg-background pb-20">
       <div className="max-w-2xl mx-auto">
         {/* Header with Cover Photo */}
-        <div className="relative bg-gradient-to-br from-primary via-accent to-fun-yellow" style={{ paddingBottom: '120px' }}>
-          {/* Cover Photo - fills the entire header with fade overlay */}
+        <div className="relative bg-gradient-to-br from-primary via-accent to-fun-yellow h-64 overflow-hidden">
+          {/* Cover Photo - fills the entire header with gradient overlay */}
           {profile?.cover_photo_url && (
             <>
               <img 
@@ -229,7 +229,7 @@ const Profile = () => {
                 alt="Cover" 
                 className="absolute inset-0 w-full h-full object-cover"
               />
-              <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px]" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-black/20" />
             </>
           )}
 
@@ -268,20 +268,20 @@ const Profile = () => {
           </div>
 
           {/* Profile Info - positioned over cover photo */}
-          <div className="relative text-center px-8 pb-8 z-10">
-            <div className="relative inline-block mb-4">
-              <Avatar className="h-24 w-24 border-4 border-background shadow-lg">
+          <div className="relative text-center px-8 pt-8 z-10">
+            <div className="relative inline-block mb-3">
+              <Avatar className="h-20 w-20 border-4 border-background shadow-lg">
                 <AvatarImage src={profile.avatar_url || undefined} alt={profile.username} />
-                <AvatarFallback className="bg-primary text-primary-foreground font-black text-4xl">
+                <AvatarFallback className="bg-primary text-primary-foreground font-black text-3xl">
                   {profile.username[0].toUpperCase()}
                 </AvatarFallback>
               </Avatar>
               {isOwnProfile && (
                 <label
                   htmlFor="avatar-upload"
-                  className="absolute bottom-0 right-0 bg-primary text-primary-foreground rounded-full p-2 cursor-pointer hover:scale-110 transition-transform shadow-lg"
+                  className="absolute bottom-0 right-0 bg-primary text-primary-foreground rounded-full p-1.5 cursor-pointer hover:scale-110 transition-transform shadow-lg"
                 >
-                  <Camera className="h-4 w-4" />
+                  <Camera className="h-3 w-3" />
                   <input
                     id="avatar-upload"
                     type="file"
@@ -339,31 +339,31 @@ const Profile = () => {
                 </Button>
               </div>
             )}
-            <p className="text-white drop-shadow-lg font-semibold capitalize">
+            <p className="text-white drop-shadow-lg font-semibold capitalize text-sm mb-3">
               {profile.user_type}
             </p>
 
-            {/* Stats - Positioned on cover photo */}
-            <div className="grid grid-cols-4 gap-2 mt-6">
-              <div className="text-center">
-                <p className="text-2xl font-black text-white drop-shadow-lg">
+            {/* Stats - Bubble style on cover photo */}
+            <div className="grid grid-cols-4 gap-2 px-2">
+              <div className="bg-background/20 backdrop-blur-md rounded-2xl p-2 border border-white/20 shadow-lg">
+                <p className="text-xl font-black text-white drop-shadow-lg">
                   {videos.reduce((sum, v) => sum + v.views_count, 0)}
                 </p>
-                <p className="text-[10px] text-white/90 drop-shadow-md font-semibold">Views</p>
+                <p className="text-[9px] text-white/90 drop-shadow-md font-semibold">Views</p>
               </div>
-              <div className="text-center">
-                <p className="text-2xl font-black text-white drop-shadow-lg">
+              <div className="bg-background/20 backdrop-blur-md rounded-2xl p-2 border border-white/20 shadow-lg">
+                <p className="text-xl font-black text-white drop-shadow-lg">
                   {videos.reduce((sum, v) => sum + v.likes_count, 0)}
                 </p>
-                <p className="text-[10px] text-white/90 drop-shadow-md font-semibold">Likes</p>
+                <p className="text-[9px] text-white/90 drop-shadow-md font-semibold">Likes</p>
               </div>
-              <div className="text-center">
-                <p className="text-2xl font-black text-white drop-shadow-lg">{followersCount}</p>
-                <p className="text-[10px] text-white/90 drop-shadow-md font-semibold">Followers</p>
+              <div className="bg-background/20 backdrop-blur-md rounded-2xl p-2 border border-white/20 shadow-lg">
+                <p className="text-xl font-black text-white drop-shadow-lg">{followersCount}</p>
+                <p className="text-[9px] text-white/90 drop-shadow-md font-semibold">Followers</p>
               </div>
-              <div className="text-center">
-                <p className="text-2xl font-black text-white drop-shadow-lg">{videos.length}</p>
-                <p className="text-[10px] text-white/90 drop-shadow-md font-semibold">Videos</p>
+              <div className="bg-background/20 backdrop-blur-md rounded-2xl p-2 border border-white/20 shadow-lg">
+                <p className="text-xl font-black text-white drop-shadow-lg">{videos.length}</p>
+                <p className="text-[9px] text-white/90 drop-shadow-md font-semibold">Videos</p>
               </div>
             </div>
           </div>
