@@ -49,8 +49,16 @@ serve(async (req) => {
       .eq('id', user.id)
       .single();
 
-    if (profileError || !profile?.is_premium) {
-      console.error('Premium check failed:', profileError);
+    if (profileError) {
+      console.error('Failed to fetch user profile:', profileError);
+      return new Response(
+        JSON.stringify({ error: 'Failed to verify premium status' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (!profile?.is_premium) {
+      console.log(`User ${user.id} attempted download without premium subscription`);
       return new Response(
         JSON.stringify({ error: 'Premium subscription required to download videos' }),
         { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
