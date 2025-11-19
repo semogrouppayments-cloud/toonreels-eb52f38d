@@ -36,6 +36,10 @@ const Settings = () => {
   const [subtitlesSize, setSubtitlesSize] = useState("medium");
   const [userId, setUserId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [totalViews, setTotalViews] = useState(0);
+  const [totalLikes, setTotalLikes] = useState(0);
+  const [followersCount, setFollowersCount] = useState(0);
+  const [videosCount, setVideosCount] = useState(0);
 
   useEffect(() => {
     fetchUserSettings();
@@ -78,6 +82,19 @@ const Settings = () => {
         setSubtitlesEnabled(playbackSettings.subtitles_enabled);
         setSubtitlesSize(playbackSettings.subtitles_size);
       }
+
+      // Fetch user stats
+      const { data: videos } = await supabase.from('videos').select('views_count, likes_count').eq('creator_id', user.id);
+      if (videos) {
+        const views = videos.reduce((sum, v) => sum + v.views_count, 0);
+        const likes = videos.reduce((sum, v) => sum + v.likes_count, 0);
+        setTotalViews(views);
+        setTotalLikes(likes);
+        setVideosCount(videos.length);
+      }
+
+      const { count: followers } = await supabase.from('follows').select('*', { count: 'exact', head: true }).eq('following_id', user.id);
+      setFollowersCount(followers || 0);
       
       setLoading(false);
     } catch (error) {
@@ -279,6 +296,29 @@ const Settings = () => {
                       </SelectContent>
                     </Select>
                     <Button onClick={savePlaybackSettings}>Save</Button>
+                  </AccordionContent>
+                </AccordionItem>
+                <AccordionItem value="stats">
+                  <AccordionTrigger>Your Stats</AccordionTrigger>
+                  <AccordionContent className="space-y-3">
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="bg-background/20 backdrop-blur-md rounded-2xl p-3 border border-border shadow-lg">
+                        <p className="text-2xl font-black text-foreground">{totalViews}</p>
+                        <p className="text-xs text-muted-foreground font-semibold">Views</p>
+                      </div>
+                      <div className="bg-background/20 backdrop-blur-md rounded-2xl p-3 border border-border shadow-lg">
+                        <p className="text-2xl font-black text-foreground">{totalLikes}</p>
+                        <p className="text-xs text-muted-foreground font-semibold">Likes</p>
+                      </div>
+                      <div className="bg-background/20 backdrop-blur-md rounded-2xl p-3 border border-border shadow-lg">
+                        <p className="text-2xl font-black text-foreground">{followersCount}</p>
+                        <p className="text-xs text-muted-foreground font-semibold">Followers</p>
+                      </div>
+                      <div className="bg-background/20 backdrop-blur-md rounded-2xl p-3 border border-border shadow-lg">
+                        <p className="text-2xl font-black text-foreground">{videosCount}</p>
+                        <p className="text-xs text-muted-foreground font-semibold">Videos</p>
+                      </div>
+                    </div>
                   </AccordionContent>
                 </AccordionItem>
               </Accordion>

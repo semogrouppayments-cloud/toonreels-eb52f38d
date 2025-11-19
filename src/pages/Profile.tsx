@@ -233,6 +233,23 @@ const Profile = () => {
             </>
           )}
 
+          {/* Cover Photo Upload Button - Top Left Position */}
+          {isOwnProfile && (
+            <label
+              htmlFor="cover-upload"
+              className="absolute top-3 left-3 bg-background/90 backdrop-blur-sm text-foreground rounded-full p-2 cursor-pointer hover:bg-background transition-colors z-10"
+            >
+              <Camera className="h-4 w-4" />
+              <input
+                id="cover-upload"
+                type="file"
+                accept="image/*"
+                onChange={handleCoverPhotoUpload}
+                className="hidden"
+              />
+            </label>
+          )}
+
           {/* Settings and Sign Out Buttons */}
           <div className="relative flex justify-end gap-2 p-4 z-10">
             {isOwnProfile && (
@@ -267,84 +284,79 @@ const Profile = () => {
             )}
           </div>
 
-          {/* Profile Info - positioned over cover photo */}
-          <div className="relative text-center px-8 pt-8 z-10">
-            <div className="relative inline-block mb-3">
-              <Avatar className="h-20 w-20 border-4 border-background shadow-lg">
-                <AvatarImage src={profile.avatar_url || undefined} alt={profile.username} />
-                <AvatarFallback className="bg-primary text-primary-foreground font-black text-3xl">
-                  {profile.username[0].toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
-              {isOwnProfile && (
-                <label
-                  htmlFor="avatar-upload"
-                  className="absolute bottom-0 right-0 bg-primary text-primary-foreground rounded-full p-1.5 cursor-pointer hover:scale-110 transition-transform shadow-lg"
-                >
-                  <Camera className="h-3 w-3" />
-                  <input
-                    id="avatar-upload"
-                    type="file"
-                    accept="image/*"
-                    onChange={handleAvatarUpload}
-                    className="hidden"
-                  />
-                </label>
-              )}
+          {/* Profile Info - Two Column Layout */}
+          <div className="relative flex items-center justify-between px-8 pt-4 z-10">
+            {/* Left Side - Profile Info */}
+            <div className="flex items-center gap-4">
+              <div className="relative">
+                <Avatar className="h-20 w-20 border-4 border-background shadow-lg">
+                  <AvatarImage src={profile.avatar_url || undefined} alt={profile.username} />
+                  <AvatarFallback className="bg-primary text-primary-foreground font-black text-3xl">
+                    {profile.username[0].toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                {isOwnProfile && (
+                  <label
+                    htmlFor="avatar-upload"
+                    className="absolute bottom-0 right-0 bg-primary text-primary-foreground rounded-full p-1.5 cursor-pointer hover:scale-110 transition-transform shadow-lg"
+                  >
+                    <Camera className="h-3 w-3" />
+                    <input
+                      id="avatar-upload"
+                      type="file"
+                      accept="image/*"
+                      onChange={handleAvatarUpload}
+                      className="hidden"
+                    />
+                  </label>
+                )}
+              </div>
+              
+              <div className="text-left">
+                {editingUsername && isOwnProfile ? (
+                  <div className="flex items-center gap-2 mb-1">
+                    <Input
+                      value={newUsername}
+                      onChange={(e) => setNewUsername(e.target.value)}
+                      className="max-w-xs text-white font-black"
+                      placeholder="New username"
+                    />
+                    <Button size="sm" onClick={handleUsernameUpdate}>Save</Button>
+                    <Button size="sm" variant="ghost" onClick={() => setEditingUsername(false)}>Cancel</Button>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2 mb-1">
+                    <h1 className="text-2xl font-black text-white drop-shadow-lg">
+                      {profile.username}
+                    </h1>
+                    {isOwnProfile && (
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-6 w-6 text-white"
+                        onClick={() => {
+                          setNewUsername(profile.username);
+                          setEditingUsername(true);
+                        }}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+                )}
+                <p className="text-white/90 drop-shadow-lg font-semibold capitalize text-sm">
+                  {profile.user_type}
+                </p>
+                {profile.bio && (
+                  <p className="text-white/80 drop-shadow-md text-xs mt-1 max-w-xs">
+                    {profile.bio}
+                  </p>
+                )}
+              </div>
             </div>
-            
-            {/* Cover Photo Upload Button - Bottom Position */}
-            {isOwnProfile && (
-              <label
-                htmlFor="cover-upload"
-                className="absolute bottom-3 right-3 bg-background/90 backdrop-blur-sm text-foreground rounded-full p-2 cursor-pointer hover:bg-background transition-colors z-10"
-              >
-                <Camera className="h-4 w-4" />
-                <input
-                  id="cover-upload"
-                  type="file"
-                  accept="image/*"
-                  onChange={handleCoverPhotoUpload}
-                  className="hidden"
-                />
-              </label>
-            )}
-            
-            {editingUsername && isOwnProfile ? (
-              <div className="flex items-center justify-center gap-2 mb-2">
-                <Input
-                  value={newUsername}
-                  onChange={(e) => setNewUsername(e.target.value)}
-                  className="max-w-xs text-background font-black"
-                  placeholder="New username"
-                />
-                <Button size="sm" onClick={handleUsernameUpdate}>Save</Button>
-                <Button size="sm" variant="ghost" onClick={() => setEditingUsername(false)}>Cancel</Button>
-              </div>
-            ) : (
-              <div className="flex items-center justify-center gap-2 mb-2">
-                <h1 className="text-2xl font-black text-background">
-                  {profile.username}
-                </h1>
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  className="h-6 w-6 text-background"
-                  onClick={() => {
-                    setNewUsername(profile.username);
-                    setEditingUsername(true);
-                  }}
-                >
-                  <Edit className="h-4 w-4" />
-                </Button>
-              </div>
-            )}
-            <p className="text-white drop-shadow-lg font-semibold capitalize text-sm mb-3">
-              {profile.user_type}
-            </p>
 
-            {/* Stats - Bubble style on cover photo */}
-            <div className="grid grid-cols-4 gap-2 px-2">
+            {/* Right Side - Stats Bubbles */}
+            <div className="grid grid-cols-2 gap-2">
               <div className="bg-background/20 backdrop-blur-md rounded-2xl p-2 border border-white/20 shadow-lg">
                 <p className="text-xl font-black text-white drop-shadow-lg">
                   {videos.reduce((sum, v) => sum + v.views_count, 0)}
