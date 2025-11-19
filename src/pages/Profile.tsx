@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { LogOut, Settings, Video, Camera, Edit } from 'lucide-react';
 import BottomNav from '@/components/BottomNav';
 import { toast } from 'sonner';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 
 interface Profile {
   username: string;
@@ -166,17 +167,12 @@ const Profile = () => {
 
           <div className="text-center">
             <div className="relative inline-block mb-4">
-              {profile.avatar_url ? (
-                <img
-                  src={profile.avatar_url}
-                  alt="Profile"
-                  className="h-24 w-24 rounded-full object-cover border-4 border-background/20"
-                />
-              ) : (
-                <div className="h-24 w-24 rounded-full bg-background/20 backdrop-blur-lg flex items-center justify-center text-background font-black text-4xl">
+              <Avatar className="h-24 w-24 border-4 border-background/20">
+                <AvatarImage src={profile.avatar_url || undefined} alt={profile.username} />
+                <AvatarFallback className="bg-background/20 backdrop-blur-lg text-background font-black text-4xl">
                   {profile.username[0].toUpperCase()}
-                </div>
-              )}
+                </AvatarFallback>
+              </Avatar>
               {isOwnProfile && (
                 <label
                   htmlFor="avatar-upload"
