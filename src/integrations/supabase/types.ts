@@ -192,6 +192,54 @@ export type Database = {
           },
         ]
       }
+      notifications: {
+        Row: {
+          actor_id: string
+          comment_id: string | null
+          created_at: string | null
+          id: string
+          is_read: boolean | null
+          type: Database["public"]["Enums"]["notification_type"]
+          user_id: string
+          video_id: string | null
+        }
+        Insert: {
+          actor_id: string
+          comment_id?: string | null
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          type: Database["public"]["Enums"]["notification_type"]
+          user_id: string
+          video_id?: string | null
+        }
+        Update: {
+          actor_id?: string
+          comment_id?: string | null
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          type?: Database["public"]["Enums"]["notification_type"]
+          user_id?: string
+          video_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_comment_id_fkey"
+            columns: ["comment_id"]
+            isOneToOne: false
+            referencedRelation: "comments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_video_id_fkey"
+            columns: ["video_id"]
+            isOneToOne: false
+            referencedRelation: "videos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       parental_controls: {
         Row: {
           bedtime_end: string | null
@@ -520,6 +568,7 @@ export type Database = {
     }
     Enums: {
       app_role: "viewer" | "creative" | "admin"
+      notification_type: "like" | "comment" | "follow" | "reply"
       user_type: "viewer" | "creative"
     }
     CompositeTypes: {
@@ -649,6 +698,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["viewer", "creative", "admin"],
+      notification_type: ["like", "comment", "follow", "reply"],
       user_type: ["viewer", "creative"],
     },
   },

@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import VideoPlayer from '@/components/VideoPlayer';
 import CommentsSheet from '@/components/CommentsSheet';
 import BottomNav from '@/components/BottomNav';
+import NotificationBell from '@/components/NotificationBell';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -126,6 +127,13 @@ const Feed = () => {
           <Filter className="h-3.5 w-3.5 mr-1.5" />
           {showFollowedOnly ? 'All' : 'Following'}
         </Button>
+      )}
+
+      {/* Notification bell */}
+      {currentUserId && (
+        <div className="fixed top-3 right-3 z-50">
+          <NotificationBell />
+        </div>
       )}
 
       {videos.map((video) => (
