@@ -221,13 +221,16 @@ const Profile = () => {
       <div className="max-w-2xl mx-auto">
         {/* Header with Cover Photo */}
         <div className="relative bg-gradient-to-br from-primary via-accent to-fun-yellow" style={{ paddingBottom: '120px' }}>
-          {/* Cover Photo - fills the entire header */}
+          {/* Cover Photo - fills the entire header with fade overlay */}
           {profile?.cover_photo_url && (
-            <img 
-              src={profile.cover_photo_url} 
-              alt="Cover" 
-              className="absolute inset-0 w-full h-full object-cover"
-            />
+            <>
+              <img 
+                src={profile.cover_photo_url} 
+                alt="Cover" 
+                className="absolute inset-0 w-full h-full object-cover"
+              />
+              <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px]" />
+            </>
           )}
 
           {/* Settings and Sign Out Buttons */}
@@ -336,34 +339,34 @@ const Profile = () => {
                 </Button>
               </div>
             )}
-            <p className="text-background drop-shadow-md font-semibold capitalize">
+            <p className="text-white drop-shadow-lg font-semibold capitalize">
               {profile.user_type}
             </p>
-          </div>
-        </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-4 gap-2 px-4 -mt-8">
-          <Card className="p-2 text-center shadow-elevated">
-            <p className="text-lg font-black text-primary">
-              {videos.reduce((sum, v) => sum + v.views_count, 0)}
-            </p>
-            <p className="text-[10px] text-muted-foreground">Views</p>
-          </Card>
-          <Card className="p-2 text-center shadow-elevated">
-            <p className="text-lg font-black text-primary">
-              {videos.reduce((sum, v) => sum + v.likes_count, 0)}
-            </p>
-            <p className="text-[10px] text-muted-foreground">Likes</p>
-          </Card>
-          <Card className="p-2 text-center shadow-elevated">
-            <p className="text-lg font-black text-primary">{followersCount}</p>
-            <p className="text-[10px] text-muted-foreground">Followers</p>
-          </Card>
-          <Card className="p-2 text-center shadow-elevated">
-            <p className="text-lg font-black text-primary">{videos.length}</p>
-            <p className="text-[10px] text-muted-foreground">Videos</p>
-          </Card>
+            {/* Stats - Positioned on cover photo */}
+            <div className="grid grid-cols-4 gap-2 mt-6">
+              <div className="text-center">
+                <p className="text-2xl font-black text-white drop-shadow-lg">
+                  {videos.reduce((sum, v) => sum + v.views_count, 0)}
+                </p>
+                <p className="text-[10px] text-white/90 drop-shadow-md font-semibold">Views</p>
+              </div>
+              <div className="text-center">
+                <p className="text-2xl font-black text-white drop-shadow-lg">
+                  {videos.reduce((sum, v) => sum + v.likes_count, 0)}
+                </p>
+                <p className="text-[10px] text-white/90 drop-shadow-md font-semibold">Likes</p>
+              </div>
+              <div className="text-center">
+                <p className="text-2xl font-black text-white drop-shadow-lg">{followersCount}</p>
+                <p className="text-[10px] text-white/90 drop-shadow-md font-semibold">Followers</p>
+              </div>
+              <div className="text-center">
+                <p className="text-2xl font-black text-white drop-shadow-lg">{videos.length}</p>
+                <p className="text-[10px] text-white/90 drop-shadow-md font-semibold">Videos</p>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Videos Grid */}
