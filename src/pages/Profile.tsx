@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { LogOut, Settings, Video } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { LogOut, Settings, Video, Camera, Edit } from 'lucide-react';
 import BottomNav from '@/components/BottomNav';
 import { toast } from 'sonner';
 
@@ -26,6 +27,8 @@ const Profile = () => {
   const navigate = useNavigate();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [videos, setVideos] = useState<Video[]>([]);
+  const [editingUsername, setEditingUsername] = useState(false);
+  const [newUsername, setNewUsername] = useState('');
 
   useEffect(() => {
     fetchProfile();
@@ -67,6 +70,59 @@ const Profile = () => {
     navigate('/auth');
   };
 
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${user.id}/avatar.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(fileName, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(fileName);
+
+      await supabase
+        .from('profiles')
+        .update({ avatar_url: publicUrl })
+        .eq('id', user.id);
+
+      toast.success('Profile picture updated!');
+      fetchProfile();
+    } catch (error) {
+      toast.error('Failed to upload avatar');
+    }
+  };
+
+  const handleUsernameUpdate = async () => {
+    if (!newUsername.trim()) return;
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      await supabase
+        .from('profiles')
+        .update({ username: newUsername })
+        .eq('id', user.id);
+
+      toast.success('Username updated!');
+      setEditingUsername(false);
+      fetchProfile();
+    } catch (error) {
+      toast.error('Failed to update username');
+    }
+  };
+
   if (!profile) return null;
 
   return (
@@ -79,6 +135,7 @@ const Profile = () => {
               variant="secondary"
               size="icon"
               className="rounded-full"
+              onClick={() => navigate('/settings')}
             >
               <Settings className="h-5 w-5" />
             </Button>
@@ -93,12 +150,62 @@ const Profile = () => {
           </div>
 
           <div className="text-center">
-            <div className="h-24 w-24 rounded-full bg-background/20 backdrop-blur-lg flex items-center justify-center text-background font-black text-4xl mx-auto mb-4">
-              {profile.username[0].toUpperCase()}
+            <div className="relative inline-block mb-4">
+              {profile.avatar_url ? (
+                <img
+                  src={profile.avatar_url}
+                  alt="Profile"
+                  className="h-24 w-24 rounded-full object-cover border-4 border-background/20"
+                />
+              ) : (
+                <div className="h-24 w-24 rounded-full bg-background/20 backdrop-blur-lg flex items-center justify-center text-background font-black text-4xl">
+                  {profile.username[0].toUpperCase()}
+                </div>
+              )}
+              <label
+                htmlFor="avatar-upload"
+                className="absolute bottom-0 right-0 bg-primary text-primary-foreground rounded-full p-2 cursor-pointer hover:scale-110 transition-transform"
+              >
+                <Camera className="h-4 w-4" />
+                <input
+                  id="avatar-upload"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleAvatarUpload}
+                  className="hidden"
+                />
+              </label>
             </div>
-            <h1 className="text-2xl font-black text-background mb-2">
-              {profile.username}
-            </h1>
+            
+            {editingUsername ? (
+              <div className="flex items-center justify-center gap-2 mb-2">
+                <Input
+                  value={newUsername}
+                  onChange={(e) => setNewUsername(e.target.value)}
+                  className="max-w-xs text-background font-black"
+                  placeholder="New username"
+                />
+                <Button size="sm" onClick={handleUsernameUpdate}>Save</Button>
+                <Button size="sm" variant="ghost" onClick={() => setEditingUsername(false)}>Cancel</Button>
+              </div>
+            ) : (
+              <div className="flex items-center justify-center gap-2 mb-2">
+                <h1 className="text-2xl font-black text-background">
+                  {profile.username}
+                </h1>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="h-6 w-6 text-background"
+                  onClick={() => {
+                    setNewUsername(profile.username);
+                    setEditingUsername(true);
+                  }}
+                >
+                  <Edit className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
             <p className="text-background/90 font-semibold capitalize">
               {profile.user_type}
             </p>

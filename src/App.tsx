@@ -10,6 +10,7 @@ import Feed from "./pages/Feed";
 import Upload from "./pages/Upload";
 import Messages from "./pages/Messages";
 import Profile from "./pages/Profile";
+import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -28,6 +29,7 @@ const App = () => (
             <Route path="/upload" element={<Upload />} />
             <Route path="/messages" element={<Messages />} />
             <Route path="/profile" element={<Profile />} />
+            <Route path="/settings" element={<Settings />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
