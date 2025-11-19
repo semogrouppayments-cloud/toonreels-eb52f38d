@@ -16,6 +16,9 @@ const Upload = () => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [videoFile, setVideoFile] = useState<File | null>(null);
+  const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
+  const [videoPreview, setVideoPreview] = useState<string | null>(null);
+  const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
 
   const handleUpload = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,6 +48,24 @@ const Upload = () => {
         .from('videos')
         .getPublicUrl(fileName);
 
+      // Upload thumbnail if provided
+      let thumbnailUrl = publicUrl;
+      if (thumbnailFile) {
+        const thumbExt = thumbnailFile.name.split('.').pop();
+        const thumbName = `${user.id}/thumb_${Date.now()}.${thumbExt}`;
+        
+        const { error: thumbError } = await supabase.storage
+          .from('videos')
+          .upload(thumbName, thumbnailFile);
+
+        if (!thumbError) {
+          const { data: { publicUrl: thumbUrl } } = supabase.storage
+            .from('videos')
+            .getPublicUrl(thumbName);
+          thumbnailUrl = thumbUrl;
+        }
+      }
+
       // Create video record
       const { error: insertError } = await supabase
         .from('videos')
@@ -53,7 +74,7 @@ const Upload = () => {
           title,
           description,
           video_url: publicUrl,
-          thumbnail_url: publicUrl, // In production, generate actual thumbnail
+          thumbnail_url: thumbnailUrl,
         });
 
       if (insertError) throw insertError;
@@ -117,14 +138,24 @@ const Upload = () => {
                     id="video"
                     type="file"
                     accept="video/*"
-                    onChange={(e) => setVideoFile(e.target.files?.[0] || null)}
+                    onChange={(e) => {
+                      const file = e.target.files?.[0] || null;
+                      setVideoFile(file);
+                      if (file) {
+                        setVideoPreview(URL.createObjectURL(file));
+                      }
+                    }}
                     className="hidden"
                   />
                   <label
                     htmlFor="video"
                     className="cursor-pointer flex flex-col items-center gap-2"
                   >
-                    <UploadIcon className="h-12 w-12 text-primary" />
+                    {videoPreview ? (
+                      <video src={videoPreview} className="h-40 rounded-lg" controls />
+                    ) : (
+                      <UploadIcon className="h-12 w-12 text-primary" />
+                    )}
                     <div className="text-sm">
                       {videoFile ? (
                         <span className="text-foreground font-semibold">{videoFile.name}</span>
@@ -137,6 +168,47 @@ const Upload = () => {
                     </div>
                     <p className="text-xs text-muted-foreground">
                       MP4, MOV, or AVI (max 100MB)
+                    </p>
+                  </label>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="thumbnail">Thumbnail (Optional)</Label>
+                <div className="border-2 border-dashed border-border rounded-2xl p-8 text-center hover:border-primary transition-colors">
+                  <input
+                    id="thumbnail"
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0] || null;
+                      setThumbnailFile(file);
+                      if (file) {
+                        setThumbnailPreview(URL.createObjectURL(file));
+                      }
+                    }}
+                    className="hidden"
+                  />
+                  <label
+                    htmlFor="thumbnail"
+                    className="cursor-pointer flex flex-col items-center gap-2"
+                  >
+                    {thumbnailPreview ? (
+                      <img src={thumbnailPreview} className="h-32 rounded-lg" alt="Thumbnail preview" />
+                    ) : (
+                      <UploadIcon className="h-12 w-12 text-primary" />
+                    )}
+                    <div className="text-sm">
+                      {thumbnailFile ? (
+                        <span className="text-foreground font-semibold">{thumbnailFile.name}</span>
+                      ) : (
+                        <>
+                          <span className="text-primary font-semibold">Click to upload thumbnail</span>
+                        </>
+                      )}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      JPG, PNG (recommended 9:16 ratio)
                     </p>
                   </label>
                 </div>
