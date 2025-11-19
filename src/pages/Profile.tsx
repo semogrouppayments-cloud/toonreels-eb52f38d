@@ -29,36 +29,47 @@ const Profile = () => {
   const [videos, setVideos] = useState<Video[]>([]);
   const [editingUsername, setEditingUsername] = useState(false);
   const [newUsername, setNewUsername] = useState('');
+  const [isOwnProfile, setIsOwnProfile] = useState(true);
 
   useEffect(() => {
-    fetchProfile();
-    fetchUserVideos();
-  }, []);
+    const urlParams = new URLSearchParams(window.location.search);
+    const userId = urlParams.get('userId');
+    fetchProfile(userId);
+    fetchUserVideos(userId);
+  }, [window.location.search]);
 
-  const fetchProfile = async () => {
+  const fetchProfile = async (userId?: string | null) => {
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
+    if (!user && !userId) {
       navigate('/auth');
       return;
     }
 
+    const targetUserId = userId || user?.id;
+    setIsOwnProfile(!userId || userId === user?.id);
+
     const { data } = await supabase
       .from('profiles')
       .select('*')
-      .eq('id', user.id)
+      .eq('id', targetUserId)
       .single();
 
-    setProfile(data);
+    if (data) {
+      setProfile(data);
+      setNewUsername(data.username);
+    }
   };
 
-  const fetchUserVideos = async () => {
+  const fetchUserVideos = async (userId?: string | null) => {
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    const targetUserId = userId || user?.id;
+    
+    if (!targetUserId) return;
 
     const { data } = await supabase
       .from('videos')
       .select('*')
-      .eq('creator_id', user.id)
+      .eq('creator_id', targetUserId)
       .order('created_at', { ascending: false });
 
     setVideos(data || []);
@@ -97,7 +108,7 @@ const Profile = () => {
         .eq('id', user.id);
 
       toast.success('Profile picture updated!');
-      fetchProfile();
+      fetchProfile(null);
     } catch (error) {
       toast.error('Failed to upload avatar');
     }
@@ -117,7 +128,7 @@ const Profile = () => {
 
       toast.success('Username updated!');
       setEditingUsername(false);
-      fetchProfile();
+      fetchProfile(null);
     } catch (error) {
       toast.error('Failed to update username');
     }
@@ -131,22 +142,26 @@ const Profile = () => {
         {/* Header */}
         <div className="bg-gradient-to-br from-primary via-accent to-fun-yellow p-8">
           <div className="flex justify-end gap-2 mb-4">
-            <Button
-              variant="secondary"
-              size="icon"
-              className="rounded-full"
-              onClick={() => navigate('/settings')}
-            >
-              <Settings className="h-5 w-5" />
-            </Button>
-            <Button
-              variant="secondary"
-              size="icon"
-              onClick={handleSignOut}
-              className="rounded-full"
-            >
-              <LogOut className="h-5 w-5" />
-            </Button>
+            {isOwnProfile && (
+              <>
+                <Button
+                  variant="secondary"
+                  size="icon"
+                  className="rounded-full"
+                  onClick={() => navigate('/settings')}
+                >
+                  <Settings className="h-5 w-5" />
+                </Button>
+                <Button
+                  variant="secondary"
+                  size="icon"
+                  onClick={handleSignOut}
+                  className="rounded-full"
+                >
+                  <LogOut className="h-5 w-5" />
+                </Button>
+              </>
+            )}
           </div>
 
           <div className="text-center">
@@ -162,22 +177,24 @@ const Profile = () => {
                   {profile.username[0].toUpperCase()}
                 </div>
               )}
-              <label
-                htmlFor="avatar-upload"
-                className="absolute bottom-0 right-0 bg-primary text-primary-foreground rounded-full p-2 cursor-pointer hover:scale-110 transition-transform"
-              >
-                <Camera className="h-4 w-4" />
-                <input
-                  id="avatar-upload"
-                  type="file"
-                  accept="image/*"
-                  onChange={handleAvatarUpload}
-                  className="hidden"
-                />
-              </label>
+              {isOwnProfile && (
+                <label
+                  htmlFor="avatar-upload"
+                  className="absolute bottom-0 right-0 bg-primary text-primary-foreground rounded-full p-2 cursor-pointer hover:scale-110 transition-transform"
+                >
+                  <Camera className="h-4 w-4" />
+                  <input
+                    id="avatar-upload"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleAvatarUpload}
+                    className="hidden"
+                  />
+                </label>
+              )}
             </div>
             
-            {editingUsername ? (
+            {editingUsername && isOwnProfile ? (
               <div className="flex items-center justify-center gap-2 mb-2">
                 <Input
                   value={newUsername}
