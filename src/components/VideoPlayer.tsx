@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { Heart, MessageCircle, Download, Flag, Trash2, UserPlus, UserMinus } from 'lucide-react';
+import { Heart, MessageCircle, Download, Flag, Trash2, UserPlus, UserMinus, Volume2, VolumeX } from 'lucide-react';
 import { toast } from 'sonner';
 import { useSignedVideoUrl } from '@/hooks/useSignedVideoUrl';
 import LikeAnimation from '@/components/LikeAnimation';
+import { useNavigate } from 'react-router-dom';
 
 interface VideoPlayerProps {
   video: {
@@ -27,14 +28,18 @@ interface VideoPlayerProps {
 }
 
 const VideoPlayer = ({ video, currentUserId, isPremium, onCommentsClick, onDelete }: VideoPlayerProps) => {
+  const navigate = useNavigate();
   const [liked, setLiked] = useState(false);
   const [likesCount, setLikesCount] = useState(video.likes_count);
   const [isFollowing, setIsFollowing] = useState(false);
   const [showReportDialog, setShowReportDialog] = useState(false);
   const [likeAnimations, setLikeAnimations] = useState<Array<{ id: number; x: number; y: number }>>([]);
+  const [isMuted, setIsMuted] = useState(true);
+  const [isPlaying, setIsPlaying] = useState(true);
   const { signedUrl, loading, error } = useSignedVideoUrl(video.video_url);
   const lastTapRef = useRef<number>(0);
   const animationIdRef = useRef<number>(0);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
     checkIfFollowing();
@@ -86,9 +91,27 @@ const VideoPlayer = ({ video, currentUserId, isPremium, onCommentsClick, onDelet
       if (!liked) {
         handleLike();
       }
+    } else {
+      // Single tap - toggle play/pause
+      if (videoRef.current) {
+        if (isPlaying) {
+          videoRef.current.pause();
+          setIsPlaying(false);
+        } else {
+          videoRef.current.play();
+          setIsPlaying(true);
+        }
+      }
     }
     
     lastTapRef.current = now;
+  };
+
+  const toggleMute = () => {
+    if (videoRef.current) {
+      videoRef.current.muted = !isMuted;
+      setIsMuted(!isMuted);
+    }
   };
 
   const removeAnimation = (id: number) => {
@@ -192,11 +215,12 @@ const VideoPlayer = ({ video, currentUserId, isPremium, onCommentsClick, onDelet
         </div>
       ) : (
         <video
+          ref={videoRef}
           src={signedUrl || ''}
           className="h-full w-full object-cover"
           loop
           autoPlay
-          muted
+          muted={isMuted}
           playsInline
           onTouchStart={handleDoubleTap}
           onDoubleClick={handleDoubleTap}
@@ -205,9 +229,22 @@ const VideoPlayer = ({ video, currentUserId, isPremium, onCommentsClick, onDelet
       
       <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
       
+      {/* Volume Control */}
+      <Button
+        size="icon"
+        variant="ghost"
+        onClick={toggleMute}
+        className="absolute top-4 right-4 z-10 rounded-full h-10 w-10 bg-black/30 text-white hover:bg-black/50"
+      >
+        {isMuted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
+      </Button>
+      
       {/* Video Info */}
       <div className="absolute bottom-20 left-3 right-16 text-white">
-        <div className="flex items-center gap-1.5 mb-1.5">
+        <div 
+          className="flex items-center gap-1.5 mb-1.5 cursor-pointer hover:opacity-80 transition-opacity"
+          onClick={() => navigate(`/profile?userId=${video.creator_id}`)}
+        >
           <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-sm font-bold">
             {video.profiles.username[0].toUpperCase()}
           </div>

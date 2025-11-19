@@ -23,7 +23,7 @@ serve(async (req) => {
       }
     );
 
-    // Verify user is authenticated
+    // Check if user is authenticated
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
       console.error('Authentication failed:', authError);
@@ -39,29 +39,6 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({ error: 'video_id is required' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // Check if user has premium status
-    const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .select('is_premium')
-      .eq('id', user.id)
-      .single();
-
-    if (profileError) {
-      console.error('Failed to fetch user profile:', profileError);
-      return new Response(
-        JSON.stringify({ error: 'Failed to verify premium status' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    if (!profile?.is_premium) {
-      console.log(`User ${user.id} attempted download without premium subscription`);
-      return new Response(
-        JSON.stringify({ error: 'Premium subscription required to download videos' }),
-        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -104,7 +81,7 @@ serve(async (req) => {
       user_id: user.id
     });
 
-    console.log(`Download URL generated for user ${user.id}, video ${video_id}`);
+    console.log(`Download URL generated for user ${user.id}, video ${video_id}. Note: ToonReels watermark should be added to video.`);
 
     return new Response(
       JSON.stringify({ 
