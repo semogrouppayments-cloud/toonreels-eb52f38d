@@ -266,7 +266,7 @@ const VideoPlayer = ({ video, currentUserId, isPremium, onCommentsClick, onDelet
             size="icon"
             variant="ghost"
             onClick={handleFollow}
-            className={`rounded-full h-11 w-11 p-0 ${isFollowing ? 'text-primary' : 'text-white'} hover:scale-110 transition-transform`}
+            className={`rounded-full h-11 w-11 p-0 ${isFollowing ? 'text-primary' : 'text-white'}`}
           >
             <div className="flex flex-col items-center gap-0.5">
               {isFollowing ? (
@@ -283,7 +283,7 @@ const VideoPlayer = ({ video, currentUserId, isPremium, onCommentsClick, onDelet
           size="icon"
           variant="ghost"
           onClick={handleLike}
-          className={`rounded-full h-11 w-11 p-0 ${liked ? 'text-primary' : 'text-white'} hover:scale-110 transition-transform`}
+          className={`rounded-full h-11 w-11 p-0 ${liked ? 'text-primary' : 'text-white'}`}
         >
           <div className="flex flex-col items-center gap-0.5">
             <Heart className={`h-6 w-6 ${liked ? 'fill-current' : ''}`} />
@@ -295,7 +295,7 @@ const VideoPlayer = ({ video, currentUserId, isPremium, onCommentsClick, onDelet
           size="icon"
           variant="ghost"
           onClick={onCommentsClick}
-          className="rounded-full h-11 w-11 p-0 text-white hover:scale-110 transition-transform"
+          className="rounded-full h-11 w-11 p-0 text-white"
         >
           <div className="flex flex-col items-center gap-0.5">
             <MessageCircle className="h-6 w-6" />
@@ -307,7 +307,7 @@ const VideoPlayer = ({ video, currentUserId, isPremium, onCommentsClick, onDelet
           size="icon"
           variant="ghost"
           onClick={handleDownload}
-          className="rounded-full h-11 w-11 p-0 text-white hover:scale-110 transition-transform"
+          className="rounded-full h-11 w-11 p-0 text-white"
         >
           <Download className="h-6 w-6" />
         </Button>
@@ -316,7 +316,7 @@ const VideoPlayer = ({ video, currentUserId, isPremium, onCommentsClick, onDelet
           size="icon"
           variant="ghost"
           onClick={() => setShowReportDialog(true)}
-          className="rounded-full h-11 w-11 p-0 text-white hover:scale-110 transition-transform"
+          className="rounded-full h-11 w-11 p-0 text-white"
         >
           <Flag className="h-6 w-6" />
         </Button>
@@ -326,7 +326,7 @@ const VideoPlayer = ({ video, currentUserId, isPremium, onCommentsClick, onDelet
             size="icon"
             variant="ghost"
             onClick={onDelete}
-            className="rounded-full h-11 w-11 p-0 text-red-500 hover:scale-110 transition-transform"
+            className="rounded-full h-11 w-11 p-0 text-red-500"
           >
             <Trash2 className="h-6 w-6" />
           </Button>

@@ -275,6 +275,7 @@ export type Database = {
           age_range: string | null
           avatar_url: string | null
           bio: string | null
+          cover_photo_url: string | null
           created_at: string
           id: string
           is_premium: boolean | null
@@ -288,6 +289,7 @@ export type Database = {
           age_range?: string | null
           avatar_url?: string | null
           bio?: string | null
+          cover_photo_url?: string | null
           created_at?: string
           id: string
           is_premium?: boolean | null
@@ -301,6 +303,7 @@ export type Database = {
           age_range?: string | null
           avatar_url?: string | null
           bio?: string | null
+          cover_photo_url?: string | null
           created_at?: string
           id?: string
           is_premium?: boolean | null
