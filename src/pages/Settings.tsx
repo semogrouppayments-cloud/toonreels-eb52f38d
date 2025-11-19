@@ -24,7 +24,7 @@ const Settings = () => {
           >
             <ArrowLeft className="h-6 w-6" />
           </Button>
-          <h1 className="text-2xl font-black">🎛️ TuneReels Settings</h1>
+          <h1 className="text-2xl font-black">🎛️ ToonReels Settings</h1>
         </div>
 
         <div className="space-y-4">
@@ -209,7 +209,7 @@ const Settings = () => {
               <div className="space-y-3 text-sm">
                 <div className="rounded-lg border-l-4 border-primary bg-muted/50 p-3">
                   <strong className="block mb-1">Q: Why can I only see cartoon reels?</strong>
-                  <p className="text-muted-foreground">A: TuneReels is designed to be kid-safe, so all adult, scary, violent, and real-life influencer content is blocked automatically.</p>
+                  <p className="text-muted-foreground">A: ToonReels is designed to be kid-safe, so all adult, scary, violent, and real-life influencer content is blocked automatically.</p>
                 </div>
                 <div className="rounded-lg border-l-4 border-primary bg-muted/50 p-3">
                   <strong className="block mb-1">Q: Why can't I send messages?</strong>
