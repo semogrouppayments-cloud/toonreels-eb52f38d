@@ -412,9 +412,24 @@ const Profile = () => {
                   <div key={video.id} className="relative group">
                     <div
                       onClick={() => setSelectedVideoIndex(index)}
-                      className="aspect-[9/16] rounded-2xl bg-gradient-to-br from-primary/20 via-accent/20 to-fun-blue/20 overflow-hidden cursor-pointer hover:scale-105 transition-transform"
+                      className="aspect-[9/16] rounded-2xl overflow-hidden cursor-pointer hover:scale-105 transition-transform relative"
                     >
-                      <div className="h-full flex flex-col justify-end p-3">
+                      {/* Video Thumbnail/Cover Photo */}
+                      {video.thumbnail_url ? (
+                        <img 
+                          src={video.thumbnail_url} 
+                          alt={video.title}
+                          className="absolute inset-0 w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-accent/20 to-fun-blue/20" />
+                      )}
+                      
+                      {/* Gradient overlay for text readability */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+                      
+                      {/* Video Title */}
+                      <div className="absolute bottom-0 left-0 right-0 p-3">
                         <p className="text-white text-xs font-bold drop-shadow-lg line-clamp-2">
                           {video.title}
                         </p>
