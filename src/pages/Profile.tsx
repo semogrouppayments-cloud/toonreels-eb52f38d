@@ -8,12 +8,15 @@ import { LogOut, Settings, Video, Camera, Edit } from 'lucide-react';
 import BottomNav from '@/components/BottomNav';
 import { toast } from 'sonner';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import VideoPlayer from '@/components/VideoPlayer';
 
 interface Profile {
+  id?: string;
   username: string;
   user_type: string;
   bio: string;
   avatar_url: string;
+  cover_photo_url?: string;
 }
 
 interface Video {
@@ -22,6 +25,9 @@ interface Video {
   thumbnail_url: string;
   views_count: number;
   likes_count: number;
+  video_url: string;
+  description: string;
+  creator_id: string;
 }
 
 const Profile = () => {
@@ -31,13 +37,39 @@ const Profile = () => {
   const [editingUsername, setEditingUsername] = useState(false);
   const [newUsername, setNewUsername] = useState('');
   const [isOwnProfile, setIsOwnProfile] = useState(true);
+  const [followersCount, setFollowersCount] = useState(0);
+  const [followingCount, setFollowingCount] = useState(0);
+  const [selectedVideoIndex, setSelectedVideoIndex] = useState<number | null>(null);
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const userId = urlParams.get('userId');
     fetchProfile(userId);
     fetchUserVideos(userId);
+    fetchFollowCounts(userId);
   }, [window.location.search]);
+
+  const fetchFollowCounts = async (userId?: string | null) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    const targetUserId = userId || user?.id;
+    
+    if (!targetUserId) return;
+
+    // Get followers count
+    const { count: followers } = await supabase
+      .from('follows')
+      .select('*', { count: 'exact', head: true })
+      .eq('following_id', targetUserId);
+
+    // Get following count
+    const { count: following } = await supabase
+      .from('follows')
+      .select('*', { count: 'exact', head: true })
+      .eq('follower_id', targetUserId);
+
+    setFollowersCount(followers || 0);
+    setFollowingCount(following || 0);
+  };
 
   const fetchProfile = async (userId?: string | null) => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -56,7 +88,7 @@ const Profile = () => {
       .single();
 
     if (data) {
-      setProfile(data);
+      setProfile({ ...data, id: data.id || targetUserId });
       setNewUsername(data.username);
     }
   };
@@ -115,6 +147,39 @@ const Profile = () => {
     }
   };
 
+  const handleCoverPhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${user.id}/cover.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(fileName, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(fileName);
+
+      await supabase
+        .from('profiles')
+        .update({ cover_photo_url: publicUrl })
+        .eq('id', user.id);
+
+      toast.success('Cover photo updated!');
+      fetchProfile(null);
+    } catch (error) {
+      toast.error('Failed to upload cover photo');
+    }
+  };
+
   const handleUsernameUpdate = async () => {
     if (!newUsername.trim()) return;
 
@@ -140,8 +205,34 @@ const Profile = () => {
   return (
     <div className="min-h-screen bg-background pb-20">
       <div className="max-w-2xl mx-auto">
+        {/* Cover Photo */}
+        <div className="relative h-40 bg-gradient-to-br from-primary via-accent to-fun-yellow">
+          {profile?.cover_photo_url && (
+            <img 
+              src={profile.cover_photo_url} 
+              alt="Cover" 
+              className="w-full h-full object-cover"
+            />
+          )}
+          {isOwnProfile && (
+            <label
+              htmlFor="cover-upload"
+              className="absolute bottom-3 right-3 bg-background/90 backdrop-blur-sm text-foreground rounded-full p-2 cursor-pointer hover:bg-background transition-colors"
+            >
+              <Camera className="h-4 w-4" />
+              <input
+                id="cover-upload"
+                type="file"
+                accept="image/*"
+                onChange={handleCoverPhotoUpload}
+                className="hidden"
+              />
+            </label>
+          )}
+        </div>
+
         {/* Header */}
-        <div className="bg-gradient-to-br from-primary via-accent to-fun-yellow p-8">
+        <div className="bg-gradient-to-br from-primary via-accent to-fun-yellow p-8 pt-4">
           <div className="flex justify-end gap-2 mb-4">
             {isOwnProfile && (
               <>
@@ -226,22 +317,26 @@ const Profile = () => {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-3 gap-4 p-4 -mt-8">
-          <Card className="p-4 text-center shadow-elevated">
-            <p className="text-2xl font-black text-primary">
+        <div className="grid grid-cols-4 gap-2 px-4 -mt-8">
+          <Card className="p-2 text-center shadow-elevated">
+            <p className="text-lg font-black text-primary">
               {videos.reduce((sum, v) => sum + v.views_count, 0)}
             </p>
-            <p className="text-sm text-muted-foreground">Views</p>
+            <p className="text-[10px] text-muted-foreground">Views</p>
           </Card>
-          <Card className="p-4 text-center shadow-elevated">
-            <p className="text-2xl font-black text-primary">
+          <Card className="p-2 text-center shadow-elevated">
+            <p className="text-lg font-black text-primary">
               {videos.reduce((sum, v) => sum + v.likes_count, 0)}
             </p>
-            <p className="text-sm text-muted-foreground">Likes</p>
+            <p className="text-[10px] text-muted-foreground">Likes</p>
           </Card>
-          <Card className="p-4 text-center shadow-elevated">
-            <p className="text-2xl font-black text-primary">{videos.length}</p>
-            <p className="text-sm text-muted-foreground">Videos</p>
+          <Card className="p-2 text-center shadow-elevated">
+            <p className="text-lg font-black text-primary">{followersCount}</p>
+            <p className="text-[10px] text-muted-foreground">Followers</p>
+          </Card>
+          <Card className="p-2 text-center shadow-elevated">
+            <p className="text-lg font-black text-primary">{videos.length}</p>
+            <p className="text-[10px] text-muted-foreground">Videos</p>
           </Card>
         </div>
 
@@ -269,9 +364,10 @@ const Profile = () => {
               </Card>
             ) : (
               <div className="grid grid-cols-3 gap-2">
-                {videos.map((video) => (
+                {videos.map((video, index) => (
                   <div
                     key={video.id}
+                    onClick={() => setSelectedVideoIndex(index)}
                     className="aspect-[9/16] rounded-2xl bg-gradient-to-br from-primary/20 via-accent/20 to-fun-blue/20 overflow-hidden cursor-pointer hover:scale-105 transition-transform"
                   >
                     <div className="h-full flex flex-col justify-end p-3">
@@ -286,6 +382,42 @@ const Profile = () => {
           </div>
         )}
       </div>
+
+      {/* Video Viewer Modal */}
+      {selectedVideoIndex !== null && (
+        <div className="fixed inset-0 z-50 bg-background">
+          <div className="h-screen overflow-y-scroll snap-y snap-mandatory">
+            {videos.map((video, index) => (
+              <div key={video.id} className="h-screen snap-start relative">
+                <VideoPlayer
+                  video={{
+                    ...video,
+                    profiles: {
+                      username: profile?.username || '',
+                      avatar_url: profile?.avatar_url || '',
+                    }
+                  }}
+                  currentUserId={profile?.id || ''}
+                  isPremium={false}
+                  onCommentsClick={() => {}}
+                  onDelete={() => {
+                    setSelectedVideoIndex(null);
+                    fetchUserVideos(null);
+                  }}
+                />
+              </div>
+            ))}
+          </div>
+          <Button
+            size="icon"
+            variant="ghost"
+            onClick={() => setSelectedVideoIndex(null)}
+            className="fixed top-4 left-4 z-50 rounded-full bg-black/50 text-white"
+          >
+            ✕
+          </Button>
+        </div>
+      )}
 
       <BottomNav />
     </div>
