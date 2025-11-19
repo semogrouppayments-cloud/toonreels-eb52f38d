@@ -36,6 +36,8 @@ const Profile = () => {
   const [videos, setVideos] = useState<Video[]>([]);
   const [editingUsername, setEditingUsername] = useState(false);
   const [newUsername, setNewUsername] = useState('');
+  const [editingBio, setEditingBio] = useState(false);
+  const [newBio, setNewBio] = useState('');
   const [isOwnProfile, setIsOwnProfile] = useState(true);
   const [followersCount, setFollowersCount] = useState(0);
   const [followingCount, setFollowingCount] = useState(0);
@@ -104,6 +106,7 @@ const Profile = () => {
     if (data) {
       setProfile({ ...data, id: data.id || targetUserId });
       setNewUsername(data.username);
+      setNewBio(data.bio || '');
     }
   };
 
@@ -211,6 +214,29 @@ const Profile = () => {
       fetchProfile(null);
     } catch (error) {
       toast.error('Failed to update username');
+    }
+  };
+
+  const handleBioUpdate = async () => {
+    if (newBio.length > 200) {
+      toast.error('Bio must be 200 characters or less');
+      return;
+    }
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      await supabase
+        .from('profiles')
+        .update({ bio: newBio.trim() })
+        .eq('id', user.id);
+
+      toast.success('Bio updated!');
+      setEditingBio(false);
+      fetchProfile(null);
+    } catch (error) {
+      toast.error('Failed to update bio');
     }
   };
 
@@ -347,10 +373,65 @@ const Profile = () => {
                 <p className="text-white/90 drop-shadow-lg font-semibold capitalize text-xs md:text-sm">
                   {profile.user_type}
                 </p>
-                {profile.bio && (
-                  <p className="text-white/80 drop-shadow-md text-xs mt-1">
-                    {profile.bio}
-                  </p>
+                
+                {/* Bio Section */}
+                {editingBio && isOwnProfile ? (
+                  <div className="mt-2 space-y-2">
+                    <div className="relative">
+                      <textarea
+                        value={newBio}
+                        onChange={(e) => setNewBio(e.target.value)}
+                        maxLength={200}
+                        placeholder="Add a bio..."
+                        className="w-full max-w-xs text-white bg-black/30 backdrop-blur-sm rounded-lg p-2 text-xs resize-none border border-white/20 focus:border-white/40 outline-none"
+                        rows={3}
+                      />
+                      <span className="text-[10px] text-white/60 absolute bottom-1 right-2">
+                        {newBio.length}/200
+                      </span>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button size="sm" onClick={handleBioUpdate} className="h-7 text-xs">
+                        Save
+                      </Button>
+                      <Button 
+                        size="sm" 
+                        variant="ghost" 
+                        onClick={() => {
+                          setEditingBio(false);
+                          setNewBio(profile.bio || '');
+                        }}
+                        className="h-7 text-xs text-white"
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-start gap-1 mt-1">
+                    {profile.bio ? (
+                      <p className="text-white/80 drop-shadow-md text-xs flex-1">
+                        {profile.bio}
+                      </p>
+                    ) : isOwnProfile ? (
+                      <p className="text-white/60 drop-shadow-md text-xs italic flex-1">
+                        No bio yet
+                      </p>
+                    ) : null}
+                    {isOwnProfile && (
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-5 w-5 text-white/80 hover:text-white"
+                        onClick={() => {
+                          setNewBio(profile.bio || '');
+                          setEditingBio(true);
+                        }}
+                      >
+                        <Edit className="h-3 w-3" />
+                      </Button>
+                    )}
+                  </div>
                 )}
               </div>
             </div>
