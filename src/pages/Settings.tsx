@@ -132,7 +132,7 @@ const Settings = () => {
       <div className="max-w-4xl mx-auto p-4">
         <div className="mb-6 flex items-center gap-4">
           <Button variant="ghost" size="icon" onClick={() => navigate('/profile')} className="rounded-full"><ArrowLeft className="h-6 w-6" /></Button>
-          <h1 className="text-2xl font-black">🎛️ ToonReels Settings</h1>
+          <h1 className="text-2xl font-black">ToonReels Settings</h1>
         </div>
 
         <div className="space-y-4">
@@ -269,58 +269,58 @@ const Settings = () => {
           </Card>
 
           <Card>
-            <CardHeader><CardTitle>📋 FAQ</CardTitle></CardHeader>
+            <CardHeader><CardTitle>FAQ</CardTitle></CardHeader>
             <CardContent>
               <Accordion type="single" collapsible>
                 <AccordionItem value="what">
-                  <AccordionTrigger>🟦 What is ToonReels?</AccordionTrigger>
+                  <AccordionTrigger>What is ToonReels?</AccordionTrigger>
                   <AccordionContent>
                     <p className="text-sm text-muted-foreground">ToonReels is a kid-safe cartoon reels platform made by SE-Motoons. Kids can watch short animated clips, music toons, fun stories, and educational shorts — all age filtered.</p>
                   </AccordionContent>
                 </AccordionItem>
                 <AccordionItem value="cartoon">
-                  <AccordionTrigger>🟦 Why only cartoon content?</AccordionTrigger>
+                  <AccordionTrigger>Why only cartoon content?</AccordionTrigger>
                   <AccordionContent>
                     <p className="text-sm text-muted-foreground">ToonReels is designed strictly for kids. We automatically block adult themes, scary content, violence, political content, and anything unsafe.</p>
                   </AccordionContent>
                 </AccordionItem>
                 <AccordionItem value="report">
-                  <AccordionTrigger>🟦 How do I report something inappropriate?</AccordionTrigger>
+                  <AccordionTrigger>How do I report something inappropriate?</AccordionTrigger>
                   <AccordionContent>
-                    <p className="text-sm text-muted-foreground mb-2">Tap the ⚠️ Report button on any reel or any creator's profile. Our moderation team reviews reports within 24–72 hours.</p>
+                    <p className="text-sm text-muted-foreground mb-2">Tap the Report button on any reel or any creator's profile. Our moderation team reviews reports within 24–72 hours.</p>
                   </AccordionContent>
                 </AccordionItem>
                 <AccordionItem value="comments">
-                  <AccordionTrigger>🟦 Are comments safe?</AccordionTrigger>
+                  <AccordionTrigger>Are comments safe?</AccordionTrigger>
                   <AccordionContent>
                     <p className="text-sm text-muted-foreground">Comments are filtered with AI kid-safe moderation, keyword blocking, and human review for flagged comments. Parents can disable comments completely in Settings → Parental Controls.</p>
                   </AccordionContent>
                 </AccordionItem>
                 <AccordionItem value="messaging">
-                  <AccordionTrigger>🟦 Can kids message each other?</AccordionTrigger>
+                  <AccordionTrigger>Can kids message each other?</AccordionTrigger>
                   <AccordionContent>
                     <p className="text-sm text-muted-foreground">Messaging is off by default. Parents can enable limited messaging after setting a Parent PIN.</p>
                   </AccordionContent>
                 </AccordionItem>
                 <AccordionItem value="uploads">
-                  <AccordionTrigger>🟦 How do uploads work?</AccordionTrigger>
+                  <AccordionTrigger>How do uploads work?</AccordionTrigger>
                   <AccordionContent>
                     <p className="text-sm text-muted-foreground">Creators can upload reels from the Upload tab. All uploads are reviewed before being public.</p>
                   </AccordionContent>
                 </AccordionItem>
                 <AccordionItem value="download">
-                  <AccordionTrigger>🟦 Why can't I download reels?</AccordionTrigger>
+                  <AccordionTrigger>Why can't I download reels?</AccordionTrigger>
                   <AccordionContent>
                     <p className="text-sm text-muted-foreground">Downloading reel videos is a premium feature.</p>
                   </AccordionContent>
                 </AccordionItem>
                 <AccordionItem value="contact">
-                  <AccordionTrigger>🟦 How do I contact ToonReels?</AccordionTrigger>
+                  <AccordionTrigger>How do I contact ToonReels?</AccordionTrigger>
                   <AccordionContent>
                     <div className="text-sm text-muted-foreground space-y-1">
-                      <p>📮 Email: info@se-motoons.com</p>
-                      <p>🌐 Website: www.semotoons.com</p>
-                      <p>🦊 App Icon: TR (ToonReels official avatar)</p>
+                      <p>Email: info@se-motoons.com</p>
+                      <p>Website: www.semotoons.com</p>
+                      <p>App Icon: TR (ToonReels official avatar)</p>
                     </div>
                   </AccordionContent>
                 </AccordionItem>
@@ -329,7 +329,7 @@ const Settings = () => {
           </Card>
 
           <Card>
-            <CardHeader><CardTitle>⭐ Terms of Use</CardTitle></CardHeader>
+            <CardHeader><CardTitle>Terms of Use</CardTitle></CardHeader>
             <CardContent>
               <Accordion type="single" collapsible>
                 <AccordionItem value="terms">
@@ -384,7 +384,7 @@ const Settings = () => {
           </Card>
 
           <Card>
-            <CardHeader><CardTitle>⭐ Privacy Center</CardTitle></CardHeader>
+            <CardHeader><CardTitle>Privacy Center</CardTitle></CardHeader>
             <CardContent>
               <Accordion type="single" collapsible>
                 <AccordionItem value="privacy">
@@ -395,7 +395,7 @@ const Settings = () => {
                     <div>
                       <p className="font-semibold text-foreground">1. What information we collect</p>
                       <p>We collect minimal data: profile name/nickname, avatar (emojis), age range (not exact birth date), parent/guardian email (optional), and uploaded content.</p>
-                      <p className="mt-2">We do NOT collect: ❌ exact addresses ❌ phone numbers ❌ legal names ❌ financial data ❌ facial recognition data</p>
+                      <p className="mt-2">We do NOT collect: exact addresses, phone numbers, legal names, financial data, or facial recognition data</p>
                     </div>
 
                     <div>
@@ -415,7 +415,7 @@ const Settings = () => {
 
                     <div>
                       <p className="font-semibold text-foreground">5. Deleting Your Data</p>
-                      <p>You may request deletion anytime by emailing: 📮 info@se-motoons.com</p>
+                      <p>You may request deletion anytime by emailing: info@se-motoons.com</p>
                     </div>
 
                     <div>
@@ -429,7 +429,7 @@ const Settings = () => {
           </Card>
 
           <Card>
-            <CardHeader><CardTitle>⭐ User Safety Guide</CardTitle></CardHeader>
+            <CardHeader><CardTitle>User Safety Guide</CardTitle></CardHeader>
             <CardContent>
               <Accordion type="single" collapsible>
                 <AccordionItem value="safety">
@@ -438,32 +438,32 @@ const Settings = () => {
                     <p className="font-semibold">ToonReels is built around kid safety first.</p>
                     
                     <div>
-                      <p className="font-semibold text-foreground">🟧 1. Safe Content System</p>
+                      <p className="font-semibold text-foreground">1. Safe Content System</p>
                       <p>We use AI detection for harmful videos, human moderation, strict cartoon-only rules, and automatic age filtering.</p>
                     </div>
 
                     <div>
-                      <p className="font-semibold text-foreground">🟧 2. Reporting Bad Content</p>
-                      <p>If something seems wrong, tap the ⚠️ Report button on a reel or the Report Creator button on a profile. Reports are checked within 24–72 hours.</p>
+                      <p className="font-semibold text-foreground">2. Reporting Bad Content</p>
+                      <p>If something seems wrong, tap the Report button on a reel or the Report Creator button on a profile. Reports are checked within 24–72 hours.</p>
                     </div>
 
                     <div>
-                      <p className="font-semibold text-foreground">🟧 3. Parental Controls (PIN-Protected)</p>
+                      <p className="font-semibold text-foreground">3. Parental Controls (PIN-Protected)</p>
                       <p>Parents can set screen time limits, bedtime mode, comment restrictions, messaging restrictions, age filters, and upload permissions.</p>
                     </div>
 
                     <div>
-                      <p className="font-semibold text-foreground">🟧 4. Messaging Safety</p>
+                      <p className="font-semibold text-foreground">4. Messaging Safety</p>
                       <p>Messaging is disabled by default, optional for older kids, monitored by automated filters, and PIN-protected for parents.</p>
                     </div>
 
                     <div>
-                      <p className="font-semibold text-foreground">🟧 5. Comment Safety</p>
+                      <p className="font-semibold text-foreground">5. Comment Safety</p>
                       <p>Comments are filtered to remove bullying, threats, adult themes, spam, and personal info. Parents can also turn off comments entirely.</p>
                     </div>
 
                     <div>
-                      <p className="font-semibold text-foreground">🟧 6. Creator Upload Safety</p>
+                      <p className="font-semibold text-foreground">6. Creator Upload Safety</p>
                       <p>All uploads go through automated filtering and human moderator review with age-range tagging. Creators lose upload access if they violate rules.</p>
                     </div>
                   </AccordionContent>
@@ -473,11 +473,11 @@ const Settings = () => {
           </Card>
 
           <Card>
-            <CardHeader><CardTitle>⭐ Help Center</CardTitle></CardHeader>
+            <CardHeader><CardTitle>Help Center</CardTitle></CardHeader>
             <CardContent>
               <Accordion type="single" collapsible>
                 <AccordionItem value="support">
-                  <AccordionTrigger>🔧 General Support</AccordionTrigger>
+                  <AccordionTrigger>General Support</AccordionTrigger>
                   <AccordionContent>
                     <div className="text-sm text-muted-foreground space-y-1">
                       <p>Email: info@se-motoons.com</p>
@@ -486,33 +486,33 @@ const Settings = () => {
                   </AccordionContent>
                 </AccordionItem>
                 <AccordionItem value="loading">
-                  <AccordionTrigger>❓ What should I do if a reel won't load?</AccordionTrigger>
+                  <AccordionTrigger>What should I do if a reel won't load?</AccordionTrigger>
                   <AccordionContent>
                     <p className="text-sm text-muted-foreground">Try refreshing your internet, closing & reopening the app, or restarting your device.</p>
                   </AccordionContent>
                 </AccordionItem>
                 <AccordionItem value="upload-help">
-                  <AccordionTrigger>🎥 How do I upload a reel?</AccordionTrigger>
+                  <AccordionTrigger>How do I upload a reel?</AccordionTrigger>
                   <AccordionContent>
                     <p className="text-sm text-muted-foreground">Go to Upload → Select Thumbnail → Add Title → Submit.</p>
                   </AccordionContent>
                 </AccordionItem>
                 <AccordionItem value="protection">
-                  <AccordionTrigger>🛡️ How does ToonReels protect kids?</AccordionTrigger>
+                  <AccordionTrigger>How does ToonReels protect kids?</AccordionTrigger>
                   <AccordionContent>
                     <p className="text-sm text-muted-foreground">Filters violent/adult content, human moderators, parental PIN, and messaging locked by default.</p>
                   </AccordionContent>
                 </AccordionItem>
                 <AccordionItem value="pin-reset">
-                  <AccordionTrigger>🔒 How do I reset my parent PIN?</AccordionTrigger>
+                  <AccordionTrigger>How do I reset my parent PIN?</AccordionTrigger>
                   <AccordionContent>
                     <p className="text-sm text-muted-foreground">Go to Settings → Parental Controls → "Forgot PIN?" You will be asked to verify your email.</p>
                   </AccordionContent>
                 </AccordionItem>
                 <AccordionItem value="icon">
-                  <AccordionTrigger>📱 App Icon / Avatar Info</AccordionTrigger>
+                  <AccordionTrigger>App Icon / Avatar Info</AccordionTrigger>
                   <AccordionContent>
-                    <p className="text-sm text-muted-foreground">The official ToonReels app icon is: 🟧 TR with a red-orange gradient background.</p>
+                    <p className="text-sm text-muted-foreground">The official ToonReels app icon is: TR with a red-orange gradient background.</p>
                   </AccordionContent>
                 </AccordionItem>
               </Accordion>
