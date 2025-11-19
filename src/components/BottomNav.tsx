@@ -1,4 +1,4 @@
-import { Home, Upload, MessageCircle, User } from 'lucide-react';
+import { Home, Upload, User } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
@@ -55,18 +55,6 @@ const BottomNav = () => {
             <span className="text-xs font-semibold">Upload</span>
           </button>
         )}
-
-        <button
-          onClick={() => navigate('/messages')}
-          className={`flex flex-col items-center gap-1 px-4 py-2 rounded-2xl transition-all ${
-            isActive('/messages')
-              ? 'text-primary bg-primary/10'
-              : 'text-muted-foreground hover:text-foreground'
-          }`}
-        >
-          <MessageCircle className="h-6 w-6" />
-          <span className="text-xs font-semibold">Messages</span>
-        </button>
 
         <button
           onClick={() => navigate('/profile')}
