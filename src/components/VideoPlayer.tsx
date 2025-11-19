@@ -7,7 +7,6 @@ import { useSignedVideoUrl } from '@/hooks/useSignedVideoUrl';
 import LikeAnimation from '@/components/LikeAnimation';
 import { useNavigate } from 'react-router-dom';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { addWatermarkToVideo } from '@/lib/videoWatermark';
 
 interface VideoPlayerProps {
   video: {
@@ -192,29 +191,20 @@ const VideoPlayer = ({ video, currentUserId, isPremium, onCommentsClick, onDelet
   };
 
   const handleDownload = async () => {
-    const downloadToast = toast.loading('Processing: 0%');
+    const downloadToast = toast.loading('Preparing download...');
     
     try {
-      // Fetch the video blob
+      // Fetch the original video
       const response = await fetch(signedUrl || video.video_url);
       if (!response.ok) throw new Error('Failed to fetch video');
       
       const videoBlob = await response.blob();
       
-      // Add watermark with progress tracking
-      const watermarkedBlob = await addWatermarkToVideo(
-        videoBlob, 
-        video.profiles.username,
-        (progress) => {
-          toast.loading(`Processing: ${progress}%`, { id: downloadToast });
-        }
-      );
-      
-      // Download watermarked video
-      const url = URL.createObjectURL(watermarkedBlob);
+      // Download original video as MP4
+      const url = URL.createObjectURL(videoBlob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `${video.title}_ToonReels.webm`;
+      link.download = `${video.title}.mp4`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
