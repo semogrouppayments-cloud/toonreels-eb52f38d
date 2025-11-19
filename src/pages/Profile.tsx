@@ -6,6 +6,7 @@ import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { LogOut, Settings, Video, Camera, Edit, BarChart3 } from 'lucide-react';
 import BottomNav from '@/components/BottomNav';
+import NotificationBell from '@/components/NotificationBell';
 import { toast } from 'sonner';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import VideoPlayer from '@/components/VideoPlayer';
@@ -351,6 +352,7 @@ const Profile = () => {
           <div className="relative flex justify-end gap-2 p-4 z-10">
             {isOwnProfile ? (
               <>
+                <NotificationBell />
                 {isCreative && (
                   <Button
                     variant="secondary"
