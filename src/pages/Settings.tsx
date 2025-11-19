@@ -40,6 +40,12 @@ const Settings = () => {
   const [totalLikes, setTotalLikes] = useState(0);
   const [followersCount, setFollowersCount] = useState(0);
   const [videosCount, setVideosCount] = useState(0);
+  const [notifLikes, setNotifLikes] = useState(true);
+  const [notifComments, setNotifComments] = useState(true);
+  const [notifFollows, setNotifFollows] = useState(true);
+  const [notifReplies, setNotifReplies] = useState(true);
+  const [notifPush, setNotifPush] = useState(false);
+  const [notifSound, setNotifSound] = useState(true);
 
   useEffect(() => {
     fetchUserSettings();
@@ -83,6 +89,16 @@ const Settings = () => {
         setSubtitlesSize(playbackSettings.subtitles_size);
       }
 
+      const { data: notifPrefs } = await supabase.from('notification_preferences').select('*').eq('user_id', user.id).single();
+      if (notifPrefs) {
+        setNotifLikes(notifPrefs.likes_enabled);
+        setNotifComments(notifPrefs.comments_enabled);
+        setNotifFollows(notifPrefs.follows_enabled);
+        setNotifReplies(notifPrefs.replies_enabled);
+        setNotifPush(notifPrefs.push_enabled);
+        setNotifSound(notifPrefs.sound_enabled);
+      }
+      
       // Fetch user stats
       const { data: videos } = await supabase.from('videos').select('views_count, likes_count').eq('creator_id', user.id);
       if (videos) {
@@ -154,6 +170,29 @@ const Settings = () => {
     try {
       await supabase.from('playback_settings').upsert({ user_id: userId, autoplay, video_quality: videoQuality, subtitles_enabled: subtitlesEnabled, subtitles_size: subtitlesSize });
       toast.success('Playback settings saved');
+    } catch (error) {
+      toast.error('Failed to save');
+    }
+  };
+
+  const saveNotificationSettings = async () => {
+    if (!userId) return;
+    try {
+      await supabase.from('notification_preferences').upsert({ 
+        user_id: userId, 
+        likes_enabled: notifLikes,
+        comments_enabled: notifComments,
+        follows_enabled: notifFollows,
+        replies_enabled: notifReplies,
+        push_enabled: notifPush,
+        sound_enabled: notifSound
+      });
+      toast.success('Notification settings saved');
+      
+      // Request push notification permission if enabled
+      if (notifPush && 'Notification' in window && Notification.permission === 'default') {
+        await Notification.requestPermission();
+      }
     } catch (error) {
       toast.error('Failed to save');
     }
@@ -319,6 +358,32 @@ const Settings = () => {
                         <p className="text-xs text-muted-foreground font-semibold">Videos</p>
                       </div>
                     </div>
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader><CardTitle>Notifications</CardTitle></CardHeader>
+            <CardContent>
+              <Accordion type="single" collapsible>
+                <AccordionItem value="notification-types">
+                  <AccordionTrigger>Notification Types</AccordionTrigger>
+                  <AccordionContent className="space-y-3">
+                    <div className="flex justify-between"><Label>Likes</Label><Switch checked={notifLikes} onCheckedChange={setNotifLikes} /></div>
+                    <div className="flex justify-between"><Label>Comments</Label><Switch checked={notifComments} onCheckedChange={setNotifComments} /></div>
+                    <div className="flex justify-between"><Label>Follows</Label><Switch checked={notifFollows} onCheckedChange={setNotifFollows} /></div>
+                    <div className="flex justify-between"><Label>Replies</Label><Switch checked={notifReplies} onCheckedChange={setNotifReplies} /></div>
+                    <Button onClick={saveNotificationSettings}>Save</Button>
+                  </AccordionContent>
+                </AccordionItem>
+                <AccordionItem value="notification-settings">
+                  <AccordionTrigger>Notification Settings</AccordionTrigger>
+                  <AccordionContent className="space-y-3">
+                    <div className="flex justify-between"><Label>Push Notifications</Label><Switch checked={notifPush} onCheckedChange={setNotifPush} /></div>
+                    <div className="flex justify-between"><Label>Sound</Label><Switch checked={notifSound} onCheckedChange={setNotifSound} /></div>
+                    <Button onClick={saveNotificationSettings}>Save</Button>
                   </AccordionContent>
                 </AccordionItem>
               </Accordion>
