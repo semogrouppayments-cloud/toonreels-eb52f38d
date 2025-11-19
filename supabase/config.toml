@@ -1,1 +1,7 @@
 project_id = "jziwagvbdomyaewcgpwa"
+
+[functions.download-video]
+verify_jwt = true
+
+[functions.get-video-url]
+verify_jwt = true
