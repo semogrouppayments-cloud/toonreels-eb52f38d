@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { LogOut, Settings, Video, Camera, Edit } from 'lucide-react';
+import { LogOut, Settings, Video, Camera, Edit, BarChart3 } from 'lucide-react';
 import BottomNav from '@/components/BottomNav';
 import { toast } from 'sonner';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
@@ -40,6 +40,7 @@ const Profile = () => {
   const [followersCount, setFollowersCount] = useState(0);
   const [followingCount, setFollowingCount] = useState(0);
   const [selectedVideoIndex, setSelectedVideoIndex] = useState<number | null>(null);
+  const [isCreative, setIsCreative] = useState(false);
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -47,7 +48,20 @@ const Profile = () => {
     fetchProfile(userId);
     fetchUserVideos(userId);
     fetchFollowCounts(userId);
+    checkIfCreative();
   }, [window.location.search]);
+
+  const checkIfCreative = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { data: roles } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', user.id);
+
+    setIsCreative(roles?.some(r => r.role === 'creative') || false);
+  };
 
   const fetchFollowCounts = async (userId?: string | null) => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -215,28 +229,21 @@ const Profile = () => {
               className="absolute inset-0 w-full h-full object-cover"
             />
           )}
-          
-          {/* Cover Photo Upload Button */}
-          {isOwnProfile && (
-            <label
-              htmlFor="cover-upload"
-              className="absolute top-3 right-3 bg-background/90 backdrop-blur-sm text-foreground rounded-full p-2 cursor-pointer hover:bg-background transition-colors z-10"
-            >
-              <Camera className="h-4 w-4" />
-              <input
-                id="cover-upload"
-                type="file"
-                accept="image/*"
-                onChange={handleCoverPhotoUpload}
-                className="hidden"
-              />
-            </label>
-          )}
 
           {/* Settings and Sign Out Buttons */}
           <div className="relative flex justify-end gap-2 p-4 z-10">
             {isOwnProfile && (
               <>
+                {isCreative && (
+                  <Button
+                    variant="secondary"
+                    size="icon"
+                    className="rounded-full"
+                    onClick={() => navigate('/creator-dashboard')}
+                  >
+                    <BarChart3 className="h-5 w-5" />
+                  </Button>
+                )}
                 <Button
                   variant="secondary"
                   size="icon"
@@ -282,6 +289,23 @@ const Profile = () => {
                 </label>
               )}
             </div>
+            
+            {/* Cover Photo Upload Button - Bottom Position */}
+            {isOwnProfile && (
+              <label
+                htmlFor="cover-upload"
+                className="absolute bottom-3 right-3 bg-background/90 backdrop-blur-sm text-foreground rounded-full p-2 cursor-pointer hover:bg-background transition-colors z-10"
+              >
+                <Camera className="h-4 w-4" />
+                <input
+                  id="cover-upload"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleCoverPhotoUpload}
+                  className="hidden"
+                />
+              </label>
+            )}
             
             {editingUsername && isOwnProfile ? (
               <div className="flex items-center justify-center gap-2 mb-2">
