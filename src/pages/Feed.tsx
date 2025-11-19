@@ -3,8 +3,8 @@ import { supabase } from '@/integrations/supabase/client';
 import VideoPlayer from '@/components/VideoPlayer';
 import CommentsSheet from '@/components/CommentsSheet';
 import BottomNav from '@/components/BottomNav';
+import StoryCircles from '@/components/StoryCircles';
 import { toast } from 'sonner';
-import { MessageCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 interface Video {
@@ -85,13 +85,16 @@ const Feed = () => {
 
   return (
     <div className="h-screen overflow-y-scroll snap-y snap-mandatory bg-background">
-      {/* Messages button in top right */}
+      {/* Story circles for creator previews */}
+      <StoryCircles />
+      
+      {/* Messages emoji button in top right */}
       <button
         onClick={() => navigate('/messages')}
-        className="fixed top-4 right-4 z-50 bg-card/95 backdrop-blur-lg border-2 border-border rounded-full p-3 shadow-lg hover:bg-accent transition-colors"
+        className="fixed top-4 right-4 z-50 bg-card/95 backdrop-blur-lg border-2 border-border rounded-full w-14 h-14 flex items-center justify-center shadow-lg hover:bg-accent transition-colors text-2xl"
         aria-label="Messages"
       >
-        <MessageCircle className="h-6 w-6 text-primary" />
+        💬
       </button>
 
       {videos.map((video) => (
