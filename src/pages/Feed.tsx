@@ -6,6 +6,8 @@ import BottomNav from '@/components/BottomNav';
 import StoryCircles from '@/components/StoryCircles';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
+import { Filter } from 'lucide-react';
 
 interface Video {
   id: string;
@@ -28,14 +30,15 @@ const Feed = () => {
   const [isPremium, setIsPremium] = useState(false);
   const [isCreative, setIsCreative] = useState(false);
   const [selectedVideoId, setSelectedVideoId] = useState<string | null>(null);
+  const [showFollowedOnly, setShowFollowedOnly] = useState(false);
 
   useEffect(() => {
     fetchVideos();
     fetchUserProfile();
-  }, []);
+  }, [showFollowedOnly]);
 
   const fetchVideos = async () => {
-    const { data } = await supabase
+    let query = supabase
       .from('videos')
       .select(`
         *,
@@ -43,6 +46,24 @@ const Feed = () => {
       `)
       .order('created_at', { ascending: false });
 
+    if (showFollowedOnly && currentUserId) {
+      // Get list of followed creators
+      const { data: follows } = await supabase
+        .from('follows')
+        .select('following_id')
+        .eq('follower_id', currentUserId);
+
+      if (follows && follows.length > 0) {
+        const followedIds = follows.map(f => f.following_id);
+        query = query.in('creator_id', followedIds);
+      } else {
+        // If not following anyone, show empty
+        setVideos([]);
+        return;
+      }
+    }
+
+    const { data } = await query;
     setVideos(data || []);
   };
 
@@ -100,6 +121,21 @@ const Feed = () => {
       
       {/* Story circles for creator previews */}
       <StoryCircles />
+
+      {/* Filter button for followed creators */}
+      {currentUserId && (
+        <Button
+          onClick={() => setShowFollowedOnly(!showFollowedOnly)}
+          className={`fixed top-4 left-20 z-50 rounded-full h-14 px-4 ${
+            showFollowedOnly
+              ? 'bg-primary text-primary-foreground'
+              : 'bg-card/95 backdrop-blur-lg border-2 border-border text-foreground'
+          } shadow-lg hover:scale-105 transition-all`}
+        >
+          <Filter className="h-5 w-5 mr-2" />
+          {showFollowedOnly ? 'All' : 'Following'}
+        </Button>
+      )}
       
       {/* Messages emoji button in top right */}
       <button

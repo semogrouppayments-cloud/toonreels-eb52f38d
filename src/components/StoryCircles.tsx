@@ -75,7 +75,7 @@ const StoryCircles = () => {
         />
       )}
       
-      <div className="fixed top-4 left-4 right-20 z-40 bg-card/95 backdrop-blur-lg rounded-full border-2 border-border shadow-lg">
+      <div className="fixed top-20 left-4 right-20 z-40 bg-card/95 backdrop-blur-lg rounded-full border-2 border-border shadow-lg">
       <ScrollArea className="w-full">
         <div className="flex gap-4 p-3">
           {creators.map((creator) => (
