@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import { useSignedVideoUrl } from '@/hooks/useSignedVideoUrl';
 import LikeAnimation from '@/components/LikeAnimation';
 import { useNavigate } from 'react-router-dom';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 
 interface VideoPlayerProps {
   video: {
@@ -245,9 +246,12 @@ const VideoPlayer = ({ video, currentUserId, isPremium, onCommentsClick, onDelet
           className="flex items-center gap-1.5 mb-1.5 cursor-pointer hover:opacity-80 transition-opacity"
           onClick={() => navigate(`/profile?userId=${video.creator_id}`)}
         >
-          <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-sm font-bold">
-            {video.profiles.username[0].toUpperCase()}
-          </div>
+          <Avatar className="h-8 w-8 border-2 border-background">
+            <AvatarImage src={video.profiles.avatar_url || undefined} alt={video.profiles.username} />
+            <AvatarFallback className="bg-primary text-background text-sm font-bold">
+              {video.profiles.username[0].toUpperCase()}
+            </AvatarFallback>
+          </Avatar>
           <span className="font-semibold text-sm">{video.profiles.username}</span>
         </div>
         <h3 className="font-semibold text-base mb-0.5">{video.title}</h3>
