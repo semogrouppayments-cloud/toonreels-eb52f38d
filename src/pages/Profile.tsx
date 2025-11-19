@@ -284,14 +284,14 @@ const Profile = () => {
             )}
           </div>
 
-          {/* Profile Info - Two Column Layout */}
-          <div className="relative flex items-center justify-between px-8 pt-4 z-10">
-            {/* Left Side - Profile Info */}
-            <div className="flex items-center gap-4">
+          {/* Profile Info - Responsive Layout */}
+          <div className="relative px-4 md:px-8 pt-4 z-10">
+            {/* Profile Section */}
+            <div className="flex items-center gap-3 mb-4">
               <div className="relative">
-                <Avatar className="h-20 w-20 border-4 border-background shadow-lg">
+                <Avatar className="h-16 w-16 md:h-20 md:w-20 border-4 border-background shadow-lg">
                   <AvatarImage src={profile.avatar_url || undefined} alt={profile.username} />
-                  <AvatarFallback className="bg-primary text-primary-foreground font-black text-3xl">
+                  <AvatarFallback className="bg-primary text-primary-foreground font-black text-2xl md:text-3xl">
                     {profile.username[0].toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
@@ -312,7 +312,7 @@ const Profile = () => {
                 )}
               </div>
               
-              <div className="text-left">
+              <div className="flex-1 text-left">
                 {editingUsername && isOwnProfile ? (
                   <div className="flex items-center gap-2 mb-1">
                     <Input
@@ -326,7 +326,7 @@ const Profile = () => {
                   </div>
                 ) : (
                   <div className="flex items-center gap-2 mb-1">
-                    <h1 className="text-2xl font-black text-white drop-shadow-lg">
+                    <h1 className="text-xl md:text-2xl font-black text-white drop-shadow-lg">
                       {profile.username}
                     </h1>
                     {isOwnProfile && (
@@ -344,38 +344,41 @@ const Profile = () => {
                     )}
                   </div>
                 )}
-                <p className="text-white/90 drop-shadow-lg font-semibold capitalize text-sm">
+                <p className="text-white/90 drop-shadow-lg font-semibold capitalize text-xs md:text-sm">
                   {profile.user_type}
                 </p>
                 {profile.bio && (
-                  <p className="text-white/80 drop-shadow-md text-xs mt-1 max-w-xs">
+                  <p className="text-white/80 drop-shadow-md text-xs mt-1">
                     {profile.bio}
                   </p>
                 )}
               </div>
             </div>
 
-            {/* Right Side - Stats Bubbles */}
-            <div className="grid grid-cols-2 gap-2">
-              <div className="bg-background/20 backdrop-blur-md rounded-2xl p-2 border border-white/20 shadow-lg">
-                <p className="text-xl font-black text-white drop-shadow-lg">
+            {/* Stats Row - TikTok Style */}
+            <div className="flex items-center justify-around gap-2 px-2">
+              <div className="flex flex-col items-center min-w-0">
+                <p className="text-lg md:text-xl font-black text-white drop-shadow-lg">
                   {videos.reduce((sum, v) => sum + v.views_count, 0)}
                 </p>
-                <p className="text-[9px] text-white/90 drop-shadow-md font-semibold">Views</p>
+                <p className="text-[10px] md:text-xs text-white/90 drop-shadow-md font-semibold">Views</p>
               </div>
-              <div className="bg-background/20 backdrop-blur-md rounded-2xl p-2 border border-white/20 shadow-lg">
-                <p className="text-xl font-black text-white drop-shadow-lg">
+              <div className="h-8 w-px bg-white/20"></div>
+              <div className="flex flex-col items-center min-w-0">
+                <p className="text-lg md:text-xl font-black text-white drop-shadow-lg">
                   {videos.reduce((sum, v) => sum + v.likes_count, 0)}
                 </p>
-                <p className="text-[9px] text-white/90 drop-shadow-md font-semibold">Likes</p>
+                <p className="text-[10px] md:text-xs text-white/90 drop-shadow-md font-semibold">Likes</p>
               </div>
-              <div className="bg-background/20 backdrop-blur-md rounded-2xl p-2 border border-white/20 shadow-lg">
-                <p className="text-xl font-black text-white drop-shadow-lg">{followersCount}</p>
-                <p className="text-[9px] text-white/90 drop-shadow-md font-semibold">Followers</p>
+              <div className="h-8 w-px bg-white/20"></div>
+              <div className="flex flex-col items-center min-w-0">
+                <p className="text-lg md:text-xl font-black text-white drop-shadow-lg">{followersCount}</p>
+                <p className="text-[10px] md:text-xs text-white/90 drop-shadow-md font-semibold">Followers</p>
               </div>
-              <div className="bg-background/20 backdrop-blur-md rounded-2xl p-2 border border-white/20 shadow-lg">
-                <p className="text-xl font-black text-white drop-shadow-lg">{videos.length}</p>
-                <p className="text-[9px] text-white/90 drop-shadow-md font-semibold">Videos</p>
+              <div className="h-8 w-px bg-white/20"></div>
+              <div className="flex flex-col items-center min-w-0">
+                <p className="text-lg md:text-xl font-black text-white drop-shadow-lg">{videos.length}</p>
+                <p className="text-[10px] md:text-xs text-white/90 drop-shadow-md font-semibold">Videos</p>
               </div>
             </div>
           </div>
