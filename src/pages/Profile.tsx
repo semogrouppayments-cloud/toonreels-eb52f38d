@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { LogOut, Settings, Video, Camera, Edit, BarChart3 } from 'lucide-react';
+import { LogOut, Settings, Video, Camera, Edit, BarChart3, Bookmark } from 'lucide-react';
 import BottomNav from '@/components/BottomNav';
 import NotificationBell from '@/components/NotificationBell';
 import { toast } from 'sonner';
@@ -48,12 +48,14 @@ const Profile = () => {
   const [isCreative, setIsCreative] = useState(false);
   const [isFollowing, setIsFollowing] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string>('');
+  const [savedVideos, setSavedVideos] = useState<Video[]>([]);
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const userId = urlParams.get('userId');
     fetchProfile(userId);
     fetchUserVideos(userId);
+    fetchSavedVideos(userId);
     fetchFollowCounts(userId);
     fetchStatsCounts(userId);
     checkIfCreative();
@@ -195,6 +197,39 @@ const Profile = () => {
       .order('created_at', { ascending: false });
 
     setVideos(data || []);
+  };
+
+  const fetchSavedVideos = async (userId?: string | null) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      const profileId = userId || user?.id;
+      if (!profileId) return;
+
+      const { data } = await supabase
+        .from('saved_videos')
+        .select(`
+          video_id,
+          videos (
+            id,
+            title,
+            thumbnail_url,
+            views_count,
+            likes_count,
+            video_url,
+            description,
+            creator_id
+          )
+        `)
+        .eq('user_id', profileId)
+        .order('created_at', { ascending: false });
+
+      if (data) {
+        const videos = data.map(item => item.videos).filter(Boolean) as Video[];
+        setSavedVideos(videos);
+      }
+    } catch (error) {
+      console.error('Error fetching saved videos:', error);
+    }
   };
 
   const handleSignOut = async () => {
@@ -640,13 +675,65 @@ const Profile = () => {
             )}
           </div>
         )}
+
+        {/* Saved Videos for Viewers */}
+        {profile.user_type === 'viewer' && isOwnProfile && (
+          <div className="p-4">
+            <h2 className="text-xl font-black mb-4 flex items-center gap-2">
+              <Bookmark className="h-6 w-6 text-primary" />
+              Saved Reels
+            </h2>
+            
+            {savedVideos.length === 0 ? (
+              <Card className="p-12 text-center">
+                <Bookmark className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <p className="text-muted-foreground">No saved videos yet</p>
+                <p className="text-sm text-muted-foreground mt-2">
+                  Save videos to watch them later!
+                </p>
+              </Card>
+            ) : (
+              <div className="grid grid-cols-3 gap-2">
+                {savedVideos.map((video, index) => (
+                  <div key={video.id} className="relative group">
+                    <div
+                      onClick={() => setSelectedVideoIndex(index)}
+                      className="aspect-[9/16] rounded-2xl overflow-hidden cursor-pointer hover:scale-105 transition-transform relative"
+                    >
+                      {/* Video Thumbnail/Cover Photo */}
+                      {video.thumbnail_url ? (
+                        <img 
+                          src={video.thumbnail_url} 
+                          alt={video.title}
+                          className="absolute inset-0 w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-accent/20 to-fun-blue/20" />
+                      )}
+                      
+                      {/* Gradient overlay for text readability */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+                      
+                      {/* Video Title */}
+                      <div className="absolute bottom-0 left-0 right-0 p-3">
+                        <p className="text-white text-xs font-bold drop-shadow-lg line-clamp-2">
+                          {video.title}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Video Viewer Modal */}
       {selectedVideoIndex !== null && (
         <div className="fixed inset-0 z-50 bg-background">
           <div className="h-screen overflow-y-scroll snap-y snap-mandatory">
-            {videos.map((video, index) => (
+            {(profile.user_type === 'creative' ? videos : savedVideos).map((video, index) => (
               <div key={video.id} className="h-screen snap-start relative">
                 <VideoPlayer
                   video={{
@@ -656,13 +743,13 @@ const Profile = () => {
                       avatar_url: profile?.avatar_url || '',
                     }
                   }}
-                  currentUserId={profile?.id || ''}
+                  currentUserId={currentUserId || ''}
                   isPremium={false}
                   onCommentsClick={() => {}}
-                  onDelete={() => {
+                  onDelete={video.creator_id === currentUserId ? () => {
                     setSelectedVideoIndex(null);
                     fetchUserVideos(null);
-                  }}
+                  } : undefined}
                 />
               </div>
             ))}
