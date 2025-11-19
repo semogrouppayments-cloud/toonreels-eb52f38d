@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { Heart, MessageCircle, Download, Flag, Trash2, UserPlus, UserMinus, Volume2, VolumeX } from 'lucide-react';
+import { Heart, MessageCircle, Download, Flag, Trash2, UserPlus, UserMinus, Volume2, VolumeX, Bookmark, BookmarkCheck } from 'lucide-react';
 import { toast } from 'sonner';
 import { useSignedVideoUrl } from '@/hooks/useSignedVideoUrl';
 import LikeAnimation from '@/components/LikeAnimation';
@@ -39,6 +39,7 @@ const VideoPlayer = ({ video, currentUserId, isPremium, onCommentsClick, onDelet
   const [likeAnimations, setLikeAnimations] = useState<Array<{ id: number; x: number; y: number }>>([]);
   const [isMuted, setIsMuted] = useState(true);
   const [isPlaying, setIsPlaying] = useState(true);
+  const [isSaved, setIsSaved] = useState(false);
   const { signedUrl, loading, error } = useSignedVideoUrl(video.video_url);
   const lastTapRef = useRef<number>(0);
   const animationIdRef = useRef<number>(0);
@@ -49,6 +50,7 @@ const VideoPlayer = ({ video, currentUserId, isPremium, onCommentsClick, onDelet
   useEffect(() => {
     checkIfFollowing();
     checkIfLiked();
+    checkIfSaved();
     incrementViewCount();
     watchStartTimeRef.current = Date.now();
     analyticsTrackedRef.current = false;
@@ -67,9 +69,22 @@ const VideoPlayer = ({ video, currentUserId, isPremium, onCommentsClick, onDelet
       .select('id')
       .eq('video_id', video.id)
       .eq('user_id', currentUserId)
-      .single();
+      .maybeSingle();
     
     setLiked(!!data);
+  };
+
+  const checkIfSaved = async () => {
+    if (!currentUserId) return;
+    
+    const { data } = await supabase
+      .from('saved_videos')
+      .select('id')
+      .eq('video_id', video.id)
+      .eq('user_id', currentUserId)
+      .maybeSingle();
+    
+    setIsSaved(!!data);
   };
 
   const incrementViewCount = async () => {
@@ -256,6 +271,33 @@ const VideoPlayer = ({ video, currentUserId, isPremium, onCommentsClick, onDelet
     }
   };
 
+  const handleSave = async () => {
+    if (!currentUserId) {
+      toast.error('Please sign in to save videos');
+      return;
+    }
+
+    try {
+      if (isSaved) {
+        await supabase
+          .from('saved_videos')
+          .delete()
+          .eq('user_id', currentUserId)
+          .eq('video_id', video.id);
+        setIsSaved(false);
+        toast.success('Removed from saved');
+      } else {
+        await supabase
+          .from('saved_videos')
+          .insert({ user_id: currentUserId, video_id: video.id });
+        setIsSaved(true);
+        toast.success('Saved to watch later!');
+      }
+    } catch (error) {
+      toast.error('Failed to save video');
+    }
+  };
+
   const handleDownload = () => {
     setShowDownloadDialog(true);
   };
@@ -416,6 +458,22 @@ const VideoPlayer = ({ video, currentUserId, isPremium, onCommentsClick, onDelet
           <div className="flex flex-col items-center gap-0.5">
             <MessageCircle className="h-6 w-6" />
             <span className="text-[10px] font-semibold leading-none">Comment</span>
+          </div>
+        </Button>
+
+        <Button
+          size="icon"
+          variant="ghost"
+          onClick={handleSave}
+          className={`rounded-full h-11 w-11 p-0 ${isSaved ? 'text-primary' : 'text-white'}`}
+        >
+          <div className="flex flex-col items-center gap-0.5">
+            {isSaved ? (
+              <BookmarkCheck className="h-6 w-6 fill-current" />
+            ) : (
+              <Bookmark className="h-6 w-6" />
+            )}
+            <span className="text-[10px] font-semibold leading-none">{isSaved ? 'Saved' : 'Save'}</span>
           </div>
         </Button>
 
