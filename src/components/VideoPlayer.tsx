@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { Heart, MessageCircle, Download, Flag, Trash2 } from 'lucide-react';
+import { Heart, MessageCircle, Download, Flag, Trash2, UserPlus, UserMinus } from 'lucide-react';
 import { toast } from 'sonner';
 import { useSignedVideoUrl } from '@/hooks/useSignedVideoUrl';
+import LikeAnimation from '@/components/LikeAnimation';
 
 interface VideoPlayerProps {
   video: {
@@ -28,8 +29,29 @@ interface VideoPlayerProps {
 const VideoPlayer = ({ video, currentUserId, isPremium, onCommentsClick, onDelete }: VideoPlayerProps) => {
   const [liked, setLiked] = useState(false);
   const [likesCount, setLikesCount] = useState(video.likes_count);
+  const [isFollowing, setIsFollowing] = useState(false);
   const [showReportDialog, setShowReportDialog] = useState(false);
+  const [likeAnimations, setLikeAnimations] = useState<Array<{ id: number; x: number; y: number }>>([]);
   const { signedUrl, loading, error } = useSignedVideoUrl(video.video_url);
+  const lastTapRef = useRef<number>(0);
+  const animationIdRef = useRef<number>(0);
+
+  useEffect(() => {
+    checkIfFollowing();
+  }, [video.creator_id, currentUserId]);
+
+  const checkIfFollowing = async () => {
+    if (!currentUserId || currentUserId === video.creator_id) return;
+    
+    const { data } = await supabase
+      .from('follows')
+      .select('id')
+      .eq('follower_id', currentUserId)
+      .eq('following_id', video.creator_id)
+      .single();
+    
+    setIsFollowing(!!data);
+  };
 
   const handleLike = async () => {
     try {
@@ -43,6 +65,60 @@ const VideoPlayer = ({ video, currentUserId, isPremium, onCommentsClick, onDelet
       setLiked(!liked);
     } catch (error) {
       toast.error('Failed to like video');
+    }
+  };
+
+  const handleDoubleTap = (e: React.TouchEvent | React.MouseEvent) => {
+    const now = Date.now();
+    const DOUBLE_TAP_DELAY = 300;
+
+    if (now - lastTapRef.current < DOUBLE_TAP_DELAY) {
+      // Double tap detected
+      const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+      const x = 'touches' in e ? e.touches[0].clientX : e.clientX;
+      const y = 'touches' in e ? e.touches[0].clientY : e.clientY;
+      
+      // Add animation
+      const id = animationIdRef.current++;
+      setLikeAnimations(prev => [...prev, { id, x, y }]);
+      
+      // Like the video if not already liked
+      if (!liked) {
+        handleLike();
+      }
+    }
+    
+    lastTapRef.current = now;
+  };
+
+  const removeAnimation = (id: number) => {
+    setLikeAnimations(prev => prev.filter(anim => anim.id !== id));
+  };
+
+  const handleFollow = async () => {
+    if (!currentUserId) {
+      toast.error('Please sign in to follow creators');
+      return;
+    }
+
+    try {
+      if (isFollowing) {
+        await supabase
+          .from('follows')
+          .delete()
+          .eq('follower_id', currentUserId)
+          .eq('following_id', video.creator_id);
+        setIsFollowing(false);
+        toast.success('Unfollowed creator');
+      } else {
+        await supabase
+          .from('follows')
+          .insert({ follower_id: currentUserId, following_id: video.creator_id });
+        setIsFollowing(true);
+        toast.success('Following creator!');
+      }
+    } catch (error) {
+      toast.error('Failed to update follow status');
     }
   };
 
@@ -96,6 +172,16 @@ const VideoPlayer = ({ video, currentUserId, isPremium, onCommentsClick, onDelet
 
   return (
     <div className="relative h-screen w-full snap-start">
+      {/* Like animations */}
+      {likeAnimations.map(anim => (
+        <LikeAnimation
+          key={anim.id}
+          x={anim.x}
+          y={anim.y}
+          onComplete={() => removeAnimation(anim.id)}
+        />
+      ))}
+      
       {loading ? (
         <div className="h-full w-full bg-black flex items-center justify-center">
           <span className="text-white">Loading video...</span>
@@ -112,6 +198,8 @@ const VideoPlayer = ({ video, currentUserId, isPremium, onCommentsClick, onDelet
           autoPlay
           muted
           playsInline
+          onTouchStart={handleDoubleTap}
+          onDoubleClick={handleDoubleTap}
         />
       )}
       
@@ -131,6 +219,25 @@ const VideoPlayer = ({ video, currentUserId, isPremium, onCommentsClick, onDelet
 
       {/* Action Buttons */}
       <div className="absolute bottom-20 right-4 flex flex-col gap-4">
+        {/* Follow/Unfollow Button - only show if not own video */}
+        {currentUserId && currentUserId !== video.creator_id && (
+          <Button
+            size="icon"
+            variant="ghost"
+            onClick={handleFollow}
+            className={`rounded-full h-12 w-12 ${isFollowing ? 'text-primary' : 'text-white'} hover:scale-110 transition-transform`}
+          >
+            <div className="flex flex-col items-center">
+              {isFollowing ? (
+                <UserMinus className="h-7 w-7" />
+              ) : (
+                <UserPlus className="h-7 w-7" />
+              )}
+              <span className="text-xs font-semibold">{isFollowing ? 'Following' : 'Follow'}</span>
+            </div>
+          </Button>
+        )}
+        
         <Button
           size="icon"
           variant="ghost"
