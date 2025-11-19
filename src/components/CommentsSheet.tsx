@@ -5,6 +5,14 @@ import { Input } from '@/components/ui/input';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Heart, Send, Flag, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { z } from 'zod';
+
+const commentSchema = z.object({
+  content: z.string()
+    .trim()
+    .min(1, 'Comment cannot be empty')
+    .max(500, 'Comment must be less than 500 characters')
+});
 
 interface Comment {
   id: string;
@@ -49,13 +57,18 @@ const CommentsSheet = ({ videoId, isOpen, onClose, currentUserId }: CommentsShee
   };
 
   const handleSubmit = async () => {
-    if (!newComment.trim()) return;
-
     try {
+      const validation = commentSchema.safeParse({ content: newComment });
+      
+      if (!validation.success) {
+        toast.error(validation.error.errors[0].message);
+        return;
+      }
+
       await supabase.from('comments').insert({
         video_id: videoId,
         user_id: currentUserId,
-        content: newComment,
+        content: validation.data.content,
         parent_id: replyTo
       });
 
