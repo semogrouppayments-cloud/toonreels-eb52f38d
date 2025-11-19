@@ -220,7 +220,7 @@ const Profile = () => {
     <div className="min-h-screen bg-background pb-20">
       <div className="max-w-2xl mx-auto">
         {/* Header with Cover Photo */}
-        <div className="relative bg-gradient-to-br from-primary via-accent to-fun-yellow h-64 overflow-hidden">
+        <div className="relative bg-gradient-to-br from-primary via-accent to-fun-yellow h-64 overflow-hidden rounded-3xl mx-4 mt-4">
           {/* Cover Photo - fills the entire header with gradient overlay */}
           {profile?.cover_photo_url && (
             <>
