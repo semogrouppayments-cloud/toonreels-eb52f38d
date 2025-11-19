@@ -102,6 +102,39 @@ export type Database = {
           },
         ]
       }
+      content_settings: {
+        Row: {
+          cartoon_only_mode: boolean | null
+          comments_visibility: string | null
+          content_categories: string[] | null
+          created_at: string | null
+          id: string
+          interaction_limits: boolean | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          cartoon_only_mode?: boolean | null
+          comments_visibility?: string | null
+          content_categories?: string[] | null
+          created_at?: string | null
+          id?: string
+          interaction_limits?: boolean | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          cartoon_only_mode?: boolean | null
+          comments_visibility?: string | null
+          content_categories?: string[] | null
+          created_at?: string | null
+          id?: string
+          interaction_limits?: boolean | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       likes: {
         Row: {
           created_at: string
@@ -138,33 +171,120 @@ export type Database = {
           },
         ]
       }
+      parental_controls: {
+        Row: {
+          bedtime_end: string | null
+          bedtime_lock: boolean | null
+          bedtime_start: string | null
+          created_at: string | null
+          id: string
+          parental_pin: string | null
+          school_end_time: string | null
+          school_hours_lock: boolean | null
+          school_start_time: string | null
+          screen_time_limit: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          bedtime_end?: string | null
+          bedtime_lock?: boolean | null
+          bedtime_start?: string | null
+          created_at?: string | null
+          id?: string
+          parental_pin?: string | null
+          school_end_time?: string | null
+          school_hours_lock?: boolean | null
+          school_start_time?: string | null
+          screen_time_limit?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          bedtime_end?: string | null
+          bedtime_lock?: boolean | null
+          bedtime_start?: string | null
+          created_at?: string | null
+          id?: string
+          parental_pin?: string | null
+          school_end_time?: string | null
+          school_hours_lock?: boolean | null
+          school_start_time?: string | null
+          screen_time_limit?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      playback_settings: {
+        Row: {
+          autoplay: boolean | null
+          created_at: string | null
+          id: string
+          subtitles_enabled: boolean | null
+          subtitles_size: string | null
+          updated_at: string | null
+          user_id: string
+          video_quality: string | null
+        }
+        Insert: {
+          autoplay?: boolean | null
+          created_at?: string | null
+          id?: string
+          subtitles_enabled?: boolean | null
+          subtitles_size?: string | null
+          updated_at?: string | null
+          user_id: string
+          video_quality?: string | null
+        }
+        Update: {
+          autoplay?: boolean | null
+          created_at?: string | null
+          id?: string
+          subtitles_enabled?: boolean | null
+          subtitles_size?: string | null
+          updated_at?: string | null
+          user_id?: string
+          video_quality?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
+          age_range: string | null
           avatar_url: string | null
           bio: string | null
           created_at: string
           id: string
           is_premium: boolean | null
+          profile_pin: string | null
+          selected_avatar: string | null
           updated_at: string
           user_type: Database["public"]["Enums"]["user_type"]
           username: string
         }
         Insert: {
+          age_range?: string | null
           avatar_url?: string | null
           bio?: string | null
           created_at?: string
           id: string
           is_premium?: boolean | null
+          profile_pin?: string | null
+          selected_avatar?: string | null
           updated_at?: string
           user_type?: Database["public"]["Enums"]["user_type"]
           username: string
         }
         Update: {
+          age_range?: string | null
           avatar_url?: string | null
           bio?: string | null
           created_at?: string
           id?: string
           is_premium?: boolean | null
+          profile_pin?: string | null
+          selected_avatar?: string | null
           updated_at?: string
           user_type?: Database["public"]["Enums"]["user_type"]
           username?: string
