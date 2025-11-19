@@ -331,13 +331,20 @@ const Profile = () => {
             </>
           )}
 
-          {/* Cover Photo Upload Button - Top Left Position */}
+          {/* Cover Photo Upload Area - Make entire area clickable if own profile */}
           {isOwnProfile && (
-            <label
-              htmlFor="cover-upload"
-              className="absolute top-3 left-3 bg-background/90 backdrop-blur-sm text-foreground rounded-full p-2 cursor-pointer hover:bg-background transition-colors z-10"
-            >
-              <Camera className="h-4 w-4" />
+            <>
+              <label
+                htmlFor="cover-upload"
+                className="absolute inset-0 cursor-pointer group"
+                title="Click to change cover photo"
+              >
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+                  <div className="bg-background/90 backdrop-blur-sm text-foreground rounded-full p-3 opacity-0 group-hover:opacity-100 transition-opacity shadow-lg">
+                    <Camera className="h-6 w-6" />
+                  </div>
+                </div>
+              </label>
               <input
                 id="cover-upload"
                 type="file"
@@ -345,7 +352,7 @@ const Profile = () => {
                 onChange={handleCoverPhotoUpload}
                 className="hidden"
               />
-            </label>
+            </>
           )}
 
           {/* Settings and Sign Out Buttons / Follow Button */}
