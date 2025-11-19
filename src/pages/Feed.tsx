@@ -4,6 +4,8 @@ import VideoPlayer from '@/components/VideoPlayer';
 import CommentsSheet from '@/components/CommentsSheet';
 import BottomNav from '@/components/BottomNav';
 import { toast } from 'sonner';
+import { MessageCircle } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 interface Video {
   id: string;
@@ -20,6 +22,7 @@ interface Video {
 }
 
 const Feed = () => {
+  const navigate = useNavigate();
   const [videos, setVideos] = useState<Video[]>([]);
   const [currentUserId, setCurrentUserId] = useState('');
   const [isPremium, setIsPremium] = useState(false);
@@ -82,6 +85,15 @@ const Feed = () => {
 
   return (
     <div className="h-screen overflow-y-scroll snap-y snap-mandatory bg-background">
+      {/* Messages button in top right */}
+      <button
+        onClick={() => navigate('/messages')}
+        className="fixed top-4 right-4 z-50 bg-card/95 backdrop-blur-lg border-2 border-border rounded-full p-3 shadow-lg hover:bg-accent transition-colors"
+        aria-label="Messages"
+      >
+        <MessageCircle className="h-6 w-6 text-primary" />
+      </button>
+
       {videos.map((video) => (
         <VideoPlayer
           key={video.id}
