@@ -21,6 +21,64 @@ const Upload = () => {
   const [videoPreview, setVideoPreview] = useState<string | null>(null);
   const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
 
+  const generateThumbnail = (videoFile: File): Promise<Blob> => {
+    return new Promise((resolve, reject) => {
+      const video = document.createElement('video');
+      video.preload = 'metadata';
+      video.muted = true;
+      
+      video.onloadedmetadata = () => {
+        video.currentTime = 0.5; // Get frame at 0.5 seconds
+      };
+      
+      video.onseeked = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        const ctx = canvas.getContext('2d');
+        
+        if (ctx) {
+          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+          canvas.toBlob((blob) => {
+            if (blob) {
+              resolve(blob);
+            } else {
+              reject(new Error('Failed to generate thumbnail'));
+            }
+          }, 'image/jpeg', 0.8);
+        } else {
+          reject(new Error('Failed to get canvas context'));
+        }
+      };
+      
+      video.onerror = () => reject(new Error('Failed to load video'));
+      video.src = URL.createObjectURL(videoFile);
+    });
+  };
+
+  const validateVideoAspectRatio = (videoFile: File): Promise<boolean> => {
+    return new Promise((resolve) => {
+      const video = document.createElement('video');
+      video.preload = 'metadata';
+      
+      video.onloadedmetadata = () => {
+        const aspectRatio = video.videoWidth / video.videoHeight;
+        const target = 9 / 16;
+        const tolerance = 0.05; // 5% tolerance
+        
+        URL.revokeObjectURL(video.src);
+        resolve(Math.abs(aspectRatio - target) <= tolerance);
+      };
+      
+      video.onerror = () => {
+        URL.revokeObjectURL(video.src);
+        resolve(false);
+      };
+      
+      video.src = URL.createObjectURL(videoFile);
+    });
+  };
+
   const handleUpload = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!videoFile) {
@@ -43,36 +101,49 @@ const Upload = () => {
       return;
     }
 
+    // Validate aspect ratio (9:16)
+    toast.info('Validating video...');
+    const isValidRatio = await validateVideoAspectRatio(videoFile);
+    if (!isValidRatio) {
+      toast.error('Video must be in 9:16 aspect ratio (vertical format)');
+      return;
+    }
+
     setLoading(true);
     setUploadProgress(0);
 
-    // Simulate progress based on estimated upload time
-    const estimatedTimeMs = Math.min((videoFile.size / 1024 / 1024) * 1000, 60000); // ~1 second per MB, max 60s
-    const progressInterval = setInterval(() => {
-      setUploadProgress((prev) => {
-        if (prev >= 90) return prev; // Stop at 90% until actual upload completes
-        return prev + 5;
-      });
-    }, estimatedTimeMs / 18); // Reach 90% gradually
+    let progressInterval: NodeJS.Timeout | null = null;
 
     try {
+      // Simulate progress based on estimated upload time
+      const estimatedTimeMs = Math.min((videoFile.size / 1024 / 1024) * 1000, 60000); // ~1 second per MB, max 60s
+      progressInterval = setInterval(() => {
+        setUploadProgress((prev) => {
+          if (prev >= 90) return prev; // Stop at 90% until actual upload completes
+          return prev + 5;
+        });
+      }, estimatedTimeMs / 18); // Reach 90% gradually
+
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
       // Upload video to storage
       const fileName = `${user.id}/${Date.now()}.${fileExt}`;
       
-      const { error: uploadError } = await supabase.storage
+      const { data: uploadData, error: uploadError } = await supabase.storage
         .from('videos')
         .upload(fileName, videoFile, {
           cacheControl: '3600',
           upsert: false
         });
 
-      clearInterval(progressInterval);
+      if (progressInterval) clearInterval(progressInterval);
       setUploadProgress(95);
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error('Upload error details:', uploadError);
+        throw uploadError;
+      }
 
       const { data: { publicUrl } } = supabase.storage
         .from('videos')
@@ -81,7 +152,7 @@ const Upload = () => {
       // Note: Since videos bucket is now private, we'll store the path
       // and generate signed URLs on-demand for viewing
 
-      // Upload thumbnail if provided
+      // Upload thumbnail if provided, otherwise generate from video
       let thumbnailUrl = '';
       if (thumbnailFile) {
         const thumbExt = thumbnailFile.name.split('.').pop();
@@ -96,6 +167,26 @@ const Upload = () => {
             .from('videos')
             .getPublicUrl(thumbName);
           thumbnailUrl = thumbUrl;
+        }
+      } else {
+        // Auto-generate thumbnail from video
+        try {
+          const thumbnailBlob = await generateThumbnail(videoFile);
+          const thumbName = `${user.id}/thumb_${Date.now()}.jpg`;
+          
+          const { error: thumbError } = await supabase.storage
+            .from('videos')
+            .upload(thumbName, thumbnailBlob);
+
+          if (!thumbError) {
+            const { data: { publicUrl: thumbUrl } } = supabase.storage
+              .from('videos')
+              .getPublicUrl(thumbName);
+            thumbnailUrl = thumbUrl;
+          }
+        } catch (thumbError) {
+          console.error('Thumbnail generation failed:', thumbError);
+          // Continue without thumbnail
         }
       }
 
@@ -119,15 +210,21 @@ const Upload = () => {
 
       setUploadProgress(100);
       toast.success('Video uploaded successfully!');
-      navigate('/feed');
+      setTimeout(() => navigate('/feed'), 500);
     } catch (error: any) {
-      clearInterval(progressInterval);
+      if (progressInterval) clearInterval(progressInterval);
       console.error('Upload error:', error);
+      
+      let errorMessage = 'Upload failed';
       if (error.message?.includes('Failed to fetch')) {
-        toast.error('Upload failed: Network error or file too large. Please try a smaller video.');
-      } else {
-        toast.error(error.message || 'Upload failed');
+        errorMessage = 'Network error. Check your connection and try again.';
+      } else if (error.message?.includes('payload')) {
+        errorMessage = 'File too large. Maximum size is 500MB.';
+      } else if (error.message) {
+        errorMessage = error.message;
       }
+      
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
       setUploadProgress(0);
