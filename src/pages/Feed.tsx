@@ -26,6 +26,7 @@ const Feed = () => {
   const [videos, setVideos] = useState<Video[]>([]);
   const [currentUserId, setCurrentUserId] = useState('');
   const [isPremium, setIsPremium] = useState(false);
+  const [isCreative, setIsCreative] = useState(false);
   const [selectedVideoId, setSelectedVideoId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -51,11 +52,12 @@ const Feed = () => {
       setCurrentUserId(user.id);
       const { data: profile } = await supabase
         .from('profiles')
-        .select('is_premium')
+        .select('is_premium, user_type')
         .eq('id', user.id)
         .single();
       
       setIsPremium(profile?.is_premium || false);
+      setIsCreative(profile?.user_type === 'creative');
     }
   };
 
@@ -85,6 +87,17 @@ const Feed = () => {
 
   return (
     <div className="h-screen overflow-y-scroll snap-y snap-mandatory bg-background">
+      {/* Add story button for creators in top left */}
+      {isCreative && (
+        <button
+          onClick={() => navigate('/upload')}
+          className="fixed top-4 left-4 z-50 bg-primary/95 backdrop-blur-lg border-2 border-primary rounded-full w-14 h-14 flex items-center justify-center shadow-lg hover:bg-primary/80 transition-colors text-2xl"
+          aria-label="Add Story"
+        >
+          ➕
+        </button>
+      )}
+      
       {/* Story circles for creator previews */}
       <StoryCircles />
       
