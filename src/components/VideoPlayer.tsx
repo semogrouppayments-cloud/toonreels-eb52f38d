@@ -7,6 +7,7 @@ import { useSignedVideoUrl } from '@/hooks/useSignedVideoUrl';
 import LikeAnimation from '@/components/LikeAnimation';
 import { useNavigate } from 'react-router-dom';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { addWatermarkToVideo } from '@/lib/videoWatermark';
 
 interface VideoPlayerProps {
   video: {
@@ -191,35 +192,39 @@ const VideoPlayer = ({ video, currentUserId, isPremium, onCommentsClick, onDelet
   };
 
   const handleDownload = async () => {
+    const downloadToast = toast.loading('Preparing download with ToonReels watermark...');
+    
     try {
-      const { data, error } = await supabase.functions.invoke('download-video', {
-        body: { video_id: video.id }
+      // Fetch the video blob
+      const response = await fetch(signedUrl || video.video_url);
+      if (!response.ok) throw new Error('Failed to fetch video');
+      
+      const videoBlob = await response.blob();
+      
+      // Add watermark
+      toast.loading('Adding watermark and creator info...', { id: downloadToast });
+      const watermarkedBlob = await addWatermarkToVideo(videoBlob, video.profiles.username);
+      
+      // Download watermarked video
+      const url = URL.createObjectURL(watermarkedBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${video.title}_ToonReels.webm`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      
+      // Log download
+      await supabase.from('video_downloads').insert({
+        video_id: video.id,
+        user_id: currentUserId
       });
-
-      if (error) {
-        if (error.message.includes('Premium')) {
-          toast.error('Premium subscription required to download videos');
-        } else if (error.message.includes('Unauthorized')) {
-          toast.error('Please sign in to download videos');
-        } else {
-          toast.error('Failed to download video');
-        }
-        return;
-      }
-
-      if (data?.download_url) {
-        const link = document.createElement('a');
-        link.href = data.download_url;
-        link.download = `${data.title || video.title}.mp4`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        
-        toast.success('Video downloaded!');
-      }
+      
+      toast.success('Video downloaded with ToonReels watermark!', { id: downloadToast });
     } catch (error) {
       console.error('Download error:', error);
-      toast.error('Failed to download video');
+      toast.error('Failed to download video', { id: downloadToast });
     }
   };
 
