@@ -12,6 +12,7 @@ import { useTheme } from "@/contexts/ThemeContext";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import bcrypt from "bcryptjs";
 
 const Settings = () => {
   const navigate = useNavigate();
@@ -88,7 +89,15 @@ const Settings = () => {
   const saveProfileSettings = async () => {
     if (!userId) return;
     try {
-      await supabase.from('profiles').update({ username, selected_avatar: selectedAvatar, age_range: ageRange, profile_pin: profilePin }).eq('id', userId);
+      const updates: any = { username, selected_avatar: selectedAvatar, age_range: ageRange };
+      
+      // Only hash and update PIN if it was changed
+      if (profilePin && profilePin.trim()) {
+        const hashedPin = await bcrypt.hash(profilePin.trim(), 10);
+        updates.profile_pin = hashedPin;
+      }
+      
+      await supabase.from('profiles').update(updates).eq('id', userId);
       toast.success('Profile settings saved');
     } catch (error) {
       toast.error('Failed to save');
@@ -108,7 +117,15 @@ const Settings = () => {
   const saveParentalControls = async () => {
     if (!userId) return;
     try {
-      await supabase.from('parental_controls').upsert({ user_id: userId, screen_time_limit: screenTimeLimit, school_hours_lock: schoolHoursLock, bedtime_lock: bedtimeLock, parental_pin: parentalPin });
+      const updates: any = { user_id: userId, screen_time_limit: screenTimeLimit, school_hours_lock: schoolHoursLock, bedtime_lock: bedtimeLock };
+      
+      // Only hash and update PIN if it was changed
+      if (parentalPin && parentalPin.trim()) {
+        const hashedPin = await bcrypt.hash(parentalPin.trim(), 10);
+        updates.parental_pin = hashedPin;
+      }
+      
+      await supabase.from('parental_controls').upsert(updates);
       toast.success('Parental controls saved');
     } catch (error) {
       toast.error('Failed to save');
