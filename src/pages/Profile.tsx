@@ -41,6 +41,8 @@ const Profile = () => {
   const [isOwnProfile, setIsOwnProfile] = useState(true);
   const [followersCount, setFollowersCount] = useState(0);
   const [followingCount, setFollowingCount] = useState(0);
+  const [totalViews, setTotalViews] = useState(0);
+  const [totalLikes, setTotalLikes] = useState(0);
   const [selectedVideoIndex, setSelectedVideoIndex] = useState<number | null>(null);
   const [isCreative, setIsCreative] = useState(false);
 
@@ -50,6 +52,7 @@ const Profile = () => {
     fetchProfile(userId);
     fetchUserVideos(userId);
     fetchFollowCounts(userId);
+    fetchStatsCounts(userId);
     checkIfCreative();
   }, [window.location.search]);
 
@@ -85,6 +88,26 @@ const Profile = () => {
 
     setFollowersCount(followers || 0);
     setFollowingCount(following || 0);
+  };
+
+  const fetchStatsCounts = async (userId?: string | null) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    const targetUserId = userId || user?.id;
+    
+    if (!targetUserId) return;
+
+    // Get total views and likes from all user's videos
+    const { data: videos } = await supabase
+      .from('videos')
+      .select('views_count, likes_count')
+      .eq('creator_id', targetUserId);
+
+    if (videos) {
+      const views = videos.reduce((sum, v) => sum + (v.views_count || 0), 0);
+      const likes = videos.reduce((sum, v) => sum + (v.likes_count || 0), 0);
+      setTotalViews(views);
+      setTotalLikes(likes);
+    }
   };
 
   const fetchProfile = async (userId?: string | null) => {
@@ -440,14 +463,14 @@ const Profile = () => {
             <div className="flex items-center justify-around gap-2 px-2">
               <div className="flex flex-col items-center min-w-0">
                 <p className="text-lg md:text-xl font-black text-white drop-shadow-lg">
-                  {videos.reduce((sum, v) => sum + v.views_count, 0)}
+                  {totalViews}
                 </p>
                 <p className="text-[10px] md:text-xs text-white/90 drop-shadow-md font-semibold">Views</p>
               </div>
               <div className="h-8 w-px bg-white/20"></div>
               <div className="flex flex-col items-center min-w-0">
                 <p className="text-lg md:text-xl font-black text-white drop-shadow-lg">
-                  {videos.reduce((sum, v) => sum + v.likes_count, 0)}
+                  {totalLikes}
                 </p>
                 <p className="text-[10px] md:text-xs text-white/90 drop-shadow-md font-semibold">Likes</p>
               </div>
