@@ -13,6 +13,7 @@ import { toast } from 'sonner';
 const Upload = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [videoFile, setVideoFile] = useState<File | null>(null);
@@ -27,21 +28,38 @@ const Upload = () => {
       return;
     }
 
-    // Check file size (max 100MB)
-    const maxSize = 100 * 1024 * 1024; // 100MB in bytes
+    // Validate file format
+    const allowedFormats = ['mp4', 'webm', 'mov'];
+    const fileExt = videoFile.name.split('.').pop()?.toLowerCase();
+    if (!fileExt || !allowedFormats.includes(fileExt)) {
+      toast.error('Invalid video format. Only MP4, WebM, and MOV are supported.');
+      return;
+    }
+
+    // Check file size (max 500MB)
+    const maxSize = 500 * 1024 * 1024; // 500MB in bytes
     if (videoFile.size > maxSize) {
-      toast.error('Video file is too large. Maximum size is 100MB');
+      toast.error('Video file is too large. Maximum size is 500MB');
       return;
     }
 
     setLoading(true);
+    setUploadProgress(0);
+
+    // Simulate progress based on estimated upload time
+    const estimatedTimeMs = Math.min((videoFile.size / 1024 / 1024) * 1000, 60000); // ~1 second per MB, max 60s
+    const progressInterval = setInterval(() => {
+      setUploadProgress((prev) => {
+        if (prev >= 90) return prev; // Stop at 90% until actual upload completes
+        return prev + 5;
+      });
+    }, estimatedTimeMs / 18); // Reach 90% gradually
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      // Upload video to storage with increased timeout
-      const fileExt = videoFile.name.split('.').pop();
+      // Upload video to storage
       const fileName = `${user.id}/${Date.now()}.${fileExt}`;
       
       const { error: uploadError } = await supabase.storage
@@ -50,6 +68,9 @@ const Upload = () => {
           cacheControl: '3600',
           upsert: false
         });
+
+      clearInterval(progressInterval);
+      setUploadProgress(95);
 
       if (uploadError) throw uploadError;
 
@@ -96,9 +117,11 @@ const Upload = () => {
 
       if (insertError) throw insertError;
 
+      setUploadProgress(100);
       toast.success('Video uploaded successfully!');
       navigate('/feed');
     } catch (error: any) {
+      clearInterval(progressInterval);
       console.error('Upload error:', error);
       if (error.message?.includes('Failed to fetch')) {
         toast.error('Upload failed: Network error or file too large. Please try a smaller video.');
@@ -107,6 +130,7 @@ const Upload = () => {
       }
     } finally {
       setLoading(false);
+      setUploadProgress(0);
     }
   };
 
@@ -236,9 +260,24 @@ const Upload = () => {
                 </div>
               </div>
 
+              {loading && uploadProgress > 0 && (
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-foreground">Uploading...</span>
+                    <span className="text-primary font-semibold">{uploadProgress}%</span>
+                  </div>
+                  <div className="h-2 bg-muted rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-primary transition-all duration-300"
+                      style={{ width: `${uploadProgress}%` }}
+                    />
+                  </div>
+                </div>
+              )}
+
               <Button
                 type="submit"
-                className="w-full"
+                className="w-full rounded-full"
                 disabled={loading}
                 size="lg"
               >
