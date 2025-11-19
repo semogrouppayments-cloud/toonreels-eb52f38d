@@ -192,7 +192,7 @@ const VideoPlayer = ({ video, currentUserId, isPremium, onCommentsClick, onDelet
   };
 
   const handleDownload = async () => {
-    const downloadToast = toast.loading('Preparing download with ToonReels watermark...');
+    const downloadToast = toast.loading('Processing: 0%');
     
     try {
       // Fetch the video blob
@@ -201,9 +201,14 @@ const VideoPlayer = ({ video, currentUserId, isPremium, onCommentsClick, onDelet
       
       const videoBlob = await response.blob();
       
-      // Add watermark
-      toast.loading('Adding watermark and creator info...', { id: downloadToast });
-      const watermarkedBlob = await addWatermarkToVideo(videoBlob, video.profiles.username);
+      // Add watermark with progress tracking
+      const watermarkedBlob = await addWatermarkToVideo(
+        videoBlob, 
+        video.profiles.username,
+        (progress) => {
+          toast.loading(`Processing: ${progress}%`, { id: downloadToast });
+        }
+      );
       
       // Download watermarked video
       const url = URL.createObjectURL(watermarkedBlob);
@@ -221,7 +226,7 @@ const VideoPlayer = ({ video, currentUserId, isPremium, onCommentsClick, onDelet
         user_id: currentUserId
       });
       
-      toast.success('Video downloaded with ToonReels watermark!', { id: downloadToast });
+      toast.success('Download complete!', { id: downloadToast });
     } catch (error) {
       console.error('Download error:', error);
       toast.error('Failed to download video', { id: downloadToast });

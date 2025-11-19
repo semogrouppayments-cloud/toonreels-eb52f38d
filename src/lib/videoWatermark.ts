@@ -3,7 +3,8 @@
  */
 export async function addWatermarkToVideo(
   videoBlob: Blob,
-  creatorUsername: string
+  creatorUsername: string,
+  onProgress?: (progress: number) => void
 ): Promise<Blob> {
   return new Promise((resolve, reject) => {
     const video = document.createElement('video');
@@ -49,6 +50,12 @@ export async function addWatermarkToVideo(
         if (video.paused || video.ended) {
           mediaRecorder.stop();
           return;
+        }
+        
+        // Report progress
+        if (onProgress && video.duration) {
+          const progress = Math.floor((video.currentTime / video.duration) * 100);
+          onProgress(progress);
         }
         
         // Draw video frame
