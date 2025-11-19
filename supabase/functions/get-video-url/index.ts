@@ -42,6 +42,24 @@ serve(async (req) => {
       );
     }
 
+    // Verify the user has access to this video
+    const { data: video, error: videoError } = await supabase
+      .from('videos')
+      .select('creator_id, id')
+      .eq('video_url', video_url)
+      .single();
+
+    if (videoError || !video) {
+      console.error('Video not found:', videoError);
+      return new Response(
+        JSON.stringify({ error: 'Video not found' }),
+        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // For now, all authenticated users can view videos (public feed behavior)
+    // In the future, you could add additional access controls here for private videos
+    
     // Extract the file path from the video_url
     const videoUrlPath = new URL(video_url).pathname;
     const filePath = videoUrlPath.split('/').slice(-2).join('/'); // Get last two parts (folder/file)

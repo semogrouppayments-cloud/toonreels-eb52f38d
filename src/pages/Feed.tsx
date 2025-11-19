@@ -71,14 +71,20 @@ const Feed = () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
       setCurrentUserId(user.id);
+      
       const { data: profile } = await supabase
         .from('profiles')
-        .select('is_premium, user_type')
+        .select('is_premium')
         .eq('id', user.id)
         .single();
       
+      const { data: roles } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id);
+      
       setIsPremium(profile?.is_premium || false);
-      setIsCreative(profile?.user_type === 'creative');
+      setIsCreative(roles?.some(r => r.role === 'creative') || false);
     }
   };
 

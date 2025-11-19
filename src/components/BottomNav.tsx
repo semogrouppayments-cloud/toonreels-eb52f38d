@@ -12,13 +12,12 @@ const BottomNav = () => {
     const checkUserType = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('user_type')
-          .eq('id', user.id)
-          .single();
+        const { data: roles } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', user.id);
         
-        setIsCreative(profile?.user_type === 'creative');
+        setIsCreative(roles?.some(r => r.role === 'creative') || false);
       }
     };
 
