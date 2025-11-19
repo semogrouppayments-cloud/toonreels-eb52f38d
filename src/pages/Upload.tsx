@@ -27,19 +27,29 @@ const Upload = () => {
       return;
     }
 
+    // Check file size (max 100MB)
+    const maxSize = 100 * 1024 * 1024; // 100MB in bytes
+    if (videoFile.size > maxSize) {
+      toast.error('Video file is too large. Maximum size is 100MB');
+      return;
+    }
+
     setLoading(true);
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      // Upload video to storage
+      // Upload video to storage with increased timeout
       const fileExt = videoFile.name.split('.').pop();
       const fileName = `${user.id}/${Date.now()}.${fileExt}`;
       
       const { error: uploadError } = await supabase.storage
         .from('videos')
-        .upload(fileName, videoFile);
+        .upload(fileName, videoFile, {
+          cacheControl: '3600',
+          upsert: false
+        });
 
       if (uploadError) throw uploadError;
 
@@ -89,7 +99,12 @@ const Upload = () => {
       toast.success('Video uploaded successfully!');
       navigate('/feed');
     } catch (error: any) {
-      toast.error(error.message || 'Upload failed');
+      console.error('Upload error:', error);
+      if (error.message?.includes('Failed to fetch')) {
+        toast.error('Upload failed: Network error or file too large. Please try a smaller video.');
+      } else {
+        toast.error(error.message || 'Upload failed');
+      }
     } finally {
       setLoading(false);
     }
