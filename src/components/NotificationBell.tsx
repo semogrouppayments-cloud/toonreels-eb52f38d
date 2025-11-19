@@ -247,9 +247,9 @@ const NotificationBell = () => {
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
         <Button
-          variant="ghost"
+          variant="secondary"
           size="icon"
-          className="relative rounded-full"
+          className="rounded-full relative"
         >
           <Bell className="h-5 w-5" />
           {unreadCount > 0 && (
