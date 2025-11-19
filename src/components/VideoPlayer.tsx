@@ -48,6 +48,8 @@ const VideoPlayer = ({ video, currentUserId, isPremium, onCommentsClick, onDelet
 
   useEffect(() => {
     checkIfFollowing();
+    checkIfLiked();
+    incrementViewCount();
     watchStartTimeRef.current = Date.now();
     analyticsTrackedRef.current = false;
 
@@ -56,6 +58,38 @@ const VideoPlayer = ({ video, currentUserId, isPremium, onCommentsClick, onDelet
       trackVideoAnalytics(false);
     };
   }, [video.id, currentUserId]);
+
+  const checkIfLiked = async () => {
+    if (!currentUserId) return;
+    
+    const { data } = await supabase
+      .from('likes')
+      .select('id')
+      .eq('video_id', video.id)
+      .eq('user_id', currentUserId)
+      .single();
+    
+    setLiked(!!data);
+  };
+
+  const incrementViewCount = async () => {
+    try {
+      const { data: currentVideo } = await supabase
+        .from('videos')
+        .select('views_count')
+        .eq('id', video.id)
+        .single();
+      
+      if (currentVideo) {
+        await supabase
+          .from('videos')
+          .update({ views_count: currentVideo.views_count + 1 })
+          .eq('id', video.id);
+      }
+    } catch (error) {
+      console.error('Failed to increment view count:', error);
+    }
+  };
 
   const trackVideoAnalytics = async (completed: boolean) => {
     if (analyticsTrackedRef.current) return;
@@ -108,11 +142,41 @@ const VideoPlayer = ({ video, currentUserId, isPremium, onCommentsClick, onDelet
   const handleLike = async () => {
     try {
       if (liked) {
+        // Remove like
         await supabase.from('likes').delete().match({ video_id: video.id, user_id: currentUserId });
         setLikesCount(prev => prev - 1);
+        
+        // Update likes_count in videos table
+        const { data: currentVideo } = await supabase
+          .from('videos')
+          .select('likes_count')
+          .eq('id', video.id)
+          .single();
+        
+        if (currentVideo) {
+          await supabase
+            .from('videos')
+            .update({ likes_count: Math.max(0, currentVideo.likes_count - 1) })
+            .eq('id', video.id);
+        }
       } else {
+        // Add like
         await supabase.from('likes').insert({ video_id: video.id, user_id: currentUserId });
         setLikesCount(prev => prev + 1);
+        
+        // Update likes_count in videos table
+        const { data: currentVideo } = await supabase
+          .from('videos')
+          .select('likes_count')
+          .eq('id', video.id)
+          .single();
+        
+        if (currentVideo) {
+          await supabase
+            .from('videos')
+            .update({ likes_count: currentVideo.likes_count + 1 })
+            .eq('id', video.id);
+        }
       }
       setLiked(!liked);
     } catch (error) {
