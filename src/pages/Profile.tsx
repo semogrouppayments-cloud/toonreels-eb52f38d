@@ -45,6 +45,8 @@ const Profile = () => {
   const [totalLikes, setTotalLikes] = useState(0);
   const [selectedVideoIndex, setSelectedVideoIndex] = useState<number | null>(null);
   const [isCreative, setIsCreative] = useState(false);
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<string>('');
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -54,11 +56,14 @@ const Profile = () => {
     fetchFollowCounts(userId);
     fetchStatsCounts(userId);
     checkIfCreative();
+    checkIfFollowing(userId);
   }, [window.location.search]);
 
   const checkIfCreative = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
+
+    setCurrentUserId(user.id);
 
     const { data: roles } = await supabase
       .from('user_roles')
@@ -66,6 +71,49 @@ const Profile = () => {
       .eq('user_id', user.id);
 
     setIsCreative(roles?.some(r => r.role === 'creative') || false);
+  };
+
+  const checkIfFollowing = async (userId?: string | null) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user || !userId || userId === user.id) return;
+
+    const { data } = await supabase
+      .from('follows')
+      .select('id')
+      .eq('follower_id', user.id)
+      .eq('following_id', userId)
+      .single();
+
+    setIsFollowing(!!data);
+  };
+
+  const handleFollowToggle = async () => {
+    if (!currentUserId || !profile?.id) return;
+
+    try {
+      if (isFollowing) {
+        await supabase
+          .from('follows')
+          .delete()
+          .eq('follower_id', currentUserId)
+          .eq('following_id', profile.id);
+        setIsFollowing(false);
+        setFollowersCount(prev => prev - 1);
+        toast.success('Unfollowed');
+      } else {
+        await supabase
+          .from('follows')
+          .insert({
+            follower_id: currentUserId,
+            following_id: profile.id
+          });
+        setIsFollowing(true);
+        setFollowersCount(prev => prev + 1);
+        toast.success('Following!');
+      }
+    } catch (error) {
+      toast.error('Failed to update follow status');
+    }
   };
 
   const fetchFollowCounts = async (userId?: string | null) => {
@@ -299,9 +347,9 @@ const Profile = () => {
             </label>
           )}
 
-          {/* Settings and Sign Out Buttons */}
+          {/* Settings and Sign Out Buttons / Follow Button */}
           <div className="relative flex justify-end gap-2 p-4 z-10">
-            {isOwnProfile && (
+            {isOwnProfile ? (
               <>
                 {isCreative && (
                   <Button
@@ -330,6 +378,14 @@ const Profile = () => {
                   <LogOut className="h-5 w-5" />
                 </Button>
               </>
+            ) : (
+              <Button
+                onClick={handleFollowToggle}
+                variant={isFollowing ? "outline" : "default"}
+                className="rounded-full"
+              >
+                {isFollowing ? 'Unfollow' : 'Follow'}
+              </Button>
             )}
           </div>
 
@@ -459,32 +515,48 @@ const Profile = () => {
               </div>
             </div>
 
-            {/* Stats Row - TikTok Style */}
-            <div className="flex items-center justify-around gap-2 px-2">
-              <div className="flex flex-col items-center min-w-0">
-                <p className="text-lg md:text-xl font-black text-white drop-shadow-lg">
-                  {totalViews}
-                </p>
-                <p className="text-[10px] md:text-xs text-white/90 drop-shadow-md font-semibold">Views</p>
+            {/* Stats Row - Conditional based on user type */}
+            {profile.user_type === 'creative' ? (
+              // Creative users: Show all stats (Views, Likes, Followers, Videos)
+              <div className="flex items-center justify-around gap-2 px-2">
+                <div className="flex flex-col items-center min-w-0">
+                  <p className="text-lg md:text-xl font-black text-white drop-shadow-lg">
+                    {totalViews}
+                  </p>
+                  <p className="text-[10px] md:text-xs text-white/90 drop-shadow-md font-semibold">Views</p>
+                </div>
+                <div className="h-8 w-px bg-white/20"></div>
+                <div className="flex flex-col items-center min-w-0">
+                  <p className="text-lg md:text-xl font-black text-white drop-shadow-lg">
+                    {totalLikes}
+                  </p>
+                  <p className="text-[10px] md:text-xs text-white/90 drop-shadow-md font-semibold">Likes</p>
+                </div>
+                <div className="h-8 w-px bg-white/20"></div>
+                <div className="flex flex-col items-center min-w-0">
+                  <p className="text-lg md:text-xl font-black text-white drop-shadow-lg">{followersCount}</p>
+                  <p className="text-[10px] md:text-xs text-white/90 drop-shadow-md font-semibold">Followers</p>
+                </div>
+                <div className="h-8 w-px bg-white/20"></div>
+                <div className="flex flex-col items-center min-w-0">
+                  <p className="text-lg md:text-xl font-black text-white drop-shadow-lg">{videos.length}</p>
+                  <p className="text-[10px] md:text-xs text-white/90 drop-shadow-md font-semibold">Videos</p>
+                </div>
               </div>
-              <div className="h-8 w-px bg-white/20"></div>
-              <div className="flex flex-col items-center min-w-0">
-                <p className="text-lg md:text-xl font-black text-white drop-shadow-lg">
-                  {totalLikes}
-                </p>
-                <p className="text-[10px] md:text-xs text-white/90 drop-shadow-md font-semibold">Likes</p>
+            ) : (
+              // Viewer users: Show only Followers and Following
+              <div className="flex items-center justify-around gap-4 px-8">
+                <div className="flex flex-col items-center min-w-0">
+                  <p className="text-2xl md:text-3xl font-black text-white drop-shadow-lg">{followersCount}</p>
+                  <p className="text-xs md:text-sm text-white/90 drop-shadow-md font-semibold">Followers</p>
+                </div>
+                <div className="h-12 w-px bg-white/20"></div>
+                <div className="flex flex-col items-center min-w-0">
+                  <p className="text-2xl md:text-3xl font-black text-white drop-shadow-lg">{followingCount}</p>
+                  <p className="text-xs md:text-sm text-white/90 drop-shadow-md font-semibold">Following</p>
+                </div>
               </div>
-              <div className="h-8 w-px bg-white/20"></div>
-              <div className="flex flex-col items-center min-w-0">
-                <p className="text-lg md:text-xl font-black text-white drop-shadow-lg">{followersCount}</p>
-                <p className="text-[10px] md:text-xs text-white/90 drop-shadow-md font-semibold">Followers</p>
-              </div>
-              <div className="h-8 w-px bg-white/20"></div>
-              <div className="flex flex-col items-center min-w-0">
-                <p className="text-lg md:text-xl font-black text-white drop-shadow-lg">{videos.length}</p>
-                <p className="text-[10px] md:text-xs text-white/90 drop-shadow-md font-semibold">Videos</p>
-              </div>
-            </div>
+            )}
           </div>
         </div>
 
