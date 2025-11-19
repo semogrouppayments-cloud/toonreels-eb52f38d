@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Heart, MessageCircle, Download, Flag, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { useSignedVideoUrl } from '@/hooks/useSignedVideoUrl';
 
 interface VideoPlayerProps {
   video: {
@@ -28,6 +29,7 @@ const VideoPlayer = ({ video, currentUserId, isPremium, onCommentsClick, onDelet
   const [liked, setLiked] = useState(false);
   const [likesCount, setLikesCount] = useState(video.likes_count);
   const [showReportDialog, setShowReportDialog] = useState(false);
+  const { signedUrl, loading, error } = useSignedVideoUrl(video.video_url);
 
   const handleLike = async () => {
     try {
@@ -45,23 +47,34 @@ const VideoPlayer = ({ video, currentUserId, isPremium, onCommentsClick, onDelet
   };
 
   const handleDownload = async () => {
-    if (!isPremium) {
-      toast.error('Premium subscription required to download videos');
-      return;
-    }
-
     try {
-      await supabase.from('video_downloads').insert({ video_id: video.id, user_id: currentUserId });
-      
-      const link = document.createElement('a');
-      link.href = video.video_url;
-      link.download = `${video.title}.mp4`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      
-      toast.success('Video downloaded!');
+      const { data, error } = await supabase.functions.invoke('download-video', {
+        body: { video_id: video.id }
+      });
+
+      if (error) {
+        if (error.message.includes('Premium')) {
+          toast.error('Premium subscription required to download videos');
+        } else if (error.message.includes('Unauthorized')) {
+          toast.error('Please sign in to download videos');
+        } else {
+          toast.error('Failed to download video');
+        }
+        return;
+      }
+
+      if (data?.download_url) {
+        const link = document.createElement('a');
+        link.href = data.download_url;
+        link.download = `${data.title || video.title}.mp4`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        toast.success('Video downloaded!');
+      }
     } catch (error) {
+      console.error('Download error:', error);
       toast.error('Failed to download video');
     }
   };
@@ -83,14 +96,24 @@ const VideoPlayer = ({ video, currentUserId, isPremium, onCommentsClick, onDelet
 
   return (
     <div className="relative h-screen w-full snap-start">
-      <video
-        src={video.video_url}
-        className="h-full w-full object-cover"
-        loop
-        autoPlay
-        muted
-        playsInline
-      />
+      {loading ? (
+        <div className="h-full w-full bg-black flex items-center justify-center">
+          <span className="text-white">Loading video...</span>
+        </div>
+      ) : error ? (
+        <div className="h-full w-full bg-black flex items-center justify-center">
+          <span className="text-white">Failed to load video</span>
+        </div>
+      ) : (
+        <video
+          src={signedUrl || ''}
+          className="h-full w-full object-cover"
+          loop
+          autoPlay
+          muted
+          playsInline
+        />
+      )}
       
       <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
       

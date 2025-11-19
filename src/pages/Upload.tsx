@@ -43,13 +43,15 @@ const Upload = () => {
 
       if (uploadError) throw uploadError;
 
-      // Get public URL
       const { data: { publicUrl } } = supabase.storage
         .from('videos')
         .getPublicUrl(fileName);
 
+      // Note: Since videos bucket is now private, we'll store the path
+      // and generate signed URLs on-demand for viewing
+
       // Upload thumbnail if provided
-      let thumbnailUrl = publicUrl;
+      let thumbnailUrl = '';
       if (thumbnailFile) {
         const thumbExt = thumbnailFile.name.split('.').pop();
         const thumbName = `${user.id}/thumb_${Date.now()}.${thumbExt}`;
@@ -66,6 +68,11 @@ const Upload = () => {
         }
       }
 
+      // Store the URL path - signed URLs will be generated on-demand for viewing
+      const { data: { publicUrl: videoUrl } } = supabase.storage
+        .from('videos')
+        .getPublicUrl(fileName);
+
       // Create video record
       const { error: insertError } = await supabase
         .from('videos')
@@ -73,7 +80,7 @@ const Upload = () => {
           creator_id: user.id,
           title,
           description,
-          video_url: publicUrl,
+          video_url: videoUrl,
           thumbnail_url: thumbnailUrl,
         });
 
