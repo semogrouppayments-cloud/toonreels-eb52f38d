@@ -205,19 +205,22 @@ const Profile = () => {
   return (
     <div className="min-h-screen bg-background pb-20">
       <div className="max-w-2xl mx-auto">
-        {/* Cover Photo */}
-        <div className="relative h-40 bg-gradient-to-br from-primary via-accent to-fun-yellow">
+        {/* Header with Cover Photo */}
+        <div className="relative bg-gradient-to-br from-primary via-accent to-fun-yellow" style={{ paddingBottom: '120px' }}>
+          {/* Cover Photo - fills the entire header */}
           {profile?.cover_photo_url && (
             <img 
               src={profile.cover_photo_url} 
               alt="Cover" 
-              className="w-full h-full object-cover"
+              className="absolute inset-0 w-full h-full object-cover"
             />
           )}
+          
+          {/* Cover Photo Upload Button */}
           {isOwnProfile && (
             <label
               htmlFor="cover-upload"
-              className="absolute bottom-3 right-3 bg-background/90 backdrop-blur-sm text-foreground rounded-full p-2 cursor-pointer hover:bg-background transition-colors"
+              className="absolute top-3 right-3 bg-background/90 backdrop-blur-sm text-foreground rounded-full p-2 cursor-pointer hover:bg-background transition-colors z-10"
             >
               <Camera className="h-4 w-4" />
               <input
@@ -229,11 +232,9 @@ const Profile = () => {
               />
             </label>
           )}
-        </div>
 
-        {/* Header */}
-        <div className="bg-gradient-to-br from-primary via-accent to-fun-yellow p-8 pt-4">
-          <div className="flex justify-end gap-2 mb-4">
+          {/* Settings and Sign Out Buttons */}
+          <div className="relative flex justify-end gap-2 p-4 z-10">
             {isOwnProfile && (
               <>
                 <Button
@@ -256,18 +257,19 @@ const Profile = () => {
             )}
           </div>
 
-          <div className="text-center">
+          {/* Profile Info - positioned over cover photo */}
+          <div className="relative text-center px-8 pb-8 z-10">
             <div className="relative inline-block mb-4">
-              <Avatar className="h-24 w-24 border-4 border-background/20">
+              <Avatar className="h-24 w-24 border-4 border-background shadow-lg">
                 <AvatarImage src={profile.avatar_url || undefined} alt={profile.username} />
-                <AvatarFallback className="bg-background/20 backdrop-blur-lg text-background font-black text-4xl">
+                <AvatarFallback className="bg-primary text-primary-foreground font-black text-4xl">
                   {profile.username[0].toUpperCase()}
                 </AvatarFallback>
               </Avatar>
               {isOwnProfile && (
                 <label
                   htmlFor="avatar-upload"
-                  className="absolute bottom-0 right-0 bg-primary text-primary-foreground rounded-full p-2 cursor-pointer hover:scale-110 transition-transform"
+                  className="absolute bottom-0 right-0 bg-primary text-primary-foreground rounded-full p-2 cursor-pointer hover:scale-110 transition-transform shadow-lg"
                 >
                   <Camera className="h-4 w-4" />
                   <input
@@ -310,7 +312,7 @@ const Profile = () => {
                 </Button>
               </div>
             )}
-            <p className="text-background/90 font-semibold capitalize">
+            <p className="text-background drop-shadow-md font-semibold capitalize">
               {profile.user_type}
             </p>
           </div>
@@ -365,16 +367,31 @@ const Profile = () => {
             ) : (
               <div className="grid grid-cols-3 gap-2">
                 {videos.map((video, index) => (
-                  <div
-                    key={video.id}
-                    onClick={() => setSelectedVideoIndex(index)}
-                    className="aspect-[9/16] rounded-2xl bg-gradient-to-br from-primary/20 via-accent/20 to-fun-blue/20 overflow-hidden cursor-pointer hover:scale-105 transition-transform"
-                  >
-                    <div className="h-full flex flex-col justify-end p-3">
-                      <p className="text-white text-xs font-bold drop-shadow-lg line-clamp-2">
-                        {video.title}
-                      </p>
+                  <div key={video.id} className="relative group">
+                    <div
+                      onClick={() => setSelectedVideoIndex(index)}
+                      className="aspect-[9/16] rounded-2xl bg-gradient-to-br from-primary/20 via-accent/20 to-fun-blue/20 overflow-hidden cursor-pointer hover:scale-105 transition-transform"
+                    >
+                      <div className="h-full flex flex-col justify-end p-3">
+                        <p className="text-white text-xs font-bold drop-shadow-lg line-clamp-2">
+                          {video.title}
+                        </p>
+                      </div>
                     </div>
+                    {/* Analytics button for own videos */}
+                    {isOwnProfile && (
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/video-analytics/${video.id}`);
+                        }}
+                        className="absolute top-2 right-2 h-7 px-2 text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        Stats
+                      </Button>
+                    )}
                   </div>
                 ))}
               </div>

@@ -41,10 +41,54 @@ const VideoPlayer = ({ video, currentUserId, isPremium, onCommentsClick, onDelet
   const lastTapRef = useRef<number>(0);
   const animationIdRef = useRef<number>(0);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const watchStartTimeRef = useRef<number>(Date.now());
+  const analyticsTrackedRef = useRef<boolean>(false);
 
   useEffect(() => {
     checkIfFollowing();
-  }, [video.creator_id, currentUserId]);
+    watchStartTimeRef.current = Date.now();
+    analyticsTrackedRef.current = false;
+
+    // Track analytics when component unmounts or video changes
+    return () => {
+      trackVideoAnalytics(false);
+    };
+  }, [video.id, currentUserId]);
+
+  const trackVideoAnalytics = async (completed: boolean) => {
+    if (analyticsTrackedRef.current) return;
+    analyticsTrackedRef.current = true;
+
+    const watchDuration = Math.floor((Date.now() - watchStartTimeRef.current) / 1000);
+    
+    // Only track if watched for at least 1 second
+    if (watchDuration < 1) return;
+
+    try {
+      await supabase.from('video_analytics').insert({
+        video_id: video.id,
+        viewer_id: currentUserId || null,
+        watch_duration: watchDuration,
+        completed: completed,
+        device_type: /Mobile|Android|iPhone/i.test(navigator.userAgent) ? 'mobile' : 'desktop',
+      });
+    } catch (error) {
+      console.error('Failed to track analytics:', error);
+    }
+  };
+
+  // Track when video completes
+  useEffect(() => {
+    const videoElement = videoRef.current;
+    if (!videoElement) return;
+
+    const handleEnded = () => {
+      trackVideoAnalytics(true);
+    };
+
+    videoElement.addEventListener('ended', handleEnded);
+    return () => videoElement.removeEventListener('ended', handleEnded);
+  }, [video.id]);
 
   const checkIfFollowing = async () => {
     if (!currentUserId || currentUserId === video.creator_id) return;

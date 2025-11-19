@@ -374,6 +374,51 @@ export type Database = {
         }
         Relationships: []
       }
+      video_analytics: {
+        Row: {
+          completed: boolean | null
+          device_type: string | null
+          id: string
+          video_id: string
+          viewer_id: string | null
+          watch_duration: number
+          watched_at: string | null
+        }
+        Insert: {
+          completed?: boolean | null
+          device_type?: string | null
+          id?: string
+          video_id: string
+          viewer_id?: string | null
+          watch_duration?: number
+          watched_at?: string | null
+        }
+        Update: {
+          completed?: boolean | null
+          device_type?: string | null
+          id?: string
+          video_id?: string
+          viewer_id?: string | null
+          watch_duration?: number
+          watched_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_video"
+            columns: ["video_id"]
+            isOneToOne: false
+            referencedRelation: "videos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "video_analytics_video_id_fkey"
+            columns: ["video_id"]
+            isOneToOne: false
+            referencedRelation: "videos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       video_downloads: {
         Row: {
           created_at: string | null
