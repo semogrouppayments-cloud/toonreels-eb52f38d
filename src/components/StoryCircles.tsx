@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
-import { useNavigate } from 'react-router-dom';
+import StoryViewer from '@/components/StoryViewer';
 
 interface Creator {
   id: string;
@@ -15,8 +15,8 @@ interface Creator {
 }
 
 const StoryCircles = () => {
-  const navigate = useNavigate();
   const [creators, setCreators] = useState<Creator[]>([]);
+  const [selectedCreator, setSelectedCreator] = useState<Creator | null>(null);
 
   useEffect(() => {
     fetchCreators();
@@ -59,20 +59,29 @@ const StoryCircles = () => {
     setCreators(Array.from(creatorsMap.values()));
   };
 
-  const handleCreatorClick = (creatorId: string) => {
-    navigate(`/profile?creator=${creatorId}`);
+  const handleCreatorClick = (creator: Creator) => {
+    setSelectedCreator(creator);
   };
 
   if (creators.length === 0) return null;
 
   return (
-    <div className="fixed top-4 left-4 right-20 z-40 bg-card/95 backdrop-blur-lg rounded-full border-2 border-border shadow-lg">
+    <>
+      {selectedCreator && (
+        <StoryViewer
+          creatorId={selectedCreator.id}
+          creatorName={selectedCreator.username}
+          onClose={() => setSelectedCreator(null)}
+        />
+      )}
+      
+      <div className="fixed top-4 left-4 right-20 z-40 bg-card/95 backdrop-blur-lg rounded-full border-2 border-border shadow-lg">
       <ScrollArea className="w-full">
         <div className="flex gap-4 p-3">
           {creators.map((creator) => (
             <button
               key={creator.id}
-              onClick={() => handleCreatorClick(creator.id)}
+              onClick={() => handleCreatorClick(creator)}
               className="flex flex-col items-center gap-2 shrink-0 group"
               aria-label={`View ${creator.username}'s stories`}
             >
@@ -103,6 +112,7 @@ const StoryCircles = () => {
         <ScrollBar orientation="horizontal" />
       </ScrollArea>
     </div>
+    </>
   );
 };
 

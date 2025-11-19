@@ -267,6 +267,257 @@ const Settings = () => {
               </Accordion>
             </CardContent>
           </Card>
+
+          <Card>
+            <CardHeader><CardTitle>📋 FAQ</CardTitle></CardHeader>
+            <CardContent>
+              <Accordion type="single" collapsible>
+                <AccordionItem value="what">
+                  <AccordionTrigger>🟦 What is ToonReels?</AccordionTrigger>
+                  <AccordionContent>
+                    <p className="text-sm text-muted-foreground">ToonReels is a kid-safe cartoon reels platform made by SE-Motoons. Kids can watch short animated clips, music toons, fun stories, and educational shorts — all age filtered.</p>
+                  </AccordionContent>
+                </AccordionItem>
+                <AccordionItem value="cartoon">
+                  <AccordionTrigger>🟦 Why only cartoon content?</AccordionTrigger>
+                  <AccordionContent>
+                    <p className="text-sm text-muted-foreground">ToonReels is designed strictly for kids. We automatically block adult themes, scary content, violence, political content, and anything unsafe.</p>
+                  </AccordionContent>
+                </AccordionItem>
+                <AccordionItem value="report">
+                  <AccordionTrigger>🟦 How do I report something inappropriate?</AccordionTrigger>
+                  <AccordionContent>
+                    <p className="text-sm text-muted-foreground mb-2">Tap the ⚠️ Report button on any reel or any creator's profile. Our moderation team reviews reports within 24–72 hours.</p>
+                  </AccordionContent>
+                </AccordionItem>
+                <AccordionItem value="comments">
+                  <AccordionTrigger>🟦 Are comments safe?</AccordionTrigger>
+                  <AccordionContent>
+                    <p className="text-sm text-muted-foreground">Comments are filtered with AI kid-safe moderation, keyword blocking, and human review for flagged comments. Parents can disable comments completely in Settings → Parental Controls.</p>
+                  </AccordionContent>
+                </AccordionItem>
+                <AccordionItem value="messaging">
+                  <AccordionTrigger>🟦 Can kids message each other?</AccordionTrigger>
+                  <AccordionContent>
+                    <p className="text-sm text-muted-foreground">Messaging is off by default. Parents can enable limited messaging after setting a Parent PIN.</p>
+                  </AccordionContent>
+                </AccordionItem>
+                <AccordionItem value="uploads">
+                  <AccordionTrigger>🟦 How do uploads work?</AccordionTrigger>
+                  <AccordionContent>
+                    <p className="text-sm text-muted-foreground">Creators can upload reels from the Upload tab. All uploads are reviewed before being public.</p>
+                  </AccordionContent>
+                </AccordionItem>
+                <AccordionItem value="download">
+                  <AccordionTrigger>🟦 Why can't I download reels?</AccordionTrigger>
+                  <AccordionContent>
+                    <p className="text-sm text-muted-foreground">Downloading reel videos is a premium feature.</p>
+                  </AccordionContent>
+                </AccordionItem>
+                <AccordionItem value="contact">
+                  <AccordionTrigger>🟦 How do I contact ToonReels?</AccordionTrigger>
+                  <AccordionContent>
+                    <div className="text-sm text-muted-foreground space-y-1">
+                      <p>📮 Email: info@se-motoons.com</p>
+                      <p>🌐 Website: www.semotoons.com</p>
+                      <p>🦊 App Icon: TR (ToonReels official avatar)</p>
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader><CardTitle>⭐ Terms of Use</CardTitle></CardHeader>
+            <CardContent>
+              <Accordion type="single" collapsible>
+                <AccordionItem value="terms">
+                  <AccordionTrigger>View Terms</AccordionTrigger>
+                  <AccordionContent className="space-y-3 text-sm text-muted-foreground">
+                    <p className="font-semibold">Last updated: 2025</p>
+                    <p>Welcome to ToonReels, a kid-friendly cartoon reels app created by SE-Motoons. By using ToonReels, you agree to these Terms of Use.</p>
+                    
+                    <div>
+                      <p className="font-semibold text-foreground">1. Eligibility</p>
+                      <p>ToonReels is designed for users ages 4–15. Parents/guardians must supervise younger users.</p>
+                    </div>
+
+                    <div>
+                      <p className="font-semibold text-foreground">2. Account Responsibilities</p>
+                      <p>You must provide accurate profile information. Parents are responsible for supervising accounts created for children. You must not impersonate others or create misleading profiles.</p>
+                    </div>
+
+                    <div>
+                      <p className="font-semibold text-foreground">3. Kid-Safe Community Rules</p>
+                      <p>You may not upload or share: adult content, violence/gore/scary material, hate speech, bullying/harassment, political content, harmful challenges/dares, or unsafe products/services. Violation may result in content removal or account suspension.</p>
+                    </div>
+
+                    <div>
+                      <p className="font-semibold text-foreground">4. Content Ownership</p>
+                      <p>You keep ownership of your uploaded reels, but you give ToonReels permission to store, display, moderate, and distribute within the app. We NEVER sell user data or videos.</p>
+                    </div>
+
+                    <div>
+                      <p className="font-semibold text-foreground">5. Moderation</p>
+                      <p>We may review content, remove unsafe uploads, and suspend creators who post harmful material. All reports are reviewed within 24–72 hours.</p>
+                    </div>
+
+                    <div>
+                      <p className="font-semibold text-foreground">6. Premium Features</p>
+                      <p>Premium subscriptions allow downloading reels, removing ads, and unlocking exclusive content. Subscriptions auto-renew unless turned off through app settings.</p>
+                    </div>
+
+                    <div>
+                      <p className="font-semibold text-foreground">7. Termination</p>
+                      <p>We may limit or disable accounts that violate safety rules, upload harmful content, or attempt to bypass parental controls.</p>
+                    </div>
+
+                    <div>
+                      <p className="font-semibold text-foreground">8. Contact</p>
+                      <p>Email: info@se-motoons.com | Website: www.semotoons.com | App icon/logo: TR</p>
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader><CardTitle>⭐ Privacy Center</CardTitle></CardHeader>
+            <CardContent>
+              <Accordion type="single" collapsible>
+                <AccordionItem value="privacy">
+                  <AccordionTrigger>View Privacy Policy</AccordionTrigger>
+                  <AccordionContent className="space-y-3 text-sm text-muted-foreground">
+                    <p className="font-semibold">ToonReels is COPPA-compliant and designed for child safety.</p>
+                    
+                    <div>
+                      <p className="font-semibold text-foreground">1. What information we collect</p>
+                      <p>We collect minimal data: profile name/nickname, avatar (emojis), age range (not exact birth date), parent/guardian email (optional), and uploaded content.</p>
+                      <p className="mt-2">We do NOT collect: ❌ exact addresses ❌ phone numbers ❌ legal names ❌ financial data ❌ facial recognition data</p>
+                    </div>
+
+                    <div>
+                      <p className="font-semibold text-foreground">2. How data is used</p>
+                      <p>We use your data to keep content age-appropriate, personalize recommendations, improve safety, and support your account. We do not sell data to advertisers or third parties.</p>
+                    </div>
+
+                    <div>
+                      <p className="font-semibold text-foreground">3. Data for Kids Under 13</p>
+                      <p>Parents can delete data, ask for account export, restrict features (comments, messages, uploads), and set time limits.</p>
+                    </div>
+
+                    <div>
+                      <p className="font-semibold text-foreground">4. Cookies & Local Storage</p>
+                      <p>Used only for saving login state, parental PIN access, and safe viewing history. No tracking across other apps or websites.</p>
+                    </div>
+
+                    <div>
+                      <p className="font-semibold text-foreground">5. Deleting Your Data</p>
+                      <p>You may request deletion anytime by emailing: 📮 info@se-motoons.com</p>
+                    </div>
+
+                    <div>
+                      <p className="font-semibold text-foreground">6. Security</p>
+                      <p>We use encryption, secure storage, and safety auditing. No system is 100% secure, but we take strong measures to protect children.</p>
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader><CardTitle>⭐ User Safety Guide</CardTitle></CardHeader>
+            <CardContent>
+              <Accordion type="single" collapsible>
+                <AccordionItem value="safety">
+                  <AccordionTrigger>View Safety Guide</AccordionTrigger>
+                  <AccordionContent className="space-y-3 text-sm text-muted-foreground">
+                    <p className="font-semibold">ToonReels is built around kid safety first.</p>
+                    
+                    <div>
+                      <p className="font-semibold text-foreground">🟧 1. Safe Content System</p>
+                      <p>We use AI detection for harmful videos, human moderation, strict cartoon-only rules, and automatic age filtering.</p>
+                    </div>
+
+                    <div>
+                      <p className="font-semibold text-foreground">🟧 2. Reporting Bad Content</p>
+                      <p>If something seems wrong, tap the ⚠️ Report button on a reel or the Report Creator button on a profile. Reports are checked within 24–72 hours.</p>
+                    </div>
+
+                    <div>
+                      <p className="font-semibold text-foreground">🟧 3. Parental Controls (PIN-Protected)</p>
+                      <p>Parents can set screen time limits, bedtime mode, comment restrictions, messaging restrictions, age filters, and upload permissions.</p>
+                    </div>
+
+                    <div>
+                      <p className="font-semibold text-foreground">🟧 4. Messaging Safety</p>
+                      <p>Messaging is disabled by default, optional for older kids, monitored by automated filters, and PIN-protected for parents.</p>
+                    </div>
+
+                    <div>
+                      <p className="font-semibold text-foreground">🟧 5. Comment Safety</p>
+                      <p>Comments are filtered to remove bullying, threats, adult themes, spam, and personal info. Parents can also turn off comments entirely.</p>
+                    </div>
+
+                    <div>
+                      <p className="font-semibold text-foreground">🟧 6. Creator Upload Safety</p>
+                      <p>All uploads go through automated filtering and human moderator review with age-range tagging. Creators lose upload access if they violate rules.</p>
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader><CardTitle>⭐ Help Center</CardTitle></CardHeader>
+            <CardContent>
+              <Accordion type="single" collapsible>
+                <AccordionItem value="support">
+                  <AccordionTrigger>🔧 General Support</AccordionTrigger>
+                  <AccordionContent>
+                    <div className="text-sm text-muted-foreground space-y-1">
+                      <p>Email: info@se-motoons.com</p>
+                      <p>Website: www.semotoons.com</p>
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+                <AccordionItem value="loading">
+                  <AccordionTrigger>❓ What should I do if a reel won't load?</AccordionTrigger>
+                  <AccordionContent>
+                    <p className="text-sm text-muted-foreground">Try refreshing your internet, closing & reopening the app, or restarting your device.</p>
+                  </AccordionContent>
+                </AccordionItem>
+                <AccordionItem value="upload-help">
+                  <AccordionTrigger>🎥 How do I upload a reel?</AccordionTrigger>
+                  <AccordionContent>
+                    <p className="text-sm text-muted-foreground">Go to Upload → Select Thumbnail → Add Title → Submit.</p>
+                  </AccordionContent>
+                </AccordionItem>
+                <AccordionItem value="protection">
+                  <AccordionTrigger>🛡️ How does ToonReels protect kids?</AccordionTrigger>
+                  <AccordionContent>
+                    <p className="text-sm text-muted-foreground">Filters violent/adult content, human moderators, parental PIN, and messaging locked by default.</p>
+                  </AccordionContent>
+                </AccordionItem>
+                <AccordionItem value="pin-reset">
+                  <AccordionTrigger>🔒 How do I reset my parent PIN?</AccordionTrigger>
+                  <AccordionContent>
+                    <p className="text-sm text-muted-foreground">Go to Settings → Parental Controls → "Forgot PIN?" You will be asked to verify your email.</p>
+                  </AccordionContent>
+                </AccordionItem>
+                <AccordionItem value="icon">
+                  <AccordionTrigger>📱 App Icon / Avatar Info</AccordionTrigger>
+                  <AccordionContent>
+                    <p className="text-sm text-muted-foreground">The official ToonReels app icon is: 🟧 TR with a red-orange gradient background.</p>
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
+            </CardContent>
+          </Card>
         </div>
       </div>
       <BottomNav />
