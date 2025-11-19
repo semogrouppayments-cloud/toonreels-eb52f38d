@@ -3,7 +3,6 @@ import { supabase } from '@/integrations/supabase/client';
 import VideoPlayer from '@/components/VideoPlayer';
 import CommentsSheet from '@/components/CommentsSheet';
 import BottomNav from '@/components/BottomNav';
-import StoryCircles from '@/components/StoryCircles';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -114,43 +113,20 @@ const Feed = () => {
 
   return (
     <div className="h-screen overflow-y-scroll snap-y snap-mandatory bg-background">
-      {/* Add story button for creators in top left */}
-      {isCreative && (
-        <button
-          onClick={() => navigate('/upload')}
-          className="fixed top-4 left-4 z-50 bg-primary/95 backdrop-blur-lg border-2 border-primary rounded-full w-14 h-14 flex items-center justify-center shadow-lg hover:bg-primary/80 transition-colors text-2xl"
-          aria-label="Add Story"
-        >
-          ➕
-        </button>
-      )}
-      
-      {/* Story circles for creator previews */}
-      <StoryCircles />
-
       {/* Filter button for followed creators */}
       {currentUserId && (
         <Button
           onClick={() => setShowFollowedOnly(!showFollowedOnly)}
-          className={`fixed top-4 left-20 z-50 rounded-full h-14 px-4 ${
+          className={`fixed top-3 left-3 z-50 rounded-full h-9 px-3 text-xs ${
             showFollowedOnly
               ? 'bg-primary text-primary-foreground'
-              : 'bg-card/95 backdrop-blur-lg border-2 border-border text-foreground'
+              : 'bg-card/95 backdrop-blur-lg border border-border text-foreground'
           } shadow-lg hover:scale-105 transition-all`}
         >
-          <Filter className="h-5 w-5 mr-2" />
+          <Filter className="h-3.5 w-3.5 mr-1.5" />
           {showFollowedOnly ? 'All' : 'Following'}
         </Button>
       )}
-      
-      {/* Messages emoji button in top right */}
-      <button
-        onClick={() => navigate('/messages')}
-        className="fixed top-4 right-4 z-50 bg-card/95 backdrop-blur-lg border-2 border-border rounded-full w-14 h-14 flex items-center justify-center shadow-lg hover:bg-accent transition-colors text-2xl"
-        aria-label="Messages"
-      >
-        💬
-      </button>
 
       {videos.map((video) => (
         <VideoPlayer

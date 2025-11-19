@@ -206,34 +206,34 @@ const VideoPlayer = ({ video, currentUserId, isPremium, onCommentsClick, onDelet
       <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
       
       {/* Video Info */}
-      <div className="absolute bottom-20 left-4 right-20 text-white">
-        <div className="flex items-center gap-2 mb-2">
-          <div className="h-10 w-10 rounded-full bg-primary flex items-center justify-center font-bold">
+      <div className="absolute bottom-20 left-3 right-16 text-white">
+        <div className="flex items-center gap-1.5 mb-1.5">
+          <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-sm font-bold">
             {video.profiles.username[0].toUpperCase()}
           </div>
-          <span className="font-bold">{video.profiles.username}</span>
+          <span className="font-semibold text-sm">{video.profiles.username}</span>
         </div>
-        <h3 className="font-bold text-lg mb-1">{video.title}</h3>
-        <p className="text-sm opacity-90 line-clamp-2">{video.description}</p>
+        <h3 className="font-semibold text-base mb-0.5">{video.title}</h3>
+        <p className="text-xs opacity-90 line-clamp-2">{video.description}</p>
       </div>
 
       {/* Action Buttons */}
-      <div className="absolute bottom-20 right-4 flex flex-col gap-4">
+      <div className="absolute bottom-20 right-2 flex flex-col gap-3">
         {/* Follow/Unfollow Button - only show if not own video */}
         {currentUserId && currentUserId !== video.creator_id && (
           <Button
             size="icon"
             variant="ghost"
             onClick={handleFollow}
-            className={`rounded-full h-12 w-12 ${isFollowing ? 'text-primary' : 'text-white'} hover:scale-110 transition-transform`}
+            className={`rounded-full h-11 w-11 p-0 ${isFollowing ? 'text-primary' : 'text-white'} hover:scale-110 transition-transform`}
           >
-            <div className="flex flex-col items-center">
+            <div className="flex flex-col items-center gap-0.5">
               {isFollowing ? (
-                <UserMinus className="h-7 w-7" />
+                <UserMinus className="h-6 w-6" />
               ) : (
-                <UserPlus className="h-7 w-7" />
+                <UserPlus className="h-6 w-6" />
               )}
-              <span className="text-xs font-semibold">{isFollowing ? 'Following' : 'Follow'}</span>
+              <span className="text-[10px] font-semibold leading-none">{isFollowing ? 'Following' : 'Follow'}</span>
             </div>
           </Button>
         )}
@@ -242,11 +242,11 @@ const VideoPlayer = ({ video, currentUserId, isPremium, onCommentsClick, onDelet
           size="icon"
           variant="ghost"
           onClick={handleLike}
-          className={`rounded-full h-12 w-12 ${liked ? 'text-primary' : 'text-white'} hover:scale-110 transition-transform`}
+          className={`rounded-full h-11 w-11 p-0 ${liked ? 'text-primary' : 'text-white'} hover:scale-110 transition-transform`}
         >
-          <div className="flex flex-col items-center">
-            <Heart className={`h-7 w-7 ${liked ? 'fill-current' : ''}`} />
-            <span className="text-xs font-semibold">{likesCount}</span>
+          <div className="flex flex-col items-center gap-0.5">
+            <Heart className={`h-6 w-6 ${liked ? 'fill-current' : ''}`} />
+            <span className="text-[10px] font-semibold leading-none">{likesCount}</span>
           </div>
         </Button>
 
@@ -254,11 +254,11 @@ const VideoPlayer = ({ video, currentUserId, isPremium, onCommentsClick, onDelet
           size="icon"
           variant="ghost"
           onClick={onCommentsClick}
-          className="rounded-full h-12 w-12 text-white hover:scale-110 transition-transform"
+          className="rounded-full h-11 w-11 p-0 text-white hover:scale-110 transition-transform"
         >
-          <div className="flex flex-col items-center">
-            <MessageCircle className="h-7 w-7" />
-            <span className="text-xs font-semibold">Comment</span>
+          <div className="flex flex-col items-center gap-0.5">
+            <MessageCircle className="h-6 w-6" />
+            <span className="text-[10px] font-semibold leading-none">Comment</span>
           </div>
         </Button>
 
@@ -266,18 +266,18 @@ const VideoPlayer = ({ video, currentUserId, isPremium, onCommentsClick, onDelet
           size="icon"
           variant="ghost"
           onClick={handleDownload}
-          className="rounded-full h-12 w-12 text-white hover:scale-110 transition-transform"
+          className="rounded-full h-11 w-11 p-0 text-white hover:scale-110 transition-transform"
         >
-          <Download className="h-7 w-7" />
+          <Download className="h-6 w-6" />
         </Button>
 
         <Button
           size="icon"
           variant="ghost"
           onClick={() => setShowReportDialog(true)}
-          className="rounded-full h-12 w-12 text-white hover:scale-110 transition-transform"
+          className="rounded-full h-11 w-11 p-0 text-white hover:scale-110 transition-transform"
         >
-          <Flag className="h-7 w-7" />
+          <Flag className="h-6 w-6" />
         </Button>
 
         {video.creator_id === currentUserId && onDelete && (
@@ -285,9 +285,9 @@ const VideoPlayer = ({ video, currentUserId, isPremium, onCommentsClick, onDelet
             size="icon"
             variant="ghost"
             onClick={onDelete}
-            className="rounded-full h-12 w-12 text-red-500 hover:scale-110 transition-transform"
+            className="rounded-full h-11 w-11 p-0 text-red-500 hover:scale-110 transition-transform"
           >
-            <Trash2 className="h-7 w-7" />
+            <Trash2 className="h-6 w-6" />
           </Button>
         )}
       </div>
