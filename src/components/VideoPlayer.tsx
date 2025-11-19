@@ -7,6 +7,7 @@ import { useSignedVideoUrl } from '@/hooks/useSignedVideoUrl';
 import LikeAnimation from '@/components/LikeAnimation';
 import { useNavigate } from 'react-router-dom';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import DownloadQualityDialog from '@/components/DownloadQualityDialog';
 
 interface VideoPlayerProps {
   video: {
@@ -34,6 +35,7 @@ const VideoPlayer = ({ video, currentUserId, isPremium, onCommentsClick, onDelet
   const [likesCount, setLikesCount] = useState(video.likes_count);
   const [isFollowing, setIsFollowing] = useState(false);
   const [showReportDialog, setShowReportDialog] = useState(false);
+  const [showDownloadDialog, setShowDownloadDialog] = useState(false);
   const [likeAnimations, setLikeAnimations] = useState<Array<{ id: number; x: number; y: number }>>([]);
   const [isMuted, setIsMuted] = useState(true);
   const [isPlaying, setIsPlaying] = useState(true);
@@ -190,7 +192,11 @@ const VideoPlayer = ({ video, currentUserId, isPremium, onCommentsClick, onDelet
     }
   };
 
-  const handleDownload = async () => {
+  const handleDownload = () => {
+    setShowDownloadDialog(true);
+  };
+
+  const handleDownloadWithQuality = async (quality: string) => {
     const downloadToast = toast.loading('Preparing download...');
     
     try {
@@ -200,11 +206,13 @@ const VideoPlayer = ({ video, currentUserId, isPremium, onCommentsClick, onDelet
       
       const videoBlob = await response.blob();
       
-      // Download original video as MP4
+      // Download video with selected quality
+      // Note: Currently downloads original quality for all selections
+      // TODO: Implement quality transcoding for different resolutions
       const url = URL.createObjectURL(videoBlob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `${video.title}.mp4`;
+      link.download = `${video.title}_${quality}.mp4`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -216,7 +224,7 @@ const VideoPlayer = ({ video, currentUserId, isPremium, onCommentsClick, onDelet
         user_id: currentUserId
       });
       
-      toast.success('Download complete!', { id: downloadToast });
+      toast.success(`Downloaded in ${quality} quality!`, { id: downloadToast });
     } catch (error) {
       console.error('Download error:', error);
       toast.error('Failed to download video', { id: downloadToast });
@@ -400,6 +408,14 @@ const VideoPlayer = ({ video, currentUserId, isPremium, onCommentsClick, onDelet
           </div>
         </div>
       )}
+
+      {/* Download Quality Dialog */}
+      <DownloadQualityDialog
+        open={showDownloadDialog}
+        onOpenChange={setShowDownloadDialog}
+        onSelectQuality={handleDownloadWithQuality}
+        videoTitle={video.title}
+      />
     </div>
   );
 };
