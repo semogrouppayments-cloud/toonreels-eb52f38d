@@ -25,13 +25,31 @@ interface Notification {
   };
 }
 
+interface NotificationPreferences {
+  likes_enabled: boolean;
+  comments_enabled: boolean;
+  follows_enabled: boolean;
+  replies_enabled: boolean;
+  push_enabled: boolean;
+  sound_enabled: boolean;
+}
+
 const NotificationBell = () => {
   const navigate = useNavigate();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [open, setOpen] = useState(false);
+  const [preferences, setPreferences] = useState<NotificationPreferences>({
+    likes_enabled: true,
+    comments_enabled: true,
+    follows_enabled: true,
+    replies_enabled: true,
+    push_enabled: false,
+    sound_enabled: true,
+  });
 
   useEffect(() => {
+    fetchNotificationPreferences();
     fetchNotifications();
     
     // Set up real-time subscription
@@ -44,7 +62,31 @@ const NotificationBell = () => {
           schema: 'public',
           table: 'notifications'
         },
-        () => {
+        (payload) => {
+          const newNotification = payload.new as any;
+          
+          // Check if this type of notification is enabled
+          const typeEnabled = 
+            (newNotification.type === 'like' && preferences.likes_enabled) ||
+            (newNotification.type === 'comment' && preferences.comments_enabled) ||
+            (newNotification.type === 'follow' && preferences.follows_enabled) ||
+            (newNotification.type === 'reply' && preferences.replies_enabled);
+          
+          if (typeEnabled) {
+            // Play sound if enabled
+            if (preferences.sound_enabled) {
+              playNotificationSound();
+            }
+            
+            // Trigger haptic feedback
+            triggerHapticFeedback();
+            
+            // Show push notification if enabled and supported
+            if (preferences.push_enabled && 'Notification' in window) {
+              showPushNotification(newNotification);
+            }
+          }
+          
           fetchNotifications();
         }
       )
@@ -53,20 +95,75 @@ const NotificationBell = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [preferences]);
+
+  const fetchNotificationPreferences = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { data } = await supabase
+      .from('notification_preferences')
+      .select('*')
+      .eq('user_id', user.id)
+      .single();
+
+    if (data) {
+      setPreferences(data);
+    }
+  };
+
+  const playNotificationSound = () => {
+    const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBTiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+Dy');
+    audio.play().catch(() => {});
+  };
+
+  const triggerHapticFeedback = () => {
+    if ('vibrate' in navigator) {
+      navigator.vibrate(200);
+    }
+  };
+
+  const showPushNotification = async (notification: any) => {
+    if (Notification.permission === 'granted') {
+      const registration = await navigator.serviceWorker.ready;
+      registration.showNotification('ToonReels', {
+        body: getNotificationText(notification),
+        icon: '/toonreels-logo.png',
+        badge: '/toonreels-logo.png',
+      });
+    } else if (Notification.permission !== 'denied') {
+      const permission = await Notification.requestPermission();
+      if (permission === 'granted') {
+        showPushNotification(notification);
+      }
+    }
+  };
 
   const fetchNotifications = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
-    const { data } = await supabase
+    let query = supabase
       .from('notifications')
       .select(`
         *,
         actor_profile:profiles!notifications_actor_id_fkey(username, avatar_url),
         video:videos(title)
       `)
-      .eq('user_id', user.id)
+      .eq('user_id', user.id);
+
+    // Filter by preferences
+    const enabledTypes = [];
+    if (preferences.likes_enabled) enabledTypes.push('like');
+    if (preferences.comments_enabled) enabledTypes.push('comment');
+    if (preferences.follows_enabled) enabledTypes.push('follow');
+    if (preferences.replies_enabled) enabledTypes.push('reply');
+
+    if (enabledTypes.length > 0) {
+      query = query.in('type', enabledTypes);
+    }
+
+    const { data } = await query
       .order('created_at', { ascending: false })
       .limit(20);
 

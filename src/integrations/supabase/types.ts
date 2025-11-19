@@ -192,6 +192,45 @@ export type Database = {
           },
         ]
       }
+      notification_preferences: {
+        Row: {
+          comments_enabled: boolean | null
+          created_at: string | null
+          follows_enabled: boolean | null
+          id: string
+          likes_enabled: boolean | null
+          push_enabled: boolean | null
+          replies_enabled: boolean | null
+          sound_enabled: boolean | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          comments_enabled?: boolean | null
+          created_at?: string | null
+          follows_enabled?: boolean | null
+          id?: string
+          likes_enabled?: boolean | null
+          push_enabled?: boolean | null
+          replies_enabled?: boolean | null
+          sound_enabled?: boolean | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          comments_enabled?: boolean | null
+          created_at?: string | null
+          follows_enabled?: boolean | null
+          id?: string
+          likes_enabled?: boolean | null
+          push_enabled?: boolean | null
+          replies_enabled?: boolean | null
+          sound_enabled?: boolean | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           actor_id: string
