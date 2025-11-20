@@ -681,10 +681,13 @@ const Profile = () => {
                           src={video.thumbnail_url} 
                           alt={video.title}
                           className="absolute inset-0 w-full h-full object-cover"
+                          onError={(e) => {
+                            e.currentTarget.style.display = 'none';
+                            e.currentTarget.parentElement?.querySelector('.fallback-gradient')?.classList.remove('hidden');
+                          }}
                         />
-                      ) : (
-                        <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-accent/20 to-fun-blue/20" />
-                      )}
+                      ) : null}
+                      <div className={`absolute inset-0 bg-gradient-to-br from-primary/20 via-accent/20 to-fun-blue/20 fallback-gradient ${video.thumbnail_url ? 'hidden' : ''}`} />
                       
                       {/* Gradient overlay for text readability */}
                       <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
@@ -763,10 +766,13 @@ const Profile = () => {
                           src={video.thumbnail_url} 
                           alt={video.title}
                           className="absolute inset-0 w-full h-full object-cover"
+                          onError={(e) => {
+                            e.currentTarget.style.display = 'none';
+                            e.currentTarget.parentElement?.querySelector('.fallback-gradient')?.classList.remove('hidden');
+                          }}
                         />
-                      ) : (
-                        <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-accent/20 to-fun-blue/20" />
-                      )}
+                      ) : null}
+                      <div className={`absolute inset-0 bg-gradient-to-br from-primary/20 via-accent/20 to-fun-blue/20 fallback-gradient ${video.thumbnail_url ? 'hidden' : ''}`} />
                       
                       {/* Gradient overlay for text readability */}
                       <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
