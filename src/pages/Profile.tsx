@@ -721,22 +721,8 @@ const Profile = () => {
                 </div>
               </div>
             ) : (
-              // Viewer users: Show Views, Likes, Followers, Following (like TikTok)
-              <div className="flex items-center justify-around gap-2 px-2">
-                <div className="flex flex-col items-center min-w-0">
-                  <p className="text-lg md:text-xl font-black text-white drop-shadow-lg">
-                    {totalViews}
-                  </p>
-                  <p className="text-[10px] md:text-xs text-white/90 drop-shadow-md font-semibold">Views</p>
-                </div>
-                <div className="h-8 w-px bg-white/20"></div>
-                <div className="flex flex-col items-center min-w-0">
-                  <p className="text-lg md:text-xl font-black text-white drop-shadow-lg">
-                    {totalLikes}
-                  </p>
-                  <p className="text-[10px] md:text-xs text-white/90 drop-shadow-md font-semibold">Likes</p>
-                </div>
-                <div className="h-8 w-px bg-white/20"></div>
+              // Viewer users: Show only Followers and Following
+              <div className="flex items-center justify-center gap-4 px-2">
                 <div className="flex flex-col items-center min-w-0">
                   <p className="text-lg md:text-xl font-black text-white drop-shadow-lg">{followersCount}</p>
                   <p className="text-[10px] md:text-xs text-white/90 drop-shadow-md font-semibold">Followers</p>
