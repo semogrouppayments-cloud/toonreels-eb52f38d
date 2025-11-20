@@ -7,6 +7,17 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import BottomNav from "@/components/BottomNav";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useState, useEffect } from "react";
@@ -226,6 +237,21 @@ const Settings = () => {
       toast.success(`Downloaded ${guide.name}`);
     } catch (error) {
       toast.error('Failed to download guide');
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    try {
+      // Sign out first to ensure clean deletion
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) throw error;
+
+      toast.success("Account deleted successfully");
+      navigate('/auth');
+    } catch (error: any) {
+      console.error('Delete account error:', error);
+      toast.error(error.message || "Failed to delete account");
     }
   };
 
@@ -574,6 +600,30 @@ const Settings = () => {
                     <div>
                       <p className="font-semibold text-foreground">6. Security</p>
                       <p>We use encryption, secure storage, and safety auditing. No system is 100% secure, but we take strong measures to protect children.</p>
+                    </div>
+
+                    <div className="pt-4 border-t">
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="destructive" className="w-full">
+                            Delete Account
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Are you sure you want to delete your account?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              This action cannot be undone. This will permanently delete your account and remove all your data including videos, likes, comments, and followers from our servers.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={handleDeleteAccount} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                              Yes, Delete My Account
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
                     </div>
                   </AccordionContent>
                 </AccordionItem>
