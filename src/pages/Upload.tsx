@@ -1,12 +1,13 @@
-import { useState } from 'react';
+import { useState, KeyboardEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Upload as UploadIcon, ArrowLeft } from 'lucide-react';
+import { Upload as UploadIcon, ArrowLeft, X, Hash } from 'lucide-react';
 import BottomNav from '@/components/BottomNav';
 import { toast } from 'sonner';
 
@@ -15,6 +16,8 @@ const Upload = () => {
   const [loading, setLoading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [description, setDescription] = useState('');
+  const [tags, setTags] = useState<string[]>([]);
+  const [tagInput, setTagInput] = useState('');
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
   const [videoPreview, setVideoPreview] = useState<string | null>(null);
@@ -76,6 +79,21 @@ const Upload = () => {
       
       video.src = URL.createObjectURL(videoFile);
     });
+  };
+
+  const handleAddTag = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' || e.key === ',') {
+      e.preventDefault();
+      const tag = tagInput.trim().toLowerCase().replace(/^#/, '');
+      if (tag && !tags.includes(tag) && tags.length < 10) {
+        setTags([...tags, tag]);
+        setTagInput('');
+      }
+    }
+  };
+
+  const handleRemoveTag = (tagToRemove: string) => {
+    setTags(tags.filter(tag => tag !== tagToRemove));
   };
 
   const handleUpload = async (e: React.FormEvent) => {
@@ -203,6 +221,7 @@ const Upload = () => {
           description,
           video_url: videoUrl,
           thumbnail_url: thumbnailUrl,
+          tags: tags,
         });
 
       if (insertError) throw insertError;
@@ -261,6 +280,44 @@ const Upload = () => {
                   rows={4}
                   required
                 />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="tags" className="flex items-center gap-2">
+                  <Hash className="h-4 w-4" />
+                  Tags/Hashtags (Optional)
+                </Label>
+                <Input
+                  id="tags"
+                  value={tagInput}
+                  onChange={(e) => setTagInput(e.target.value)}
+                  onKeyDown={handleAddTag}
+                  placeholder="Add tags (press Enter or comma to add)"
+                  disabled={tags.length >= 10}
+                />
+                {tags.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {tags.map((tag) => (
+                      <Badge
+                        key={tag}
+                        variant="secondary"
+                        className="gap-1 pl-2 pr-1"
+                      >
+                        #{tag}
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveTag(tag)}
+                          className="ml-1 rounded-full p-0.5 hover:bg-muted-foreground/20"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+                <p className="text-xs text-muted-foreground">
+                  {tags.length}/10 tags • Helps users discover your content
+                </p>
               </div>
 
               <div className="space-y-2">
