@@ -147,17 +147,44 @@ const Profile = () => {
     
     if (!targetUserId) return;
 
-    // Get total views and likes from all user's videos
-    const { data: videos } = await supabase
-      .from('videos')
-      .select('views_count, likes_count')
-      .eq('creator_id', targetUserId);
+    // Get profile to check user type
+    const { data: profileData } = await supabase
+      .from('profiles')
+      .select('user_type')
+      .eq('id', targetUserId)
+      .single();
 
-    if (videos) {
-      const views = videos.reduce((sum, v) => sum + (v.views_count || 0), 0);
-      const likes = videos.reduce((sum, v) => sum + (v.likes_count || 0), 0);
-      setTotalViews(views);
-      setTotalLikes(likes);
+    if (profileData?.user_type === 'creative') {
+      // For creatives: Get total views and likes from all their videos
+      const { data: videos } = await supabase
+        .from('videos')
+        .select('views_count, likes_count')
+        .eq('creator_id', targetUserId);
+
+      if (videos) {
+        const views = videos.reduce((sum, v) => sum + (v.views_count || 0), 0);
+        const likes = videos.reduce((sum, v) => sum + (v.likes_count || 0), 0);
+        setTotalViews(views);
+        setTotalLikes(likes);
+      }
+    } else {
+      // For viewers: Get total views and likes from their saved videos
+      const { data: savedData } = await supabase
+        .from('saved_videos')
+        .select(`
+          videos (
+            views_count,
+            likes_count
+          )
+        `)
+        .eq('user_id', targetUserId);
+
+      if (savedData) {
+        const views = savedData.reduce((sum, item: any) => sum + (item.videos?.views_count || 0), 0);
+        const likes = savedData.reduce((sum, item: any) => sum + (item.videos?.likes_count || 0), 0);
+        setTotalViews(views);
+        setTotalLikes(likes);
+      }
     }
   };
 
@@ -588,16 +615,30 @@ const Profile = () => {
                 </div>
               </div>
             ) : (
-              // Viewer users: Show only Followers and Following
-              <div className="flex items-center justify-around gap-4 px-8">
+              // Viewer users: Show Views, Likes, Followers, Following (like TikTok)
+              <div className="flex items-center justify-around gap-2 px-2">
                 <div className="flex flex-col items-center min-w-0">
-                  <p className="text-2xl md:text-3xl font-black text-white drop-shadow-lg">{followersCount}</p>
-                  <p className="text-xs md:text-sm text-white/90 drop-shadow-md font-semibold">Followers</p>
+                  <p className="text-lg md:text-xl font-black text-white drop-shadow-lg">
+                    {totalViews}
+                  </p>
+                  <p className="text-[10px] md:text-xs text-white/90 drop-shadow-md font-semibold">Views</p>
                 </div>
-                <div className="h-12 w-px bg-white/20"></div>
+                <div className="h-8 w-px bg-white/20"></div>
                 <div className="flex flex-col items-center min-w-0">
-                  <p className="text-2xl md:text-3xl font-black text-white drop-shadow-lg">{followingCount}</p>
-                  <p className="text-xs md:text-sm text-white/90 drop-shadow-md font-semibold">Following</p>
+                  <p className="text-lg md:text-xl font-black text-white drop-shadow-lg">
+                    {totalLikes}
+                  </p>
+                  <p className="text-[10px] md:text-xs text-white/90 drop-shadow-md font-semibold">Likes</p>
+                </div>
+                <div className="h-8 w-px bg-white/20"></div>
+                <div className="flex flex-col items-center min-w-0">
+                  <p className="text-lg md:text-xl font-black text-white drop-shadow-lg">{followersCount}</p>
+                  <p className="text-[10px] md:text-xs text-white/90 drop-shadow-md font-semibold">Followers</p>
+                </div>
+                <div className="h-8 w-px bg-white/20"></div>
+                <div className="flex flex-col items-center min-w-0">
+                  <p className="text-lg md:text-xl font-black text-white drop-shadow-lg">{followingCount}</p>
+                  <p className="text-[10px] md:text-xs text-white/90 drop-shadow-md font-semibold">Following</p>
                 </div>
               </div>
             )}
