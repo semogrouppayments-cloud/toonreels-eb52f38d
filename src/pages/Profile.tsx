@@ -10,6 +10,17 @@ import NotificationBell from '@/components/NotificationBell';
 import { toast } from 'sonner';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import VideoPlayer from '@/components/VideoPlayer';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { z } from 'zod';
 
 interface Profile {
   id?: string;
@@ -49,6 +60,14 @@ const Profile = () => {
   const [isFollowing, setIsFollowing] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string>('');
   const [savedVideos, setSavedVideos] = useState<Video[]>([]);
+  const [editingVideo, setEditingVideo] = useState<Video | null>(null);
+  const [editVideoTitle, setEditVideoTitle] = useState('');
+  const [editVideoDescription, setEditVideoDescription] = useState('');
+
+  const videoEditSchema = z.object({
+    title: z.string().trim().min(1, { message: "Title is required" }).max(100, { message: "Title must be less than 100 characters" }),
+    description: z.string().trim().max(500, { message: "Description must be less than 500 characters" }).optional()
+  });
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -371,6 +390,51 @@ const Profile = () => {
       fetchProfile(null);
     } catch (error) {
       toast.error('Failed to update bio');
+    }
+  };
+
+  const handleOpenEditVideo = (video: Video) => {
+    setEditingVideo(video);
+    setEditVideoTitle(video.title);
+    setEditVideoDescription(video.description || '');
+  };
+
+  const handleCloseEditVideo = () => {
+    setEditingVideo(null);
+    setEditVideoTitle('');
+    setEditVideoDescription('');
+  };
+
+  const handleSaveVideoEdit = async () => {
+    if (!editingVideo) return;
+
+    try {
+      const validation = videoEditSchema.safeParse({
+        title: editVideoTitle,
+        description: editVideoDescription
+      });
+
+      if (!validation.success) {
+        toast.error(validation.error.issues[0].message);
+        return;
+      }
+
+      const { error } = await supabase
+        .from('videos')
+        .update({
+          title: validation.data.title,
+          description: validation.data.description || ''
+        })
+        .eq('id', editingVideo.id);
+
+      if (error) throw error;
+
+      toast.success('Video updated successfully!');
+      handleCloseEditVideo();
+      fetchUserVideos(null);
+    } catch (error) {
+      console.error('Error updating video:', error);
+      toast.error('Failed to update video');
     }
   };
 
@@ -715,19 +779,33 @@ const Profile = () => {
                         </p>
                       </div>
                     </div>
-                    {/* Analytics button for own videos */}
+                    {/* Action buttons for own videos */}
                     {isOwnProfile && (
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          navigate(`/video-analytics/${video.id}`);
-                        }}
-                        className="absolute top-2 right-2 h-7 px-2 text-xs opacity-0 group-hover:opacity-100 transition-opacity"
-                      >
-                        Stats
-                      </Button>
+                      <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleOpenEditVideo(video);
+                          }}
+                          className="h-7 w-7 p-0"
+                          title="Edit video"
+                        >
+                          <Edit className="h-3 w-3" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(`/video-analytics/${video.id}`);
+                          }}
+                          className="h-7 px-2 text-xs"
+                        >
+                          Stats
+                        </Button>
+                      </div>
                     )}
                   </div>
                 ))}
@@ -843,6 +921,58 @@ const Profile = () => {
           </Button>
         </div>
       )}
+
+
+      {/* Edit Video Dialog */}
+      <Dialog open={!!editingVideo} onOpenChange={(open) => !open && handleCloseEditVideo()}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Edit Video</DialogTitle>
+            <DialogDescription>
+              Update your video title and description
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="video-title">
+                Title <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id="video-title"
+                value={editVideoTitle}
+                onChange={(e) => setEditVideoTitle(e.target.value)}
+                placeholder="Enter video title"
+                maxLength={100}
+              />
+              <p className="text-xs text-muted-foreground">
+                {editVideoTitle.length}/100 characters
+              </p>
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="video-description">Description</Label>
+              <Textarea
+                id="video-description"
+                value={editVideoDescription}
+                onChange={(e) => setEditVideoDescription(e.target.value)}
+                placeholder="Enter video description (optional)"
+                maxLength={500}
+                rows={4}
+              />
+              <p className="text-xs text-muted-foreground">
+                {editVideoDescription.length}/500 characters
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={handleCloseEditVideo}>
+              Cancel
+            </Button>
+            <Button onClick={handleSaveVideoEdit}>
+              Save Changes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <BottomNav />
     </div>
