@@ -14,7 +14,6 @@ const Upload = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
-  const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
@@ -200,7 +199,7 @@ const Upload = () => {
         .from('videos')
         .insert({
           creator_id: user.id,
-          title,
+          title: description,
           description,
           video_url: videoUrl,
           thumbnail_url: thumbnailUrl,
@@ -253,24 +252,14 @@ const Upload = () => {
           <CardContent>
             <form onSubmit={handleUpload} className="space-y-6">
               <div className="space-y-2">
-                <Label htmlFor="title">Title</Label>
-                <Input
-                  id="title"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  placeholder="Give your animation a catchy title"
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="description">Description</Label>
+                <Label htmlFor="description">Title</Label>
                 <Textarea
                   id="description"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Tell us about your animation"
+                  placeholder="Give your animation a catchy title and description"
                   rows={4}
+                  required
                 />
               </div>
 
