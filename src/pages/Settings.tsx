@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Moon, Sun } from "lucide-react";
+import { ArrowLeft, Moon, Sun, Download, FileImage } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -46,6 +46,7 @@ const Settings = () => {
   const [notifReplies, setNotifReplies] = useState(true);
   const [notifPush, setNotifPush] = useState(false);
   const [notifSound, setNotifSound] = useState(true);
+  const [isCreative, setIsCreative] = useState(false);
 
   useEffect(() => {
     fetchUserSettings();
@@ -56,6 +57,13 @@ const Settings = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
       setUserId(user.id);
+      
+      // Check if user is creative
+      const { data: roles } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id);
+      setIsCreative(roles?.some(r => r.role === 'creative') || false);
       
       const { data: profile } = await supabase.from('profiles').select('username, selected_avatar, age_range, profile_pin').eq('id', user.id).single();
       if (profile) {
@@ -196,6 +204,23 @@ const Settings = () => {
     } catch (error) {
       toast.error('Failed to save');
     }
+  };
+
+  const colorGuides = [
+    { name: 'Black Color Guide', file: 'ToonReels_Black.png', path: '/guides/ToonReels_Black.png' },
+    { name: 'Blue Color Guide', file: 'ToonReels_Blue.png', path: '/guides/ToonReels_Blue.png' },
+    { name: 'White Color Guide', file: 'ToonReels_White.png', path: '/guides/ToonReels_White.png' },
+    { name: 'Red Color Guide', file: 'ToonReels_Shorts_Red.png', path: '/guides/ToonReels_Shorts_Red.png' },
+  ];
+
+  const handleDownload = (guide: typeof colorGuides[0]) => {
+    const link = document.createElement('a');
+    link.href = guide.path;
+    link.download = guide.file;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast.success(`Downloaded ${guide.name}`);
   };
 
   if (loading) return <div className="min-h-screen bg-background flex items-center justify-center"><p>Loading...</p></div>;
@@ -593,6 +618,50 @@ const Settings = () => {
               </Accordion>
             </CardContent>
           </Card>
+
+          {/* Color Guides - Creatives Only */}
+          {isCreative && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <FileImage className="h-5 w-5" />
+                  Video Upload Color Guides
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Download these color guide templates to help format your videos correctly for ToonReels.
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {colorGuides.map((guide) => (
+                    <div
+                      key={guide.file}
+                      className="flex items-center justify-between p-3 rounded-lg border border-border bg-card hover:bg-accent transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-md bg-primary/10">
+                          <FileImage className="h-5 w-5 text-primary" />
+                        </div>
+                        <div>
+                          <p className="font-semibold text-sm">{guide.name}</p>
+                          <p className="text-xs text-muted-foreground">{guide.file}</p>
+                        </div>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleDownload(guide)}
+                        className="gap-2"
+                      >
+                        <Download className="h-4 w-4" />
+                        Download
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           <Card>
             <CardHeader><CardTitle>Help Center</CardTitle></CardHeader>
