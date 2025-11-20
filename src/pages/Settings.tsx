@@ -493,6 +493,12 @@ const Settings = () => {
                     <p className="text-sm text-muted-foreground">Downloading reel videos is a premium feature.</p>
                   </AccordionContent>
                 </AccordionItem>
+                <AccordionItem value="delete">
+                  <AccordionTrigger>How do I delete my account?</AccordionTrigger>
+                  <AccordionContent>
+                    <p className="text-sm text-muted-foreground">To delete your account, go to <span className="font-semibold">Settings → Privacy Center</span>, scroll down, and click the <span className="font-semibold text-destructive">"Delete Account"</span> button. You'll be asked to confirm before your account is permanently deleted. This action cannot be undone and will remove all your videos, likes, comments, and followers.</p>
+                  </AccordionContent>
+                </AccordionItem>
                 <AccordionItem value="contact">
                   <AccordionTrigger>How do I contact ToonReels?</AccordionTrigger>
                   <AccordionContent>
