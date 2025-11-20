@@ -609,7 +609,7 @@ const Profile = () => {
                       {profile.username}
                     </h1>
                     {profile.id === currentUserId && (
-                      <BadgeCheck className="h-5 w-5 text-white drop-shadow-lg" fill="white" />
+                      <BadgeCheck className="h-5 w-5 text-black drop-shadow-lg" fill="#FFD700" />
                     )}
                     {isOwnProfile && (
                       <Button
