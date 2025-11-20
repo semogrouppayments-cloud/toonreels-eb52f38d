@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { LogOut, Settings, Video, Camera, Edit, BarChart3, Bookmark } from 'lucide-react';
+import { LogOut, Settings, Video, Camera, Edit, BarChart3, Bookmark, Eye, Heart } from 'lucide-react';
 import BottomNav from '@/components/BottomNav';
 import NotificationBell from '@/components/NotificationBell';
 import { toast } from 'sonner';
@@ -689,9 +689,25 @@ const Profile = () => {
                       {/* Gradient overlay for text readability */}
                       <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
                       
+                      {/* View Count - TikTok style */}
+                      <div className="absolute bottom-2 left-2 flex items-center gap-1 bg-black/50 backdrop-blur-sm px-2 py-1 rounded-full">
+                        <Eye className="h-3 w-3 text-white" />
+                        <span className="text-white text-[10px] font-semibold">
+                          {video.views_count || 0}
+                        </span>
+                      </div>
+                      
+                      {/* Likes Count - TikTok style */}
+                      <div className="absolute bottom-2 right-2 flex items-center gap-1 bg-black/50 backdrop-blur-sm px-2 py-1 rounded-full">
+                        <Heart className="h-3 w-3 text-white fill-white" />
+                        <span className="text-white text-[10px] font-semibold">
+                          {video.likes_count || 0}
+                        </span>
+                      </div>
+                      
                       {/* Video Title */}
-                      <div className="absolute bottom-0 left-0 right-0 p-3">
-                        <p className="text-white text-xs font-bold drop-shadow-lg line-clamp-2">
+                      <div className="absolute top-2 left-2 right-2">
+                        <p className="text-white text-xs font-bold drop-shadow-lg line-clamp-2 bg-black/30 backdrop-blur-sm px-2 py-1 rounded">
                           {video.title}
                         </p>
                       </div>
@@ -755,9 +771,25 @@ const Profile = () => {
                       {/* Gradient overlay for text readability */}
                       <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
                       
+                      {/* View Count - TikTok style */}
+                      <div className="absolute bottom-2 left-2 flex items-center gap-1 bg-black/50 backdrop-blur-sm px-2 py-1 rounded-full">
+                        <Eye className="h-3 w-3 text-white" />
+                        <span className="text-white text-[10px] font-semibold">
+                          {video.views_count || 0}
+                        </span>
+                      </div>
+                      
+                      {/* Likes Count - TikTok style */}
+                      <div className="absolute bottom-2 right-2 flex items-center gap-1 bg-black/50 backdrop-blur-sm px-2 py-1 rounded-full">
+                        <Heart className="h-3 w-3 text-white fill-white" />
+                        <span className="text-white text-[10px] font-semibold">
+                          {video.likes_count || 0}
+                        </span>
+                      </div>
+                      
                       {/* Video Title */}
-                      <div className="absolute bottom-0 left-0 right-0 p-3">
-                        <p className="text-white text-xs font-bold drop-shadow-lg line-clamp-2">
+                      <div className="absolute top-2 left-2 right-2">
+                        <p className="text-white text-xs font-bold drop-shadow-lg line-clamp-2 bg-black/30 backdrop-blur-sm px-2 py-1 rounded">
                           {video.title}
                         </p>
                       </div>
