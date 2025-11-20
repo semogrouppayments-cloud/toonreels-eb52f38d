@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { LogOut, Settings, Video, Camera, Edit, BarChart3, Bookmark, Eye, Heart } from 'lucide-react';
+import { LogOut, Settings, Video, Camera, Edit, BarChart3, Bookmark, Eye, Heart, Trash2 } from 'lucide-react';
 import BottomNav from '@/components/BottomNav';
 import NotificationBell from '@/components/NotificationBell';
 import { toast } from 'sonner';
@@ -18,6 +18,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { z } from 'zod';
@@ -63,6 +73,7 @@ const Profile = () => {
   const [editingVideo, setEditingVideo] = useState<Video | null>(null);
   const [editVideoTitle, setEditVideoTitle] = useState('');
   const [editVideoDescription, setEditVideoDescription] = useState('');
+  const [deletingVideo, setDeletingVideo] = useState<string | null>(null);
 
   const videoEditSchema = z.object({
     title: z.string().trim().min(1, { message: "Title is required" }).max(100, { message: "Title must be less than 100 characters" }),
@@ -408,33 +419,61 @@ const Profile = () => {
   const handleSaveVideoEdit = async () => {
     if (!editingVideo) return;
 
+    const validation = videoEditSchema.safeParse({
+      title: editVideoTitle,
+      description: editVideoDescription,
+    });
+
+    if (!validation.success) {
+      toast.error(validation.error.issues[0].message);
+      return;
+    }
+
     try {
-      const validation = videoEditSchema.safeParse({
-        title: editVideoTitle,
-        description: editVideoDescription
-      });
-
-      if (!validation.success) {
-        toast.error(validation.error.issues[0].message);
-        return;
-      }
-
       const { error } = await supabase
-        .from('videos')
+        .from("videos")
         .update({
-          title: validation.data.title,
-          description: validation.data.description || ''
+          title: editVideoTitle,
+          description: editVideoDescription,
         })
-        .eq('id', editingVideo.id);
+        .eq("id", editingVideo.id);
 
       if (error) throw error;
 
-      toast.success('Video updated successfully!');
+      // Update local state
+      setVideos(videos.map(v => 
+        v.id === editingVideo.id 
+          ? { ...v, title: editVideoTitle, description: editVideoDescription }
+          : v
+      ));
+
+      toast.success("Video updated successfully!");
       handleCloseEditVideo();
-      fetchUserVideos(null);
     } catch (error) {
-      console.error('Error updating video:', error);
-      toast.error('Failed to update video');
+      console.error("Error updating video:", error);
+      toast.error("Failed to update video");
+    }
+  };
+
+  const handleDeleteVideo = async () => {
+    if (!deletingVideo) return;
+
+    try {
+      const { error } = await supabase
+        .from("videos")
+        .delete()
+        .eq("id", deletingVideo);
+
+      if (error) throw error;
+
+      // Update local state
+      setVideos(videos.filter(v => v.id !== deletingVideo));
+
+      toast.success("Video deleted successfully!");
+      setDeletingVideo(null);
+    } catch (error) {
+      console.error("Error deleting video:", error);
+      toast.error("Failed to delete video");
     }
   };
 
@@ -805,6 +844,18 @@ const Profile = () => {
                         >
                           Stats
                         </Button>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setDeletingVideo(video.id);
+                          }}
+                          className="h-7 w-7 p-0"
+                          title="Delete video"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
                       </div>
                     )}
                   </div>
@@ -973,6 +1024,28 @@ const Profile = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Video Confirmation Dialog */}
+      <AlertDialog open={!!deletingVideo} onOpenChange={(open) => !open && setDeletingVideo(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete your video
+              and remove it from our servers.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDeleteVideo}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <BottomNav />
     </div>
