@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { LogOut, Settings, Video, Camera, Edit, BarChart3, Bookmark, Eye, Heart, Trash2 } from 'lucide-react';
+import { LogOut, Settings, Video, Camera, Edit, BarChart3, Bookmark, Eye, Heart, Trash2, BadgeCheck } from 'lucide-react';
 import BottomNav from '@/components/BottomNav';
 import NotificationBell from '@/components/NotificationBell';
 import { toast } from 'sonner';
@@ -608,6 +608,9 @@ const Profile = () => {
                     <h1 className="text-xl md:text-2xl font-black text-white drop-shadow-lg">
                       {profile.username}
                     </h1>
+                    {profile.id === currentUserId && (
+                      <BadgeCheck className="h-5 w-5 text-white drop-shadow-lg" fill="white" />
+                    )}
                     {isOwnProfile && (
                       <Button
                         size="icon"
