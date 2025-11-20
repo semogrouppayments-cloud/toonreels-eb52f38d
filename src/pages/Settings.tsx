@@ -213,14 +213,20 @@ const Settings = () => {
     { name: 'Red Color Guide', file: 'ToonReels_Shorts_Red.png', path: '/guides/ToonReels_Shorts_Red.png' },
   ];
 
-  const handleDownload = (guide: typeof colorGuides[0]) => {
-    const link = document.createElement('a');
-    link.href = guide.path;
-    link.download = guide.file;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    toast.success(`Downloaded ${guide.name}`);
+  const handleDownload = async (guide: typeof colorGuides[0]) => {
+    try {
+      const response = await fetch(guide.path);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = guide.file;
+      link.click();
+      window.URL.revokeObjectURL(url);
+      toast.success(`Downloaded ${guide.name}`);
+    } catch (error) {
+      toast.error('Failed to download guide');
+    }
   };
 
   if (loading) return <div className="min-h-screen bg-background flex items-center justify-center"><p>Loading...</p></div>;
