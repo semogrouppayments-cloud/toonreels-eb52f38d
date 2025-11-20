@@ -46,6 +46,7 @@ const VideoPlayer = ({ video, currentUserId, isPremium, onCommentsClick, onDelet
   const videoRef = useRef<HTMLVideoElement>(null);
   const watchStartTimeRef = useRef<number>(Date.now());
   const analyticsTrackedRef = useRef<boolean>(false);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     checkIfFollowing();
@@ -60,6 +61,39 @@ const VideoPlayer = ({ video, currentUserId, isPremium, onCommentsClick, onDelet
       trackVideoAnalytics(false);
     };
   }, [video.id, currentUserId]);
+
+  // Intersection Observer to mute video when scrolled away
+  useEffect(() => {
+    const container = containerRef.current;
+    const video = videoRef.current;
+    if (!container || !video) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            // Video is in view - unmute if user had unmuted it
+            video.play().catch(() => {
+              console.log('Play prevented');
+            });
+          } else {
+            // Video scrolled out of view - mute it instead of pausing
+            setIsMuted(true);
+            video.muted = true;
+          }
+        });
+      },
+      {
+        threshold: 0.5, // Trigger when 50% of video is visible
+      }
+    );
+
+    observer.observe(container);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, []);
 
   const checkIfLiked = async () => {
     if (!currentUserId) return;
@@ -353,7 +387,7 @@ const VideoPlayer = ({ video, currentUserId, isPremium, onCommentsClick, onDelet
   };
 
   return (
-    <div className="relative h-screen w-full snap-start">
+    <div ref={containerRef} className="relative h-screen w-full snap-start">
       {/* Like animations */}
       {likeAnimations.map(anim => (
         <LikeAnimation
@@ -381,8 +415,19 @@ const VideoPlayer = ({ video, currentUserId, isPremium, onCommentsClick, onDelet
           autoPlay
           muted={isMuted}
           playsInline
+          webkit-playsinline="true"
+          preload="auto"
           onTouchStart={handleDoubleTap}
           onDoubleClick={handleDoubleTap}
+          onLoadedData={() => {
+            // Ensure video plays on mobile after loading
+            if (videoRef.current) {
+              videoRef.current.play().catch(() => {
+                // If autoplay fails, video will need user interaction
+                console.log('Autoplay prevented, waiting for user interaction');
+              });
+            }
+          }}
         />
       )}
       
