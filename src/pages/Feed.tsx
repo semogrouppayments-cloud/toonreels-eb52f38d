@@ -4,9 +4,6 @@ import VideoPlayer from '@/components/VideoPlayer';
 import CommentsSheet from '@/components/CommentsSheet';
 import BottomNav from '@/components/BottomNav';
 import { toast } from 'sonner';
-import { useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Filter } from 'lucide-react';
 
 interface Video {
   id: string;
@@ -23,21 +20,18 @@ interface Video {
 }
 
 const Feed = () => {
-  const navigate = useNavigate();
   const [videos, setVideos] = useState<Video[]>([]);
   const [currentUserId, setCurrentUserId] = useState('');
   const [isPremium, setIsPremium] = useState(false);
-  const [isCreative, setIsCreative] = useState(false);
   const [selectedVideoId, setSelectedVideoId] = useState<string | null>(null);
-  const [showFollowedOnly, setShowFollowedOnly] = useState(false);
 
   useEffect(() => {
     fetchVideos();
     fetchUserProfile();
-  }, [showFollowedOnly]);
+  }, []);
 
   const fetchVideos = async () => {
-    let query = supabase
+    const { data } = await supabase
       .from('videos')
       .select(`
         *,
@@ -45,24 +39,6 @@ const Feed = () => {
       `)
       .order('created_at', { ascending: false });
 
-    if (showFollowedOnly && currentUserId) {
-      // Get list of followed creators
-      const { data: follows } = await supabase
-        .from('follows')
-        .select('following_id')
-        .eq('follower_id', currentUserId);
-
-      if (follows && follows.length > 0) {
-        const followedIds = follows.map(f => f.following_id);
-        query = query.in('creator_id', followedIds);
-      } else {
-        // If not following anyone, show empty
-        setVideos([]);
-        return;
-      }
-    }
-
-    const { data } = await query;
     setVideos(data || []);
   };
 
@@ -77,13 +53,7 @@ const Feed = () => {
         .eq('id', user.id)
         .single();
       
-      const { data: roles } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', user.id);
-      
       setIsPremium(profile?.is_premium || false);
-      setIsCreative(roles?.some(r => r.role === 'creative') || false);
     }
   };
 
@@ -112,22 +82,7 @@ const Feed = () => {
   }
 
   return (
-    <div className="h-screen overflow-y-scroll snap-y snap-mandatory bg-background">
-      {/* Filter button for followed creators */}
-      {currentUserId && (
-        <Button
-          onClick={() => setShowFollowedOnly(!showFollowedOnly)}
-          className={`fixed top-3 left-3 z-50 rounded-full h-9 px-3 text-xs ${
-            showFollowedOnly
-              ? 'bg-primary text-primary-foreground'
-              : 'bg-card/95 backdrop-blur-lg border border-border text-foreground'
-          } shadow-lg hover:scale-105 transition-all`}
-        >
-          <Filter className="h-3.5 w-3.5 mr-1.5" />
-          {showFollowedOnly ? 'All' : 'Following'}
-        </Button>
-      )}
-
+    <div className="h-screen overflow-y-scroll snap-y snap-mandatory bg-black">
       {videos.map((video) => (
         <VideoPlayer
           key={video.id}
