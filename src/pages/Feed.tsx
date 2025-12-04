@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import VideoPlayer from '@/components/VideoPlayer';
 import CommentsSheet from '@/components/CommentsSheet';
@@ -24,6 +24,8 @@ const Feed = () => {
   const [currentUserId, setCurrentUserId] = useState('');
   const [isPremium, setIsPremium] = useState(false);
   const [selectedVideoId, setSelectedVideoId] = useState<string | null>(null);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     fetchVideos();
@@ -69,6 +71,25 @@ const Feed = () => {
     }
   };
 
+  // Handle scroll snap to detect active video
+  const handleScroll = useCallback(() => {
+    if (!containerRef.current) return;
+    const scrollTop = containerRef.current.scrollTop;
+    const height = window.innerHeight;
+    const newIndex = Math.round(scrollTop / height);
+    if (newIndex !== activeIndex && newIndex >= 0 && newIndex < videos.length) {
+      setActiveIndex(newIndex);
+    }
+  }, [activeIndex, videos.length]);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+    
+    container.addEventListener('scroll', handleScroll, { passive: true });
+    return () => container.removeEventListener('scroll', handleScroll);
+  }, [handleScroll]);
+
   if (videos.length === 0) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center pb-24">
@@ -82,13 +103,22 @@ const Feed = () => {
   }
 
   return (
-    <div className="h-screen overflow-y-scroll snap-y snap-mandatory bg-black">
-      {videos.map((video) => (
+    <div 
+      ref={containerRef}
+      className="h-screen w-full overflow-y-scroll snap-y snap-mandatory bg-black scrollbar-hide"
+      style={{ 
+        scrollSnapType: 'y mandatory',
+        WebkitOverflowScrolling: 'touch',
+        overscrollBehavior: 'contain'
+      }}
+    >
+      {videos.map((video, index) => (
         <VideoPlayer
           key={video.id}
           video={video}
           currentUserId={currentUserId}
           isPremium={isPremium}
+          isActive={index === activeIndex}
           onCommentsClick={() => setSelectedVideoId(video.id)}
           onDelete={video.creator_id === currentUserId ? () => handleDeleteVideo(video.id) : undefined}
         />

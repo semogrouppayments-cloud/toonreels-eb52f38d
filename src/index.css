@@ -133,3 +133,13 @@ All colors MUST be HSL.
     transform: scale(1.2);
   }
 }
+
+/* Hide scrollbar for cleaner swipe experience */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}

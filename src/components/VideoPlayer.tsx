@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { Heart, MessageCircle, Download, Flag, Trash2, Volume2, VolumeX, Bookmark, BookmarkCheck } from 'lucide-react';
+import { Heart, MessageCircle, Download, Flag, Trash2, Volume2, VolumeX, Bookmark, BookmarkCheck, Play, Pause } from 'lucide-react';
 import { toast } from 'sonner';
 import { useSignedVideoUrl } from '@/hooks/useSignedVideoUrl';
 import LikeAnimation from '@/components/LikeAnimation';
@@ -25,11 +25,12 @@ interface VideoPlayerProps {
   };
   currentUserId: string;
   isPremium: boolean;
+  isActive: boolean;
   onCommentsClick: () => void;
   onDelete?: () => void;
 }
 
-const VideoPlayer = ({ video, currentUserId, isPremium, onCommentsClick, onDelete }: VideoPlayerProps) => {
+const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClick, onDelete }: VideoPlayerProps) => {
   const navigate = useNavigate();
   const [liked, setLiked] = useState(false);
   const [likesCount, setLikesCount] = useState(video.likes_count);
@@ -38,7 +39,7 @@ const VideoPlayer = ({ video, currentUserId, isPremium, onCommentsClick, onDelet
   const [showDownloadDialog, setShowDownloadDialog] = useState(false);
   const [likeAnimations, setLikeAnimations] = useState<Array<{ id: number; x: number; y: number }>>([]);
   const [isMuted, setIsMuted] = useState(true);
-  const [isPlaying, setIsPlaying] = useState(true);
+  const [isPlaying, setIsPlaying] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
   const { signedUrl, loading, error } = useSignedVideoUrl(video.video_url);
   const lastTapRef = useRef<number>(0);
@@ -46,58 +47,60 @@ const VideoPlayer = ({ video, currentUserId, isPremium, onCommentsClick, onDelet
   const videoRef = useRef<HTMLVideoElement>(null);
   const watchStartTimeRef = useRef<number>(Date.now());
   const analyticsTrackedRef = useRef<boolean>(false);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const hasTrackedViewRef = useRef<boolean>(false);
 
   const isOwnVideo = currentUserId === video.creator_id;
 
+  // Initial data fetch
   useEffect(() => {
     checkIfFollowing();
     checkIfLiked();
     checkIfSaved();
-    incrementViewCount();
-    watchStartTimeRef.current = Date.now();
-    analyticsTrackedRef.current = false;
-
-    return () => {
-      trackVideoAnalytics(false);
-    };
   }, [video.id, currentUserId]);
 
-  // Intersection Observer to handle video when scrolled
+  // Handle active state - play/pause based on visibility
   useEffect(() => {
-    const container = containerRef.current;
     const videoEl = videoRef.current;
-    if (!container || !videoEl) return;
+    if (!videoEl) return;
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            // Video is in view - play it
-            videoEl.play().catch(() => {
-              console.log('Play prevented');
-            });
+    if (isActive) {
+      // Video is now active - play it
+      videoEl.currentTime = 0;
+      const playPromise = videoEl.play();
+      if (playPromise !== undefined) {
+        playPromise
+          .then(() => {
             setIsPlaying(true);
-          } else {
-            // Video scrolled out of view - mute and pause
-            setIsMuted(true);
-            videoEl.muted = true;
-            videoEl.pause();
+            // Track view only once per video
+            if (!hasTrackedViewRef.current) {
+              incrementViewCount();
+              hasTrackedViewRef.current = true;
+              watchStartTimeRef.current = Date.now();
+              analyticsTrackedRef.current = false;
+            }
+          })
+          .catch(() => {
             setIsPlaying(false);
-          }
-        });
-      },
-      {
-        threshold: 0.5,
+          });
       }
-    );
+    } else {
+      // Video is not active - pause and mute
+      videoEl.pause();
+      videoEl.muted = true;
+      setIsMuted(true);
+      setIsPlaying(false);
+      // Track analytics when leaving
+      if (!analyticsTrackedRef.current && hasTrackedViewRef.current) {
+        trackVideoAnalytics(false);
+      }
+    }
+  }, [isActive, signedUrl]);
 
-    observer.observe(container);
-
-    return () => {
-      observer.disconnect();
-    };
-  }, []);
+  // Reset tracking when video changes
+  useEffect(() => {
+    hasTrackedViewRef.current = false;
+    analyticsTrackedRef.current = false;
+  }, [video.id]);
 
   const checkIfLiked = async () => {
     if (!currentUserId) return;
@@ -185,7 +188,7 @@ const VideoPlayer = ({ video, currentUserId, isPremium, onCommentsClick, onDelet
       .select('id')
       .eq('follower_id', currentUserId)
       .eq('following_id', video.creator_id)
-      .single();
+      .maybeSingle();
     
     setIsFollowing(!!data);
   };
@@ -231,14 +234,15 @@ const VideoPlayer = ({ video, currentUserId, isPremium, onCommentsClick, onDelet
     }
   };
 
-  const handleDoubleTap = (e: React.TouchEvent | React.MouseEvent) => {
+  const handleTap = (e: React.TouchEvent | React.MouseEvent) => {
     const now = Date.now();
     const DOUBLE_TAP_DELAY = 300;
 
     if (now - lastTapRef.current < DOUBLE_TAP_DELAY) {
+      // Double tap - like
       const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-      const x = 'touches' in e ? e.touches[0].clientX : e.clientX;
-      const y = 'touches' in e ? e.touches[0].clientY : e.clientY;
+      const x = 'touches' in e ? e.changedTouches[0]?.clientX || 0 : e.clientX;
+      const y = 'touches' in e ? e.changedTouches[0]?.clientY || 0 : e.clientY;
       
       const id = animationIdRef.current++;
       setLikeAnimations(prev => [...prev, { id, x, y }]);
@@ -246,23 +250,32 @@ const VideoPlayer = ({ video, currentUserId, isPremium, onCommentsClick, onDelet
       if (!liked) {
         handleLike();
       }
+      lastTapRef.current = 0; // Reset to prevent triple tap
     } else {
       // Single tap - toggle play/pause
-      if (videoRef.current) {
-        if (isPlaying) {
-          videoRef.current.pause();
-          setIsPlaying(false);
-        } else {
-          videoRef.current.play().catch(() => {});
-          setIsPlaying(true);
+      lastTapRef.current = now;
+      setTimeout(() => {
+        if (lastTapRef.current === now) {
+          togglePlayPause();
         }
-      }
+      }, DOUBLE_TAP_DELAY);
     }
-    
-    lastTapRef.current = now;
   };
 
-  const toggleMute = () => {
+  const togglePlayPause = () => {
+    const videoEl = videoRef.current;
+    if (!videoEl) return;
+
+    if (isPlaying) {
+      videoEl.pause();
+      setIsPlaying(false);
+    } else {
+      videoEl.play().then(() => setIsPlaying(true)).catch(() => {});
+    }
+  };
+
+  const toggleMute = (e: React.MouseEvent) => {
+    e.stopPropagation();
     if (videoRef.current) {
       videoRef.current.muted = !isMuted;
       setIsMuted(!isMuted);
@@ -273,7 +286,8 @@ const VideoPlayer = ({ video, currentUserId, isPremium, onCommentsClick, onDelet
     setLikeAnimations(prev => prev.filter(anim => anim.id !== id));
   };
 
-  const handleFollow = async () => {
+  const handleFollow = async (e: React.MouseEvent) => {
+    e.stopPropagation();
     if (!currentUserId) {
       toast.error('Please sign in to follow creators');
       return;
@@ -300,7 +314,8 @@ const VideoPlayer = ({ video, currentUserId, isPremium, onCommentsClick, onDelet
     }
   };
 
-  const handleSave = async () => {
+  const handleSave = async (e: React.MouseEvent) => {
+    e.stopPropagation();
     if (!currentUserId) {
       toast.error('Please sign in to save videos');
       return;
@@ -327,7 +342,8 @@ const VideoPlayer = ({ video, currentUserId, isPremium, onCommentsClick, onDelet
     }
   };
 
-  const handleDownload = () => {
+  const handleDownload = (e: React.MouseEvent) => {
+    e.stopPropagation();
     setShowDownloadDialog(true);
   };
 
@@ -376,8 +392,16 @@ const VideoPlayer = ({ video, currentUserId, isPremium, onCommentsClick, onDelet
     }
   };
 
+  const handleActionClick = (e: React.MouseEvent, action: () => void) => {
+    e.stopPropagation();
+    action();
+  };
+
   return (
-    <div ref={containerRef} className="relative h-screen w-full snap-start bg-black">
+    <div 
+      className="relative w-full bg-black snap-start snap-always"
+      style={{ height: '100vh', scrollSnapAlign: 'start' }}
+    >
       {/* Like animations */}
       {likeAnimations.map(anim => (
         <LikeAnimation
@@ -388,56 +412,68 @@ const VideoPlayer = ({ video, currentUserId, isPremium, onCommentsClick, onDelet
         />
       ))}
       
-      {loading ? (
-        <div className="h-full w-full bg-black flex items-center justify-center">
-          <span className="text-white text-sm">Loading...</span>
-        </div>
-      ) : error ? (
-        <div className="h-full w-full bg-black flex items-center justify-center">
-          <span className="text-white text-sm">Failed to load</span>
-        </div>
-      ) : (
-        <video
-          ref={videoRef}
-          src={signedUrl || ''}
-          className="w-full h-screen object-contain bg-black"
-          style={{ objectFit: 'contain' }}
-          loop
-          autoPlay
-          muted={isMuted}
-          playsInline
-          webkit-playsinline="true"
-          preload="auto"
-          onTouchStart={handleDoubleTap}
-          onDoubleClick={handleDoubleTap}
-          onLoadedData={() => {
-            if (videoRef.current) {
-              videoRef.current.play().catch(() => {
-                console.log('Autoplay prevented');
-              });
-            }
-          }}
-        />
-      )}
+      {/* Video container with tap handler */}
+      <div 
+        className="absolute inset-0 flex items-center justify-center"
+        onClick={handleTap}
+        onTouchEnd={handleTap}
+      >
+        {loading ? (
+          <div className="flex items-center justify-center">
+            <span className="text-white text-sm">Loading...</span>
+          </div>
+        ) : error ? (
+          <div className="flex items-center justify-center">
+            <span className="text-white text-sm">Failed to load</span>
+          </div>
+        ) : (
+          <video
+            ref={videoRef}
+            src={signedUrl || ''}
+            className="w-full h-full object-contain"
+            loop
+            muted={isMuted}
+            playsInline
+            preload="auto"
+            style={{ 
+              maxHeight: 'calc(100vh - 80px)', // Leave space for bottom nav
+              marginBottom: '80px'
+            }}
+          />
+        )}
+        
+        {/* Play/Pause indicator */}
+        {!isPlaying && isActive && (
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <div className="bg-black/50 rounded-full p-4">
+              <Play className="h-12 w-12 text-white fill-white" />
+            </div>
+          </div>
+        )}
+      </div>
       
-      <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent pointer-events-none" />
+      {/* Gradient overlay */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
       
-      {/* Volume Control - tiny */}
+      {/* Volume Control */}
       <Button
         size="icon"
         variant="ghost"
         onClick={toggleMute}
-        className="absolute top-3 right-3 z-10 rounded-full h-8 w-8 bg-black/40 text-white hover:bg-black/60"
+        className="absolute top-4 right-3 z-20 rounded-full h-8 w-8 bg-black/40 text-white hover:bg-black/60"
       >
         {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
       </Button>
       
-      {/* Video Info - compact with follow next to username */}
-      <div className="absolute bottom-16 left-2 right-14 text-white">
+      {/* Video Info - moved up with bottom padding */}
+      <div className="absolute left-2 right-14 text-white z-10" style={{ bottom: '100px' }}>
         <div className="flex items-center gap-1.5 mb-1">
           <div 
             className="flex items-center gap-1 cursor-pointer hover:opacity-80 transition-opacity"
-            onClick={() => navigate(`/profile?userId=${video.creator_id}`)}
+            onClick={(e) => {
+              e.stopPropagation();
+              navigate(`/profile?userId=${video.creator_id}`);
+            }}
           >
             <Avatar className="h-6 w-6 border border-white/30">
               <AvatarImage src={video.profiles.avatar_url || undefined} alt={video.profiles.username} />
@@ -448,7 +484,7 @@ const VideoPlayer = ({ video, currentUserId, isPremium, onCommentsClick, onDelet
             <span className="font-medium text-xs">{video.profiles.username}</span>
           </div>
           
-          {/* Follow/Following button next to username - only for other users' videos */}
+          {/* Follow/Following button */}
           {currentUserId && !isOwnVideo && (
             <button
               onClick={handleFollow}
@@ -465,11 +501,11 @@ const VideoPlayer = ({ video, currentUserId, isPremium, onCommentsClick, onDelet
         <p className="text-[11px] opacity-90 line-clamp-2 leading-tight">{video.description || video.title}</p>
       </div>
 
-      {/* Action Buttons - tiny and compact */}
-      <div className="absolute bottom-16 right-1 flex flex-col gap-2">
-        {/* Like - show for everyone */}
+      {/* Action Buttons - moved up */}
+      <div className="absolute right-1 flex flex-col gap-2 z-10" style={{ bottom: '100px' }}>
+        {/* Like */}
         <button
-          onClick={handleLike}
+          onClick={(e) => handleActionClick(e, handleLike)}
           className="flex flex-col items-center"
         >
           <div className={`rounded-full h-9 w-9 flex items-center justify-center ${liked ? 'text-primary' : 'text-white'}`}>
@@ -478,9 +514,9 @@ const VideoPlayer = ({ video, currentUserId, isPremium, onCommentsClick, onDelet
           <span className="text-[9px] text-white font-medium">{likesCount}</span>
         </button>
 
-        {/* Comment - show for everyone */}
+        {/* Comment */}
         <button
-          onClick={onCommentsClick}
+          onClick={(e) => handleActionClick(e, onCommentsClick)}
           className="flex flex-col items-center"
         >
           <div className="rounded-full h-9 w-9 flex items-center justify-center text-white">
@@ -489,7 +525,7 @@ const VideoPlayer = ({ video, currentUserId, isPremium, onCommentsClick, onDelet
           <span className="text-[9px] text-white font-medium">Comment</span>
         </button>
 
-        {/* Save - show for viewers (not own video) */}
+        {/* Save - only for non-owners */}
         {!isOwnVideo && (
           <button
             onClick={handleSave}
@@ -506,7 +542,7 @@ const VideoPlayer = ({ video, currentUserId, isPremium, onCommentsClick, onDelet
           </button>
         )}
 
-        {/* Download - show for viewers (not own video) */}
+        {/* Download - only for non-owners */}
         {!isOwnVideo && (
           <button
             onClick={handleDownload}
@@ -515,55 +551,59 @@ const VideoPlayer = ({ video, currentUserId, isPremium, onCommentsClick, onDelet
             <div className="rounded-full h-9 w-9 flex items-center justify-center text-white">
               <Download className="h-5 w-5" />
             </div>
+            <span className="text-[9px] text-white font-medium">Download</span>
           </button>
         )}
 
-        {/* Report - show for viewers (not own video) */}
+        {/* Report - only for non-owners */}
         {!isOwnVideo && (
           <button
-            onClick={() => setShowReportDialog(true)}
+            onClick={(e) => handleActionClick(e, () => setShowReportDialog(true))}
             className="flex flex-col items-center"
           >
             <div className="rounded-full h-9 w-9 flex items-center justify-center text-white">
-              <Flag className="h-4 w-4" />
+              <Flag className="h-5 w-5" />
             </div>
+            <span className="text-[9px] text-white font-medium">Report</span>
           </button>
         )}
 
-        {/* Delete - only for own videos */}
+        {/* Delete - only for owners */}
         {isOwnVideo && onDelete && (
           <button
-            onClick={onDelete}
+            onClick={(e) => handleActionClick(e, onDelete)}
             className="flex flex-col items-center"
           >
-            <div className="rounded-full h-9 w-9 flex items-center justify-center text-red-500">
+            <div className="rounded-full h-9 w-9 flex items-center justify-center text-destructive">
               <Trash2 className="h-5 w-5" />
             </div>
+            <span className="text-[9px] text-white font-medium">Delete</span>
           </button>
         )}
       </div>
 
       {/* Report Dialog */}
       {showReportDialog && (
-        <div className="absolute inset-0 bg-black/80 flex items-center justify-center p-4 z-50">
-          <div className="bg-card rounded-2xl p-4 max-w-xs w-full">
-            <h3 className="text-lg font-bold mb-3">Report Video</h3>
-            <div className="space-y-1.5">
-              {['Inappropriate content', 'Spam', 'Violence', 'Copyright', 'Other'].map((reason) => (
-                <Button
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setShowReportDialog(false)}>
+          <div className="bg-background rounded-xl p-4 w-full max-w-sm" onClick={e => e.stopPropagation()}>
+            <h3 className="font-bold text-lg mb-4">Report Video</h3>
+            <div className="space-y-2">
+              {['Inappropriate content', 'Violence or harmful content', 'Spam or misleading', 'Copyright violation', 'Other'].map(reason => (
+                <button
                   key={reason}
-                  variant="outline"
-                  size="sm"
-                  className="w-full text-sm"
                   onClick={() => handleReport(reason)}
+                  className="w-full text-left px-4 py-3 rounded-lg hover:bg-muted transition-colors text-sm"
                 >
                   {reason}
-                </Button>
+                </button>
               ))}
-              <Button variant="ghost" size="sm" className="w-full text-sm" onClick={() => setShowReportDialog(false)}>
-                Cancel
-              </Button>
             </div>
+            <button
+              onClick={() => setShowReportDialog(false)}
+              className="w-full mt-4 text-muted-foreground text-sm"
+            >
+              Cancel
+            </button>
           </div>
         </div>
       )}
