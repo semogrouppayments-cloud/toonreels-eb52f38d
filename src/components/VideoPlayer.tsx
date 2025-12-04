@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { Heart, MessageCircle, Download, Flag, Trash2, UserPlus, UserMinus, Volume2, VolumeX, Bookmark, BookmarkCheck } from 'lucide-react';
+import { Heart, MessageCircle, Download, Flag, Trash2, Volume2, VolumeX, Bookmark, BookmarkCheck } from 'lucide-react';
 import { toast } from 'sonner';
 import { useSignedVideoUrl } from '@/hooks/useSignedVideoUrl';
 import LikeAnimation from '@/components/LikeAnimation';
@@ -48,6 +48,8 @@ const VideoPlayer = ({ video, currentUserId, isPremium, onCommentsClick, onDelet
   const analyticsTrackedRef = useRef<boolean>(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
+  const isOwnVideo = currentUserId === video.creator_id;
+
   useEffect(() => {
     checkIfFollowing();
     checkIfLiked();
@@ -56,35 +58,37 @@ const VideoPlayer = ({ video, currentUserId, isPremium, onCommentsClick, onDelet
     watchStartTimeRef.current = Date.now();
     analyticsTrackedRef.current = false;
 
-    // Track analytics when component unmounts or video changes
     return () => {
       trackVideoAnalytics(false);
     };
   }, [video.id, currentUserId]);
 
-  // Intersection Observer to mute video when scrolled away
+  // Intersection Observer to handle video when scrolled
   useEffect(() => {
     const container = containerRef.current;
-    const video = videoRef.current;
-    if (!container || !video) return;
+    const videoEl = videoRef.current;
+    if (!container || !videoEl) return;
 
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
-            // Video is in view - unmute if user had unmuted it
-            video.play().catch(() => {
+            // Video is in view - play it
+            videoEl.play().catch(() => {
               console.log('Play prevented');
             });
+            setIsPlaying(true);
           } else {
-            // Video scrolled out of view - mute it instead of pausing
+            // Video scrolled out of view - mute and pause
             setIsMuted(true);
-            video.muted = true;
+            videoEl.muted = true;
+            videoEl.pause();
+            setIsPlaying(false);
           }
         });
       },
       {
-        threshold: 0.5, // Trigger when 50% of video is visible
+        threshold: 0.5,
       }
     );
 
@@ -146,7 +150,6 @@ const VideoPlayer = ({ video, currentUserId, isPremium, onCommentsClick, onDelet
 
     const watchDuration = Math.floor((Date.now() - watchStartTimeRef.current) / 1000);
     
-    // Only track if watched for at least 1 second
     if (watchDuration < 1) return;
 
     try {
@@ -162,7 +165,6 @@ const VideoPlayer = ({ video, currentUserId, isPremium, onCommentsClick, onDelet
     }
   };
 
-  // Track when video completes
   useEffect(() => {
     const videoElement = videoRef.current;
     if (!videoElement) return;
@@ -191,11 +193,9 @@ const VideoPlayer = ({ video, currentUserId, isPremium, onCommentsClick, onDelet
   const handleLike = async () => {
     try {
       if (liked) {
-        // Remove like
         await supabase.from('likes').delete().match({ video_id: video.id, user_id: currentUserId });
         setLikesCount(prev => prev - 1);
         
-        // Update likes_count in videos table
         const { data: currentVideo } = await supabase
           .from('videos')
           .select('likes_count')
@@ -209,11 +209,9 @@ const VideoPlayer = ({ video, currentUserId, isPremium, onCommentsClick, onDelet
             .eq('id', video.id);
         }
       } else {
-        // Add like
         await supabase.from('likes').insert({ video_id: video.id, user_id: currentUserId });
         setLikesCount(prev => prev + 1);
         
-        // Update likes_count in videos table
         const { data: currentVideo } = await supabase
           .from('videos')
           .select('likes_count')
@@ -238,16 +236,13 @@ const VideoPlayer = ({ video, currentUserId, isPremium, onCommentsClick, onDelet
     const DOUBLE_TAP_DELAY = 300;
 
     if (now - lastTapRef.current < DOUBLE_TAP_DELAY) {
-      // Double tap detected
       const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
       const x = 'touches' in e ? e.touches[0].clientX : e.clientX;
       const y = 'touches' in e ? e.touches[0].clientY : e.clientY;
       
-      // Add animation
       const id = animationIdRef.current++;
       setLikeAnimations(prev => [...prev, { id, x, y }]);
       
-      // Like the video if not already liked
       if (!liked) {
         handleLike();
       }
@@ -258,7 +253,7 @@ const VideoPlayer = ({ video, currentUserId, isPremium, onCommentsClick, onDelet
           videoRef.current.pause();
           setIsPlaying(false);
         } else {
-          videoRef.current.play();
+          videoRef.current.play().catch(() => {});
           setIsPlaying(true);
         }
       }
@@ -340,15 +335,11 @@ const VideoPlayer = ({ video, currentUserId, isPremium, onCommentsClick, onDelet
     const downloadToast = toast.loading('Preparing download...');
     
     try {
-      // Fetch the original video
       const response = await fetch(signedUrl || video.video_url);
       if (!response.ok) throw new Error('Failed to fetch video');
       
       const videoBlob = await response.blob();
       
-      // Download video with selected quality
-      // Note: Currently downloads original quality for all selections
-      // TODO: Implement quality transcoding for different resolutions
       const url = URL.createObjectURL(videoBlob);
       const link = document.createElement('a');
       link.href = url;
@@ -358,7 +349,6 @@ const VideoPlayer = ({ video, currentUserId, isPremium, onCommentsClick, onDelet
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
       
-      // Log download
       await supabase.from('video_downloads').insert({
         video_id: video.id,
         user_id: currentUserId
@@ -387,7 +377,7 @@ const VideoPlayer = ({ video, currentUserId, isPremium, onCommentsClick, onDelet
   };
 
   return (
-    <div ref={containerRef} className="relative h-screen w-full snap-start">
+    <div ref={containerRef} className="relative h-screen w-full snap-start bg-black">
       {/* Like animations */}
       {likeAnimations.map(anim => (
         <LikeAnimation
@@ -400,17 +390,18 @@ const VideoPlayer = ({ video, currentUserId, isPremium, onCommentsClick, onDelet
       
       {loading ? (
         <div className="h-full w-full bg-black flex items-center justify-center">
-          <span className="text-white">Loading video...</span>
+          <span className="text-white text-sm">Loading...</span>
         </div>
       ) : error ? (
         <div className="h-full w-full bg-black flex items-center justify-center">
-          <span className="text-white">Failed to load video</span>
+          <span className="text-white text-sm">Failed to load</span>
         </div>
       ) : (
         <video
           ref={videoRef}
           src={signedUrl || ''}
-          className="h-full w-full object-cover"
+          className="w-full h-screen object-contain bg-black"
+          style={{ objectFit: 'contain' }}
           loop
           autoPlay
           muted={isMuted}
@@ -420,155 +411,156 @@ const VideoPlayer = ({ video, currentUserId, isPremium, onCommentsClick, onDelet
           onTouchStart={handleDoubleTap}
           onDoubleClick={handleDoubleTap}
           onLoadedData={() => {
-            // Ensure video plays on mobile after loading
             if (videoRef.current) {
               videoRef.current.play().catch(() => {
-                // If autoplay fails, video will need user interaction
-                console.log('Autoplay prevented, waiting for user interaction');
+                console.log('Autoplay prevented');
               });
             }
           }}
         />
       )}
       
-      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent pointer-events-none" />
       
-      {/* Volume Control */}
+      {/* Volume Control - tiny */}
       <Button
         size="icon"
         variant="ghost"
         onClick={toggleMute}
-        className="absolute top-4 right-4 z-10 rounded-full h-10 w-10 bg-black/30 text-white hover:bg-black/50"
+        className="absolute top-3 right-3 z-10 rounded-full h-8 w-8 bg-black/40 text-white hover:bg-black/60"
       >
-        {isMuted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
+        {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
       </Button>
       
-      {/* Video Info */}
-      <div className="absolute bottom-20 left-3 right-16 text-white">
-        <div 
-          className="flex items-center gap-1.5 mb-1.5 cursor-pointer hover:opacity-80 transition-opacity"
-          onClick={() => navigate(`/profile?userId=${video.creator_id}`)}
-        >
-          <Avatar className="h-8 w-8 border-2 border-background">
-            <AvatarImage src={video.profiles.avatar_url || undefined} alt={video.profiles.username} />
-            <AvatarFallback className="bg-primary text-background text-sm font-bold">
-              {video.profiles.username[0].toUpperCase()}
-            </AvatarFallback>
-          </Avatar>
-          <span className="font-semibold text-sm">{video.profiles.username}</span>
+      {/* Video Info - compact with follow next to username */}
+      <div className="absolute bottom-16 left-2 right-14 text-white">
+        <div className="flex items-center gap-1.5 mb-1">
+          <div 
+            className="flex items-center gap-1 cursor-pointer hover:opacity-80 transition-opacity"
+            onClick={() => navigate(`/profile?userId=${video.creator_id}`)}
+          >
+            <Avatar className="h-6 w-6 border border-white/30">
+              <AvatarImage src={video.profiles.avatar_url || undefined} alt={video.profiles.username} />
+              <AvatarFallback className="bg-primary text-background text-[10px] font-bold">
+                {video.profiles.username[0].toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+            <span className="font-medium text-xs">{video.profiles.username}</span>
+          </div>
+          
+          {/* Follow/Following button next to username - only for other users' videos */}
+          {currentUserId && !isOwnVideo && (
+            <button
+              onClick={handleFollow}
+              className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
+                isFollowing 
+                  ? 'bg-white/20 text-white' 
+                  : 'bg-primary text-primary-foreground'
+              }`}
+            >
+              {isFollowing ? 'Following' : 'Follow'}
+            </button>
+          )}
         </div>
-        <h3 className="font-semibold text-base mb-0.5">{video.title}</h3>
-        <p className="text-xs opacity-90 line-clamp-2">{video.description}</p>
+        <p className="text-[11px] opacity-90 line-clamp-2 leading-tight">{video.description || video.title}</p>
       </div>
 
-      {/* Action Buttons */}
-      <div className="absolute bottom-20 right-2 flex flex-col gap-3">
-        {/* Follow/Unfollow Button - only show if not own video */}
-        {currentUserId && currentUserId !== video.creator_id && (
-          <Button
-            size="icon"
-            variant="ghost"
-            onClick={handleFollow}
-            className={`rounded-full h-11 w-11 p-0 ${isFollowing ? 'text-primary' : 'text-white'}`}
-          >
-            <div className="flex flex-col items-center gap-0.5">
-              {isFollowing ? (
-                <UserMinus className="h-6 w-6" />
-              ) : (
-                <UserPlus className="h-6 w-6" />
-              )}
-              <span className="text-[10px] font-semibold leading-none">{isFollowing ? 'Following' : 'Follow'}</span>
-            </div>
-          </Button>
-        )}
-        
-        <Button
-          size="icon"
-          variant="ghost"
+      {/* Action Buttons - tiny and compact */}
+      <div className="absolute bottom-16 right-1 flex flex-col gap-2">
+        {/* Like - show for everyone */}
+        <button
           onClick={handleLike}
-          className={`rounded-full h-11 w-11 p-0 ${liked ? 'text-primary' : 'text-white'}`}
+          className="flex flex-col items-center"
         >
-          <div className="flex flex-col items-center gap-0.5">
-            <Heart className={`h-6 w-6 ${liked ? 'fill-current' : ''}`} />
-            <span className="text-[10px] font-semibold leading-none">{likesCount}</span>
+          <div className={`rounded-full h-9 w-9 flex items-center justify-center ${liked ? 'text-primary' : 'text-white'}`}>
+            <Heart className={`h-5 w-5 ${liked ? 'fill-current' : ''}`} />
           </div>
-        </Button>
+          <span className="text-[9px] text-white font-medium">{likesCount}</span>
+        </button>
 
-        <Button
-          size="icon"
-          variant="ghost"
+        {/* Comment - show for everyone */}
+        <button
           onClick={onCommentsClick}
-          className="rounded-full h-11 w-11 p-0 text-white"
+          className="flex flex-col items-center"
         >
-          <div className="flex flex-col items-center gap-0.5">
-            <MessageCircle className="h-6 w-6" />
-            <span className="text-[10px] font-semibold leading-none">Comment</span>
+          <div className="rounded-full h-9 w-9 flex items-center justify-center text-white">
+            <MessageCircle className="h-5 w-5" />
           </div>
-        </Button>
+          <span className="text-[9px] text-white font-medium">Comment</span>
+        </button>
 
-        <Button
-          size="icon"
-          variant="ghost"
-          onClick={handleSave}
-          className={`rounded-full h-11 w-11 p-0 ${isSaved ? 'text-primary' : 'text-white'}`}
-        >
-          <div className="flex flex-col items-center gap-0.5">
-            {isSaved ? (
-              <BookmarkCheck className="h-6 w-6 fill-current" />
-            ) : (
-              <Bookmark className="h-6 w-6" />
-            )}
-            <span className="text-[10px] font-semibold leading-none">{isSaved ? 'Saved' : 'Save'}</span>
-          </div>
-        </Button>
-
-        <Button
-          size="icon"
-          variant="ghost"
-          onClick={handleDownload}
-          className="rounded-full h-11 w-11 p-0 text-white"
-        >
-          <Download className="h-6 w-6" />
-        </Button>
-
-        <Button
-          size="icon"
-          variant="ghost"
-          onClick={() => setShowReportDialog(true)}
-          className="rounded-full h-11 w-11 p-0 text-white"
-        >
-          <Flag className="h-6 w-6" />
-        </Button>
-
-        {video.creator_id === currentUserId && onDelete && (
-          <Button
-            size="icon"
-            variant="ghost"
-            onClick={onDelete}
-            className="rounded-full h-11 w-11 p-0 text-red-500"
+        {/* Save - show for viewers (not own video) */}
+        {!isOwnVideo && (
+          <button
+            onClick={handleSave}
+            className="flex flex-col items-center"
           >
-            <Trash2 className="h-6 w-6" />
-          </Button>
+            <div className={`rounded-full h-9 w-9 flex items-center justify-center ${isSaved ? 'text-primary' : 'text-white'}`}>
+              {isSaved ? (
+                <BookmarkCheck className="h-5 w-5 fill-current" />
+              ) : (
+                <Bookmark className="h-5 w-5" />
+              )}
+            </div>
+            <span className="text-[9px] text-white font-medium">{isSaved ? 'Saved' : 'Save'}</span>
+          </button>
+        )}
+
+        {/* Download - show for viewers (not own video) */}
+        {!isOwnVideo && (
+          <button
+            onClick={handleDownload}
+            className="flex flex-col items-center"
+          >
+            <div className="rounded-full h-9 w-9 flex items-center justify-center text-white">
+              <Download className="h-5 w-5" />
+            </div>
+          </button>
+        )}
+
+        {/* Report - show for viewers (not own video) */}
+        {!isOwnVideo && (
+          <button
+            onClick={() => setShowReportDialog(true)}
+            className="flex flex-col items-center"
+          >
+            <div className="rounded-full h-9 w-9 flex items-center justify-center text-white">
+              <Flag className="h-4 w-4" />
+            </div>
+          </button>
+        )}
+
+        {/* Delete - only for own videos */}
+        {isOwnVideo && onDelete && (
+          <button
+            onClick={onDelete}
+            className="flex flex-col items-center"
+          >
+            <div className="rounded-full h-9 w-9 flex items-center justify-center text-red-500">
+              <Trash2 className="h-5 w-5" />
+            </div>
+          </button>
         )}
       </div>
 
       {/* Report Dialog */}
       {showReportDialog && (
         <div className="absolute inset-0 bg-black/80 flex items-center justify-center p-4 z-50">
-          <div className="bg-card rounded-3xl p-6 max-w-sm w-full">
-            <h3 className="text-xl font-black mb-4">Report Video</h3>
-            <div className="space-y-2">
+          <div className="bg-card rounded-2xl p-4 max-w-xs w-full">
+            <h3 className="text-lg font-bold mb-3">Report Video</h3>
+            <div className="space-y-1.5">
               {['Inappropriate content', 'Spam', 'Violence', 'Copyright', 'Other'].map((reason) => (
                 <Button
                   key={reason}
                   variant="outline"
-                  className="w-full"
+                  size="sm"
+                  className="w-full text-sm"
                   onClick={() => handleReport(reason)}
                 >
                   {reason}
                 </Button>
               ))}
-              <Button variant="ghost" className="w-full" onClick={() => setShowReportDialog(false)}>
+              <Button variant="ghost" size="sm" className="w-full text-sm" onClick={() => setShowReportDialog(false)}>
                 Cancel
               </Button>
             </div>
