@@ -942,6 +942,7 @@ const Profile = () => {
                   }}
                   currentUserId={currentUserId || ''}
                   isPremium={false}
+                  isActive={index === selectedVideoIndex}
                   onCommentsClick={() => {}}
                   onDelete={video.creator_id === currentUserId ? () => {
                     setSelectedVideoIndex(null);
