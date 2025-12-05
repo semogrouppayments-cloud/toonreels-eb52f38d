@@ -7,7 +7,7 @@ import CommentsSheet from '@/components/CommentsSheet';
 import BottomNav from '@/components/BottomNav';
 import { toast } from 'sonner';
 import { RefreshCw } from 'lucide-react';
-import toonreelsLogo from '@/assets/toonreels-logo-white.png';
+import toonreelsLogo from '@/assets/toonreels-logo-long.png';
 
 interface Video {
   id: string;
@@ -214,9 +214,9 @@ const Feed = () => {
         </div>
       )}
 
-      {/* Logo in top left - enlarged */}
+      {/* Logo in top left */}
       <div className="fixed top-4 left-3 z-30">
-        <img src={toonreelsLogo} alt="ToonReels" className="h-12 w-auto drop-shadow-lg" />
+        <img src={toonreelsLogo} alt="ToonReels" className="h-10 w-auto drop-shadow-lg" />
       </div>
 
       {videos.map((video, index) => (

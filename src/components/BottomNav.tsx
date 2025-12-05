@@ -1,4 +1,4 @@
-import { Home, Upload, User } from 'lucide-react';
+import { Home, Search, Upload, User } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
@@ -31,40 +31,52 @@ const BottomNav = () => {
       <div className="flex items-center justify-around h-16 px-2">
         <button
           onClick={() => navigate('/feed')}
-          className={`flex flex-col items-center gap-1 px-4 py-2 rounded-2xl transition-all ${
+          className={`flex flex-col items-center gap-1 px-3 py-2 rounded-2xl transition-all ${
             isActive('/feed')
               ? 'text-primary bg-primary/10'
               : 'text-muted-foreground hover:text-foreground'
           }`}
         >
-          <Home className="h-6 w-6" />
-          <span className="text-xs font-semibold">Home</span>
+          <Home className="h-5 w-5" />
+          <span className="text-[10px] font-semibold">Home</span>
+        </button>
+
+        <button
+          onClick={() => navigate('/search')}
+          className={`flex flex-col items-center gap-1 px-3 py-2 rounded-2xl transition-all ${
+            isActive('/search')
+              ? 'text-primary bg-primary/10'
+              : 'text-muted-foreground hover:text-foreground'
+          }`}
+        >
+          <Search className="h-5 w-5" />
+          <span className="text-[10px] font-semibold">Search</span>
         </button>
 
         {isCreative && (
           <button
             onClick={() => navigate('/upload')}
-            className={`flex flex-col items-center gap-1 px-4 py-2 rounded-2xl transition-all ${
+            className={`flex flex-col items-center gap-1 px-3 py-2 rounded-2xl transition-all ${
               isActive('/upload')
                 ? 'text-primary bg-primary/10'
                 : 'text-muted-foreground hover:text-foreground'
             }`}
           >
-            <Upload className="h-6 w-6" />
-            <span className="text-xs font-semibold">Upload</span>
+            <Upload className="h-5 w-5" />
+            <span className="text-[10px] font-semibold">Upload</span>
           </button>
         )}
 
         <button
           onClick={() => navigate('/profile')}
-          className={`flex flex-col items-center gap-1 px-4 py-2 rounded-2xl transition-all ${
+          className={`flex flex-col items-center gap-1 px-3 py-2 rounded-2xl transition-all ${
             isActive('/profile')
               ? 'text-primary bg-primary/10'
               : 'text-muted-foreground hover:text-foreground'
           }`}
         >
-          <User className="h-6 w-6" />
-          <span className="text-xs font-semibold">Profile</span>
+          <User className="h-5 w-5" />
+          <span className="text-[10px] font-semibold">Profile</span>
         </button>
       </div>
     </nav>
