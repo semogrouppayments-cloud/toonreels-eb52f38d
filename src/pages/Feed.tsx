@@ -6,7 +6,7 @@ import VideoSkeleton from '@/components/VideoSkeleton';
 import CommentsSheet from '@/components/CommentsSheet';
 import BottomNav from '@/components/BottomNav';
 import { toast } from 'sonner';
-import { RefreshCw } from 'lucide-react';
+import { RefreshCw, Loader2 } from 'lucide-react';
 import toonreelsLogo from '@/assets/toonreels-logo-long.png';
 
 interface Video {
@@ -17,6 +17,7 @@ interface Video {
   creator_id: string;
   likes_count: number;
   views_count: number;
+  tags?: string[] | null;
   profiles: {
     username: string;
     avatar_url: string;
@@ -33,6 +34,8 @@ const shuffleArray = <T,>(array: T[]): T[] => {
   return shuffled;
 };
 
+const PAGE_SIZE = 10;
+
 const Feed = () => {
   const navigate = useNavigate();
   const [videos, setVideos] = useState<Video[]>([]);
@@ -43,6 +46,9 @@ const Feed = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [pullDistance, setPullDistance] = useState(0);
+  const [page, setPage] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const touchStartY = useRef(0);
   const isPulling = useRef(false);
@@ -62,50 +68,83 @@ const Feed = () => {
     }
     
     setCurrentUserId(session.user.id);
-    await Promise.all([fetchVideos(), fetchUserProfile()]);
+    
+    // Fetch user profile in parallel
+    fetchUserProfile(session.user.id);
+    
+    // Fetch first page of videos
+    await fetchVideos(0, true);
     setIsLoading(false);
   };
 
-  const fetchVideos = async () => {
-    const { data } = await supabase
+  const fetchVideos = async (pageNum: number, reset: boolean = false) => {
+    const from = pageNum * PAGE_SIZE;
+    const to = from + PAGE_SIZE - 1;
+    
+    const { data, error } = await supabase
       .from('videos')
       .select(`
         *,
         profiles(username, avatar_url)
       `)
-      .order('created_at', { ascending: false });
+      .order('created_at', { ascending: false })
+      .range(from, to);
+
+    if (error) {
+      console.error('Error fetching videos:', error);
+      return;
+    }
+
+    const newVideos = data || [];
+    
+    if (newVideos.length < PAGE_SIZE) {
+      setHasMore(false);
+    }
 
     // Shuffle videos for variety
-    const shuffledVideos = shuffleArray(data || []);
-    setVideos(shuffledVideos);
+    const shuffledVideos = shuffleArray(newVideos);
+    
+    if (reset) {
+      setVideos(shuffledVideos);
+      setPage(0);
+      setHasMore(newVideos.length === PAGE_SIZE);
+    } else {
+      setVideos(prev => [...prev, ...shuffledVideos]);
+    }
   };
 
-  const fetchUserProfile = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      setCurrentUserId(user.id);
-      
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('is_premium')
-        .eq('id', user.id)
-        .single();
-      
-      setIsPremium(profile?.is_premium || false);
-    }
+  const fetchUserProfile = async (userId: string) => {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('is_premium')
+      .eq('id', userId)
+      .maybeSingle();
+    
+    setIsPremium(profile?.is_premium || false);
   };
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
     setActiveIndex(0);
-    await fetchVideos();
+    setPage(0);
+    setHasMore(true);
+    await fetchVideos(0, true);
     setIsRefreshing(false);
     toast.success('Feed refreshed!');
     
-    // Scroll to top
     if (containerRef.current) {
       containerRef.current.scrollTo({ top: 0, behavior: 'smooth' });
     }
+  };
+
+  const loadMoreVideos = async () => {
+    if (isLoadingMore || !hasMore) return;
+    
+    setIsLoadingMore(true);
+    const nextPage = page + 1;
+    await fetchVideos(nextPage, false);
+    setPage(nextPage);
+    setIsLoadingMore(false);
   };
 
   const handleDeleteVideo = async (videoId: string) => {
@@ -113,23 +152,29 @@ const Feed = () => {
       try {
         await supabase.from('videos').delete().eq('id', videoId);
         toast.success('Video deleted');
-        fetchVideos();
+        setVideos(prev => prev.filter(v => v.id !== videoId));
       } catch (error) {
         toast.error('Failed to delete video');
       }
     }
   };
 
-  // Handle scroll snap to detect active video
+  // Handle scroll snap to detect active video and load more
   const handleScroll = useCallback(() => {
     if (!containerRef.current) return;
     const scrollTop = containerRef.current.scrollTop;
     const height = window.innerHeight;
     const newIndex = Math.round(scrollTop / height);
+    
     if (newIndex !== activeIndex && newIndex >= 0 && newIndex < videos.length) {
       setActiveIndex(newIndex);
     }
-  }, [activeIndex, videos.length]);
+    
+    // Load more when near the end (3 videos before last)
+    if (newIndex >= videos.length - 3 && hasMore && !isLoadingMore) {
+      loadMoreVideos();
+    }
+  }, [activeIndex, videos.length, hasMore, isLoadingMore]);
 
   // Pull to refresh handlers
   const handleTouchStart = (e: React.TouchEvent) => {
@@ -214,9 +259,9 @@ const Feed = () => {
         </div>
       )}
 
-      {/* Logo in top left */}
-      <div className="fixed top-4 left-3 z-30">
-        <img src={toonreelsLogo} alt="ToonReels" className="h-10 w-auto drop-shadow-lg" />
+      {/* Logo in top left - better positioned */}
+      <div className="fixed top-3 left-3 z-30">
+        <img src={toonreelsLogo} alt="ToonReels" className="h-6 w-auto drop-shadow-lg" />
       </div>
 
       {videos.map((video, index) => (
@@ -230,6 +275,13 @@ const Feed = () => {
           onDelete={video.creator_id === currentUserId ? () => handleDeleteVideo(video.id) : undefined}
         />
       ))}
+      
+      {/* Loading more indicator */}
+      {isLoadingMore && (
+        <div className="h-screen w-full flex items-center justify-center bg-black snap-start">
+          <Loader2 className="h-8 w-8 text-white animate-spin" />
+        </div>
+      )}
       
       <CommentsSheet
         videoId={selectedVideoId || ''}
