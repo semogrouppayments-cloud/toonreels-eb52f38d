@@ -83,13 +83,17 @@ const Profile = () => {
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const userId = urlParams.get('userId');
-    fetchProfile(userId);
-    fetchUserVideos(userId);
-    fetchSavedVideos(userId);
-    fetchFollowCounts(userId);
-    fetchStatsCounts(userId);
-    checkIfCreative();
-    checkIfFollowing(userId);
+    
+    // Fetch all data in parallel for faster loading
+    Promise.all([
+      fetchProfile(userId),
+      fetchUserVideos(userId),
+      fetchSavedVideos(userId),
+      fetchFollowCounts(userId),
+      fetchStatsCounts(userId),
+      checkIfCreative(),
+      checkIfFollowing(userId)
+    ]);
   }, [window.location.search]);
 
   const checkIfCreative = async () => {

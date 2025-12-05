@@ -1,14 +1,18 @@
 import { Home, Search, Upload, User } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
 const BottomNav = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [isCreative, setIsCreative] = useState(false);
+  const [isCreative, setIsCreative] = useState<boolean | null>(null);
+  const checkedRef = useRef(false);
 
   useEffect(() => {
+    if (checkedRef.current) return;
+    checkedRef.current = true;
+    
     const checkUserType = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
@@ -18,6 +22,8 @@ const BottomNav = () => {
           .eq('user_id', user.id);
         
         setIsCreative(roles?.some(r => r.role === 'creative') || false);
+      } else {
+        setIsCreative(false);
       }
     };
 

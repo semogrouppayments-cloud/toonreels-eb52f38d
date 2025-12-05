@@ -18,6 +18,7 @@ interface VideoPlayerProps {
     creator_id: string;
     likes_count: number;
     views_count: number;
+    tags?: string[] | null;
     profiles: {
       username: string;
       avatar_url: string;
@@ -493,7 +494,7 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
       
       {/* Video Info - moved up with bottom padding */}
       <div className="absolute left-2 right-14 text-white z-10" style={{ bottom: '100px' }}>
-        <div className="flex items-center gap-1.5 mb-1">
+        <div className="flex items-center gap-1.5 mb-0.5">
           <div 
             className="flex items-center gap-1 cursor-pointer hover:opacity-80 transition-opacity"
             onClick={(e) => {
@@ -524,7 +525,17 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
             </button>
           )}
         </div>
-        <p className="text-[11px] opacity-90 line-clamp-2 leading-tight">{video.description || video.title}</p>
+        <p className="text-[11px] opacity-90 line-clamp-1 leading-tight mb-0.5">{video.description || video.title}</p>
+        {/* Hashtags under description */}
+        {video.tags && video.tags.length > 0 && (
+          <div className="flex flex-wrap gap-1">
+            {video.tags.slice(0, 4).map((tag, i) => (
+              <span key={i} className="text-[10px] text-primary/90 font-medium">
+                #{tag.length > 15 ? tag.slice(0, 15) : tag}
+              </span>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Action Buttons - moved up */}
