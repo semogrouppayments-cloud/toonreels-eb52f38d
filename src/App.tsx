@@ -7,6 +7,7 @@ import { ThemeProvider } from "@/contexts/ThemeContext";
 import Splash from "./pages/Splash";
 import Auth from "./pages/Auth";
 import Feed from "./pages/Feed";
+import Search from "./pages/Search";
 import Upload from "./pages/Upload";
 import Messages from "./pages/Messages";
 import Profile from "./pages/Profile";
@@ -28,6 +29,7 @@ const App = () => (
             <Route path="/" element={<Splash />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/feed" element={<Feed />} />
+            <Route path="/search" element={<Search />} />
             <Route path="/upload" element={<Upload />} />
             <Route path="/messages" element={<Messages />} />
             <Route path="/profile" element={<Profile />} />

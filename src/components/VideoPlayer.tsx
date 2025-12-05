@@ -84,8 +84,10 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
     if (!videoEl) return;
 
     if (isActive) {
-      // Video is now active - play it
+      // Video is now active - play it and auto-unmute
       videoEl.currentTime = 0;
+      videoEl.muted = false;
+      setIsMuted(false);
       const playPromise = videoEl.play();
       if (playPromise !== undefined) {
         playPromise
@@ -100,7 +102,10 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
             }
           })
           .catch(() => {
-            setIsPlaying(false);
+            // If autoplay with sound fails, try muted
+            videoEl.muted = true;
+            setIsMuted(true);
+            videoEl.play().then(() => setIsPlaying(true)).catch(() => setIsPlaying(false));
           });
       }
     } else {
