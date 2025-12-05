@@ -8,6 +8,26 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Play, Sparkles, Eye } from 'lucide-react';
 import { toast } from 'sonner';
+import { z } from 'zod';
+
+// Validation schemas
+const emailSchema = z.string().email('Please enter a valid email address').max(255, 'Email is too long');
+const passwordSchema = z.string().min(8, 'Password must be at least 8 characters').max(128, 'Password is too long');
+const usernameSchema = z.string()
+  .min(3, 'Username must be at least 3 characters')
+  .max(30, 'Username must be less than 30 characters')
+  .regex(/^[a-zA-Z0-9_]+$/, 'Username can only contain letters, numbers, and underscores');
+
+const signUpSchema = z.object({
+  email: emailSchema,
+  password: passwordSchema,
+  username: usernameSchema,
+});
+
+const signInSchema = z.object({
+  email: emailSchema,
+  password: z.string().min(1, 'Password is required'),
+});
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -17,9 +37,38 @@ const Auth = () => {
   const [password, setPassword] = useState('');
   const [username, setUsername] = useState('');
   const [userType, setUserType] = useState<'viewer' | 'creative'>('viewer');
+  const [errors, setErrors] = useState<{ email?: string; password?: string; username?: string }>({});
+
+  const validateForm = () => {
+    setErrors({});
+    
+    try {
+      if (isSignUp) {
+        signUpSchema.parse({ email, password, username });
+      } else {
+        signInSchema.parse({ email, password });
+      }
+      return true;
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        const newErrors: typeof errors = {};
+        error.issues.forEach((err) => {
+          const field = err.path[0] as keyof typeof errors;
+          newErrors[field] = err.message;
+        });
+        setErrors(newErrors);
+      }
+      return false;
+    }
+  };
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!validateForm()) {
+      return;
+    }
+    
     setLoading(true);
 
     try {
@@ -50,7 +99,13 @@ const Auth = () => {
         navigate('/feed');
       }
     } catch (error: any) {
-      toast.error(error.message || 'Authentication failed');
+      if (error.message?.includes('User already registered')) {
+        toast.error('This email is already registered. Please sign in instead.');
+      } else if (error.message?.includes('Invalid login credentials')) {
+        toast.error('Invalid email or password. Please try again.');
+      } else {
+        toast.error(error.message || 'Authentication failed');
+      }
     } finally {
       setLoading(false);
     }
@@ -79,10 +134,16 @@ const Auth = () => {
                   <Input
                     id="username"
                     value={username}
-                    onChange={(e) => setUsername(e.target.value)}
+                    onChange={(e) => {
+                      setUsername(e.target.value);
+                      if (errors.username) setErrors(prev => ({ ...prev, username: undefined }));
+                    }}
                     placeholder="Enter username"
-                    required
+                    className={errors.username ? 'border-destructive' : ''}
                   />
+                  {errors.username && (
+                    <p className="text-sm text-destructive">{errors.username}</p>
+                  )}
                 </div>
                 
                 <div className="space-y-3">
@@ -119,10 +180,16 @@ const Auth = () => {
                 id="email"
                 type="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  if (errors.email) setErrors(prev => ({ ...prev, email: undefined }));
+                }}
                 placeholder="Enter your email"
-                required
+                className={errors.email ? 'border-destructive' : ''}
               />
+              {errors.email && (
+                <p className="text-sm text-destructive">{errors.email}</p>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -131,10 +198,19 @@ const Auth = () => {
                 id="password"
                 type="password"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  if (errors.password) setErrors(prev => ({ ...prev, password: undefined }));
+                }}
                 placeholder="Enter your password"
-                required
+                className={errors.password ? 'border-destructive' : ''}
               />
+              {errors.password && (
+                <p className="text-sm text-destructive">{errors.password}</p>
+              )}
+              {isSignUp && !errors.password && (
+                <p className="text-xs text-muted-foreground">Must be at least 8 characters</p>
+              )}
             </div>
 
             <Button
@@ -149,7 +225,10 @@ const Auth = () => {
           <div className="mt-4 text-center">
             <button
               type="button"
-              onClick={() => setIsSignUp(!isSignUp)}
+              onClick={() => {
+                setIsSignUp(!isSignUp);
+                setErrors({});
+              }}
               className="text-sm text-primary hover:underline font-semibold"
             >
               {isSignUp ? 'Already have an account? Sign in' : "Don't have an account? Sign up"}

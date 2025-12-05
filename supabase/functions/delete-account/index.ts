@@ -128,6 +128,7 @@ Deno.serve(async (req) => {
     await supabaseAdmin.from('content_settings').delete().eq('user_id', userId);
     await supabaseAdmin.from('parental_controls').delete().eq('user_id', userId);
     await supabaseAdmin.from('playback_settings').delete().eq('user_id', userId);
+    await supabaseAdmin.from('profile_secrets').delete().eq('user_id', userId);
     console.log('Deleted user settings');
 
     // 15. Delete avatar from storage

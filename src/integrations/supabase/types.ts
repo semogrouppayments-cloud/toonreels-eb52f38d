@@ -357,6 +357,30 @@ export type Database = {
         }
         Relationships: []
       }
+      profile_secrets: {
+        Row: {
+          created_at: string | null
+          id: string
+          profile_pin: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          profile_pin?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          profile_pin?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           age_range: string | null
@@ -639,7 +663,7 @@ export type Database = {
     }
     Enums: {
       app_role: "viewer" | "creative" | "admin"
-      notification_type: "like" | "comment" | "follow" | "reply"
+      notification_type: "like" | "comment" | "follow" | "reply" | "new_video"
       user_type: "viewer" | "creative"
     }
     CompositeTypes: {
@@ -769,7 +793,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["viewer", "creative", "admin"],
-      notification_type: ["like", "comment", "follow", "reply"],
+      notification_type: ["like", "comment", "follow", "reply", "new_video"],
       user_type: ["viewer", "creative"],
     },
   },

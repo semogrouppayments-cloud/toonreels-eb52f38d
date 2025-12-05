@@ -11,7 +11,7 @@ import { useNavigate } from 'react-router-dom';
 interface Notification {
   id: string;
   actor_id: string;
-  type: 'like' | 'comment' | 'follow' | 'reply';
+  type: 'like' | 'comment' | 'follow' | 'reply' | 'new_video';
   video_id: string | null;
   comment_id: string | null;
   is_read: boolean;
@@ -216,13 +216,15 @@ const NotificationBell = () => {
     
     switch (notification.type) {
       case 'like':
-        return `${username} liked your video${notification.video?.title ? ` "${notification.video.title}"` : ''}`;
+        return `${username} liked your ${notification.comment_id ? 'comment' : 'video'}${notification.video?.title ? ` "${notification.video.title}"` : ''}`;
       case 'comment':
         return `${username} commented on your video${notification.video?.title ? ` "${notification.video.title}"` : ''}`;
       case 'reply':
         return `${username} replied to your comment`;
       case 'follow':
         return `${username} started following you`;
+      case 'new_video':
+        return `${username} uploaded a new video${notification.video?.title ? ` "${notification.video.title}"` : ''}`;
       default:
         return 'New notification';
     }
@@ -238,6 +240,8 @@ const NotificationBell = () => {
         return '↩️';
       case 'follow':
         return '👤';
+      case 'new_video':
+        return '🎬';
       default:
         return '🔔';
     }

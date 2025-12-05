@@ -76,12 +76,17 @@ const Settings = () => {
         .eq('user_id', user.id);
       setIsCreative(roles?.some(r => r.role === 'creative') || false);
       
-      const { data: profile } = await supabase.from('profiles').select('username, selected_avatar, age_range, profile_pin').eq('id', user.id).single();
+      const { data: profile } = await supabase.from('profiles').select('username, selected_avatar, age_range').eq('id', user.id).single();
       if (profile) {
         setUsername(profile.username || "");
         setSelectedAvatar(profile.selected_avatar || "🦊");
         setAgeRange(profile.age_range || "7-9");
-        setProfilePin(profile.profile_pin || "");
+      }
+      
+      // Fetch profile PIN from secure table
+      const { data: profileSecrets } = await supabase.from('profile_secrets').select('profile_pin').eq('user_id', user.id).single();
+      if (profileSecrets) {
+        setProfilePin(profileSecrets.profile_pin || "");
       }
       
       const { data: contentSettings } = await supabase.from('content_settings').select('*').eq('user_id', user.id).single();
@@ -143,13 +148,17 @@ const Settings = () => {
     try {
       const updates: any = { username, selected_avatar: selectedAvatar, age_range: ageRange };
       
-      // Only hash and update PIN if it was changed
+      await supabase.from('profiles').update(updates).eq('id', userId);
+      
+      // Save PIN to secure table if changed
       if (profilePin && profilePin.trim()) {
         const hashedPin = await bcrypt.hash(profilePin.trim(), 10);
-        updates.profile_pin = hashedPin;
+        await supabase.from('profile_secrets').upsert({
+          user_id: userId,
+          profile_pin: hashedPin
+        }, { onConflict: 'user_id' });
       }
       
-      await supabase.from('profiles').update(updates).eq('id', userId);
       toast.success('Profile settings saved');
     } catch (error) {
       toast.error('Failed to save');
