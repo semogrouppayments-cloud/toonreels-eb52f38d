@@ -34,6 +34,8 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
   const navigate = useNavigate();
   const [liked, setLiked] = useState(false);
   const [likesCount, setLikesCount] = useState(video.likes_count);
+  const [commentsCount, setCommentsCount] = useState(0);
+  const [savesCount, setSavesCount] = useState(0);
   const [isFollowing, setIsFollowing] = useState(false);
   const [showReportDialog, setShowReportDialog] = useState(false);
   const [showDownloadDialog, setShowDownloadDialog] = useState(false);
@@ -56,7 +58,25 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
     checkIfFollowing();
     checkIfLiked();
     checkIfSaved();
+    fetchCommentsCount();
+    fetchSavesCount();
   }, [video.id, currentUserId]);
+
+  const fetchCommentsCount = async () => {
+    const { count } = await supabase
+      .from('comments')
+      .select('*', { count: 'exact', head: true })
+      .eq('video_id', video.id);
+    setCommentsCount(count || 0);
+  };
+
+  const fetchSavesCount = async () => {
+    const { count } = await supabase
+      .from('saved_videos')
+      .select('*', { count: 'exact', head: true })
+      .eq('video_id', video.id);
+    setSavesCount(count || 0);
+  };
 
   // Handle active state - play/pause based on visibility
   useEffect(() => {
@@ -329,12 +349,14 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
           .eq('user_id', currentUserId)
           .eq('video_id', video.id);
         setIsSaved(false);
+        setSavesCount(prev => Math.max(0, prev - 1));
         toast.success('Removed from saved');
       } else {
         await supabase
           .from('saved_videos')
           .insert({ user_id: currentUserId, video_id: video.id });
         setIsSaved(true);
+        setSavesCount(prev => prev + 1);
         toast.success('Saved to watch later!');
       }
     } catch (error) {
@@ -416,7 +438,6 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
       <div 
         className="absolute inset-0 flex items-center justify-center"
         onClick={handleTap}
-        onTouchEnd={handleTap}
       >
         {loading ? (
           <div className="flex items-center justify-center">
@@ -522,7 +543,7 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
           <div className="rounded-full h-9 w-9 flex items-center justify-center text-white">
             <MessageCircle className="h-5 w-5" />
           </div>
-          <span className="text-[9px] text-white font-medium">Comment</span>
+          <span className="text-[9px] text-white font-medium">{commentsCount}</span>
         </button>
 
         {/* Save - only for non-owners */}
@@ -538,7 +559,7 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
                 <Bookmark className="h-5 w-5" />
               )}
             </div>
-            <span className="text-[9px] text-white font-medium">{isSaved ? 'Saved' : 'Save'}</span>
+            <span className="text-[9px] text-white font-medium">{savesCount}</span>
           </button>
         )}
 

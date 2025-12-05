@@ -1,9 +1,11 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import VideoPlayer from '@/components/VideoPlayer';
 import CommentsSheet from '@/components/CommentsSheet';
 import BottomNav from '@/components/BottomNav';
 import { toast } from 'sonner';
+import toonreelsLogo from '@/assets/toonreels-logo-white.png';
 
 interface Video {
   id: string;
@@ -20,17 +22,31 @@ interface Video {
 }
 
 const Feed = () => {
+  const navigate = useNavigate();
   const [videos, setVideos] = useState<Video[]>([]);
   const [currentUserId, setCurrentUserId] = useState('');
   const [isPremium, setIsPremium] = useState(false);
   const [selectedVideoId, setSelectedVideoId] = useState<string | null>(null);
   const [activeIndex, setActiveIndex] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    fetchVideos();
-    fetchUserProfile();
+    checkAuthAndFetch();
   }, []);
+
+  const checkAuthAndFetch = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session) {
+      navigate('/auth');
+      return;
+    }
+    
+    setCurrentUserId(session.user.id);
+    await Promise.all([fetchVideos(), fetchUserProfile()]);
+    setIsLoading(false);
+  };
 
   const fetchVideos = async () => {
     const { data } = await supabase
@@ -90,6 +106,14 @@ const Feed = () => {
     return () => container.removeEventListener('scroll', handleScroll);
   }, [handleScroll]);
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <p>Loading...</p>
+      </div>
+    );
+  }
+
   if (videos.length === 0) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center pb-24">
@@ -112,6 +136,10 @@ const Feed = () => {
         overscrollBehavior: 'contain'
       }}
     >
+      {/* Logo in top left */}
+      <div className="fixed top-4 left-3 z-30">
+        <img src={toonreelsLogo} alt="ToonReels" className="h-8 w-auto drop-shadow-lg" />
+      </div>
       {videos.map((video, index) => (
         <VideoPlayer
           key={video.id}

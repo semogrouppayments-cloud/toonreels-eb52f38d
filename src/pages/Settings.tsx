@@ -242,12 +242,17 @@ const Settings = () => {
 
   const handleDeleteAccount = async () => {
     try {
-      // Sign out first to ensure clean deletion
-      const { error } = await supabase.auth.signOut();
+      const deleteToast = toast.loading("Deleting account...");
       
-      if (error) throw error;
+      // Call the edge function to delete all user data
+      const { data, error } = await supabase.functions.invoke('delete-account');
+      
+      if (error) {
+        toast.error("Failed to delete account", { id: deleteToast });
+        throw error;
+      }
 
-      toast.success("Account deleted successfully");
+      toast.success("Account deleted successfully", { id: deleteToast });
       navigate('/auth');
     } catch (error: any) {
       console.error('Delete account error:', error);
