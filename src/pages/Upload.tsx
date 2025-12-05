@@ -81,6 +81,26 @@ const Upload = () => {
     });
   };
 
+  const validateVideoDuration = (videoFile: File): Promise<{ valid: boolean; duration: number }> => {
+    return new Promise((resolve) => {
+      const video = document.createElement('video');
+      video.preload = 'metadata';
+      
+      video.onloadedmetadata = () => {
+        const duration = video.duration;
+        URL.revokeObjectURL(video.src);
+        resolve({ valid: duration <= 90, duration }); // Max 90 seconds (1:30)
+      };
+      
+      video.onerror = () => {
+        URL.revokeObjectURL(video.src);
+        resolve({ valid: false, duration: 0 });
+      };
+      
+      video.src = URL.createObjectURL(videoFile);
+    });
+  };
+
   const handleAddTag = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' || e.key === ',') {
       e.preventDefault();
@@ -123,6 +143,13 @@ const Upload = () => {
     const isValidRatio = await validateVideoAspectRatio(videoFile);
     if (!isValidRatio) {
       toast.error('Video must be in 9:16 aspect ratio (vertical format)');
+      return;
+    }
+
+    // Validate duration (max 90 seconds)
+    const { valid: isValidDuration, duration } = await validateVideoDuration(videoFile);
+    if (!isValidDuration) {
+      toast.error(`Video is too long (${Math.floor(duration)}s). Maximum duration is 1 minute 30 seconds (90s)`);
       return;
     }
 
