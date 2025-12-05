@@ -81,48 +81,74 @@ const Profile = () => {
   });
 
   useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const userId = urlParams.get('userId');
+    const loadProfile = async () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const userId = urlParams.get('userId');
+      
+      // Get session once and reuse
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) {
+        navigate('/auth');
+        return;
+      }
+      
+      const currentUser = session.user;
+      setCurrentUserId(currentUser.id);
+      
+      // Determine target user
+      const targetUserId = userId || currentUser.id;
+      const isOwn = !userId || userId === currentUser.id;
+      setIsOwnProfile(isOwn);
+      
+      // Fetch all data in parallel for faster loading
+      await Promise.all([
+        fetchProfileData(targetUserId),
+        fetchUserVideos(targetUserId),
+        fetchSavedVideos(targetUserId),
+        fetchFollowCounts(targetUserId),
+        fetchStatsCounts(targetUserId),
+        checkIfCreative(currentUser.id),
+        !isOwn ? checkIfFollowingUser(currentUser.id, targetUserId) : Promise.resolve()
+      ]);
+    };
     
-    // Fetch all data in parallel for faster loading
-    Promise.all([
-      fetchProfile(userId),
-      fetchUserVideos(userId),
-      fetchSavedVideos(userId),
-      fetchFollowCounts(userId),
-      fetchStatsCounts(userId),
-      checkIfCreative(),
-      checkIfFollowing(userId)
-    ]);
+    loadProfile();
   }, [window.location.search]);
 
-  const checkIfCreative = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+  const fetchProfileData = async (targetUserId: string) => {
+    const { data } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', targetUserId)
+      .maybeSingle();
 
-    setCurrentUserId(user.id);
+    if (data) {
+      setProfile({ ...data, id: data.id || targetUserId });
+      setNewUsername(data.username);
+      setNewBio(data.bio || '');
+    }
+  };
 
+  const checkIfCreative = async (userId: string) => {
     const { data: roles } = await supabase
       .from('user_roles')
       .select('role')
-      .eq('user_id', user.id);
+      .eq('user_id', userId);
 
     setIsCreative(roles?.some(r => r.role === 'creative') || false);
   };
 
-  const checkIfFollowing = async (userId?: string | null) => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user || !userId || userId === user.id) return;
-
+  const checkIfFollowingUser = async (followerId: string, followingId: string) => {
     const { data } = await supabase
       .from('follows')
       .select('id')
-      .eq('follower_id', user.id)
-      .eq('following_id', userId)
-      .single();
-
+      .eq('follower_id', followerId)
+      .eq('following_id', followingId)
+      .maybeSingle();
+    
     setIsFollowing(!!data);
   };
+
 
   const handleFollowToggle = async () => {
     if (!currentUserId || !profile?.id) return;
@@ -153,32 +179,20 @@ const Profile = () => {
     }
   };
 
-  const fetchFollowCounts = async (userId?: string | null) => {
-    const { data: { user } } = await supabase.auth.getUser();
-    const targetUserId = userId || user?.id;
-    
+  const fetchFollowCounts = async (targetUserId: string) => {
     if (!targetUserId) return;
 
-    // Get followers count
-    const { count: followers } = await supabase
-      .from('follows')
-      .select('*', { count: 'exact', head: true })
-      .eq('following_id', targetUserId);
+    // Get followers and following counts in parallel
+    const [followersResult, followingResult] = await Promise.all([
+      supabase.from('follows').select('*', { count: 'exact', head: true }).eq('following_id', targetUserId),
+      supabase.from('follows').select('*', { count: 'exact', head: true }).eq('follower_id', targetUserId)
+    ]);
 
-    // Get following count
-    const { count: following } = await supabase
-      .from('follows')
-      .select('*', { count: 'exact', head: true })
-      .eq('follower_id', targetUserId);
-
-    setFollowersCount(followers || 0);
-    setFollowingCount(following || 0);
+    setFollowersCount(followersResult.count || 0);
+    setFollowingCount(followingResult.count || 0);
   };
 
-  const fetchStatsCounts = async (userId?: string | null) => {
-    const { data: { user } } = await supabase.auth.getUser();
-    const targetUserId = userId || user?.id;
-    
+  const fetchStatsCounts = async (targetUserId: string) => {
     if (!targetUserId) return;
 
     // Get profile to check user type
@@ -186,10 +200,9 @@ const Profile = () => {
       .from('profiles')
       .select('user_type')
       .eq('id', targetUserId)
-      .single();
+      .maybeSingle();
 
     if (profileData?.user_type === 'creative') {
-      // For creatives: Get total views and likes from all their videos
       const { data: videos } = await supabase
         .from('videos')
         .select('views_count, likes_count')
@@ -202,15 +215,9 @@ const Profile = () => {
         setTotalLikes(likes);
       }
     } else {
-      // For viewers: Get total views and likes from their saved videos
       const { data: savedData } = await supabase
         .from('saved_videos')
-        .select(`
-          videos (
-            views_count,
-            likes_count
-          )
-        `)
+        .select('videos(views_count, likes_count)')
         .eq('user_id', targetUserId);
 
       if (savedData) {
@@ -222,33 +229,7 @@ const Profile = () => {
     }
   };
 
-  const fetchProfile = async (userId?: string | null) => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user && !userId) {
-      navigate('/auth');
-      return;
-    }
-
-    const targetUserId = userId || user?.id;
-    setIsOwnProfile(!userId || userId === user?.id);
-
-    const { data } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', targetUserId)
-      .single();
-
-    if (data) {
-      setProfile({ ...data, id: data.id || targetUserId });
-      setNewUsername(data.username);
-      setNewBio(data.bio || '');
-    }
-  };
-
-  const fetchUserVideos = async (userId?: string | null) => {
-    const { data: { user } } = await supabase.auth.getUser();
-    const targetUserId = userId || user?.id;
-    
+  const fetchUserVideos = async (targetUserId: string) => {
     if (!targetUserId) return;
 
     const { data } = await supabase
@@ -260,36 +241,30 @@ const Profile = () => {
     setVideos(data || []);
   };
 
-  const fetchSavedVideos = async (userId?: string | null) => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      const profileId = userId || user?.id;
-      if (!profileId) return;
+  const fetchSavedVideos = async (targetUserId: string) => {
+    if (!targetUserId) return;
 
-      const { data } = await supabase
-        .from('saved_videos')
-        .select(`
-          video_id,
-          videos (
-            id,
-            title,
-            thumbnail_url,
-            views_count,
-            likes_count,
-            video_url,
-            description,
-            creator_id
-          )
-        `)
-        .eq('user_id', profileId)
-        .order('created_at', { ascending: false });
+    const { data } = await supabase
+      .from('saved_videos')
+      .select(`
+        video_id,
+        videos (
+          id,
+          title,
+          thumbnail_url,
+          views_count,
+          likes_count,
+          video_url,
+          description,
+          creator_id
+        )
+      `)
+      .eq('user_id', targetUserId)
+      .order('created_at', { ascending: false });
 
-      if (data) {
-        const videos = data.map(item => item.videos).filter(Boolean) as Video[];
-        setSavedVideos(videos);
-      }
-    } catch (error) {
-      console.error('Error fetching saved videos:', error);
+    if (data) {
+      const videos = data.map(item => item.videos).filter(Boolean) as Video[];
+      setSavedVideos(videos);
     }
   };
 
@@ -326,7 +301,7 @@ const Profile = () => {
         .eq('id', user.id);
 
       toast.success('Profile picture updated!');
-      fetchProfile(null);
+      fetchProfileData(user.id);
     } catch (error) {
       toast.error('Failed to upload avatar');
     }
@@ -359,7 +334,7 @@ const Profile = () => {
         .eq('id', user.id);
 
       toast.success('Cover photo updated!');
-      fetchProfile(null);
+      fetchProfileData(user.id);
     } catch (error) {
       toast.error('Failed to upload cover photo');
     }
@@ -379,7 +354,7 @@ const Profile = () => {
 
       toast.success('Username updated!');
       setEditingUsername(false);
-      fetchProfile(null);
+      fetchProfileData(user.id);
     } catch (error) {
       toast.error('Failed to update username');
     }
@@ -402,7 +377,7 @@ const Profile = () => {
 
       toast.success('Bio updated!');
       setEditingBio(false);
-      fetchProfile(null);
+      fetchProfileData(user.id);
     } catch (error) {
       toast.error('Failed to update bio');
     }

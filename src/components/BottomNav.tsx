@@ -1,30 +1,46 @@
 import { Home, Search, Upload, User } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+
+// Cache creative status in memory to avoid re-fetching on every render
+let cachedCreativeStatus: boolean | null = null;
 
 const BottomNav = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [isCreative, setIsCreative] = useState<boolean | null>(null);
-  const checkedRef = useRef(false);
+  const [isCreative, setIsCreative] = useState<boolean>(cachedCreativeStatus ?? false);
+  const [isLoaded, setIsLoaded] = useState(cachedCreativeStatus !== null);
 
   useEffect(() => {
-    if (checkedRef.current) return;
-    checkedRef.current = true;
+    // If already cached, skip fetching
+    if (cachedCreativeStatus !== null) {
+      setIsCreative(cachedCreativeStatus);
+      setIsLoaded(true);
+      return;
+    }
     
     const checkUserType = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const { data: roles } = await supabase
-          .from('user_roles')
-          .select('role')
-          .eq('user_id', user.id);
-        
-        setIsCreative(roles?.some(r => r.role === 'creative') || false);
-      } else {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const { data: roles } = await supabase
+            .from('user_roles')
+            .select('role')
+            .eq('user_id', user.id);
+          
+          const creative = roles?.some(r => r.role === 'creative') || false;
+          cachedCreativeStatus = creative;
+          setIsCreative(creative);
+        } else {
+          cachedCreativeStatus = false;
+          setIsCreative(false);
+        }
+      } catch {
+        cachedCreativeStatus = false;
         setIsCreative(false);
       }
+      setIsLoaded(true);
     };
 
     checkUserType();
@@ -59,7 +75,7 @@ const BottomNav = () => {
           <span className="text-[10px] font-semibold">Search</span>
         </button>
 
-        {isCreative && (
+        {isLoaded && isCreative && (
           <button
             onClick={() => navigate('/upload')}
             className={`flex flex-col items-center gap-1 px-3 py-2 rounded-2xl transition-all ${
