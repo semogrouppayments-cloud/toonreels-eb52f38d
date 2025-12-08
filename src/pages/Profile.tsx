@@ -10,6 +10,7 @@ import NotificationBell from '@/components/NotificationBell';
 import { toast } from 'sonner';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import VideoPlayer from '@/components/VideoPlayer';
+import ProfileSkeleton from '@/components/ProfileSkeleton';
 import {
   Dialog,
   DialogContent,
@@ -456,7 +457,7 @@ const Profile = () => {
     }
   };
 
-  if (!profile) return null;
+  if (!profile) return <ProfileSkeleton />;
 
   return (
     <div className="min-h-screen bg-background pb-20">
