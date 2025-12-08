@@ -235,11 +235,12 @@ const Feed = () => {
   return (
     <div 
       ref={containerRef}
-      className="h-screen w-full overflow-y-scroll snap-y snap-mandatory bg-black scrollbar-hide"
+      className="h-screen w-full overflow-y-scroll bg-black scrollbar-hide"
       style={{ 
         scrollSnapType: 'y mandatory',
+        scrollSnapStop: 'always',
         WebkitOverflowScrolling: 'touch',
-        overscrollBehavior: 'contain'
+        overscrollBehavior: 'none'
       }}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
@@ -265,15 +266,20 @@ const Feed = () => {
       </div>
 
       {videos.map((video, index) => (
-        <VideoPlayer
-          key={video.id}
-          video={video}
-          currentUserId={currentUserId}
-          isPremium={isPremium}
-          isActive={index === activeIndex}
-          onCommentsClick={() => setSelectedVideoId(video.id)}
-          onDelete={video.creator_id === currentUserId ? () => handleDeleteVideo(video.id) : undefined}
-        />
+        <div 
+          key={video.id} 
+          className="h-screen w-full flex-shrink-0"
+          style={{ scrollSnapAlign: 'start', scrollSnapStop: 'always' }}
+        >
+          <VideoPlayer
+            video={video}
+            currentUserId={currentUserId}
+            isPremium={isPremium}
+            isActive={index === activeIndex}
+            onCommentsClick={() => setSelectedVideoId(video.id)}
+            onDelete={video.creator_id === currentUserId ? () => handleDeleteVideo(video.id) : undefined}
+          />
+        </div>
       ))}
       
       {/* Loading more indicator */}
