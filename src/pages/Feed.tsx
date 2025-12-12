@@ -8,6 +8,7 @@ import BottomNav from '@/components/BottomNav';
 import { toast } from 'sonner';
 import { RefreshCw, Loader2 } from 'lucide-react';
 import toonreelsLogo from '@/assets/toonreels-logo-long.png';
+import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 
 interface Video {
   id: string;
@@ -38,6 +39,7 @@ const PAGE_SIZE = 10;
 
 const Feed = () => {
   const navigate = useNavigate();
+  const { triggerScrollHaptic } = useHapticFeedback();
   const [videos, setVideos] = useState<Video[]>([]);
   const [currentUserId, setCurrentUserId] = useState('');
   const [isPremium, setIsPremium] = useState(false);
@@ -52,6 +54,7 @@ const Feed = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const touchStartY = useRef(0);
   const isPulling = useRef(false);
+  const preloadedVideosRef = useRef<Set<string>>(new Set());
 
   const PULL_THRESHOLD = 80;
 
@@ -159,6 +162,25 @@ const Feed = () => {
     }
   };
 
+  // Preload video URLs for smoother playback
+  const preloadVideo = useCallback((videoUrl: string) => {
+    if (preloadedVideosRef.current.has(videoUrl)) return;
+    
+    const link = document.createElement('link');
+    link.rel = 'preload';
+    link.as = 'video';
+    link.href = videoUrl;
+    document.head.appendChild(link);
+    
+    preloadedVideosRef.current.add(videoUrl);
+    
+    // Cleanup old preloads to avoid memory issues
+    if (preloadedVideosRef.current.size > 10) {
+      const firstKey = preloadedVideosRef.current.values().next().value;
+      preloadedVideosRef.current.delete(firstKey);
+    }
+  }, []);
+
   // Handle scroll snap to detect active video and load more
   const handleScroll = useCallback(() => {
     if (!containerRef.current) return;
@@ -167,14 +189,24 @@ const Feed = () => {
     const newIndex = Math.round(scrollTop / height);
     
     if (newIndex !== activeIndex && newIndex >= 0 && newIndex < videos.length) {
+      // Haptic feedback when snapping to new video
+      triggerScrollHaptic();
       setActiveIndex(newIndex);
+      
+      // Preload next and previous videos
+      if (videos[newIndex + 1]) {
+        preloadVideo(videos[newIndex + 1].video_url);
+      }
+      if (videos[newIndex + 2]) {
+        preloadVideo(videos[newIndex + 2].video_url);
+      }
     }
     
     // Load more when near the end (3 videos before last)
     if (newIndex >= videos.length - 3 && hasMore && !isLoadingMore) {
       loadMoreVideos();
     }
-  }, [activeIndex, videos.length, hasMore, isLoadingMore]);
+  }, [activeIndex, videos, hasMore, isLoadingMore, triggerScrollHaptic, preloadVideo]);
 
   // Pull to refresh handlers
   const handleTouchStart = (e: React.TouchEvent) => {
