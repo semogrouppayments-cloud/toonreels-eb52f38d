@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import { RefreshCw, Loader2 } from 'lucide-react';
 import toonreelsLogo from '@/assets/toonreels-logo-long.png';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
+import { useSoundEffects } from '@/hooks/useSoundEffects';
 
 interface Video {
   id: string;
@@ -40,6 +41,7 @@ const PAGE_SIZE = 10;
 const Feed = () => {
   const navigate = useNavigate();
   const { triggerScrollHaptic } = useHapticFeedback();
+  const { playSwipeSound, initAudio } = useSoundEffects();
   const [videos, setVideos] = useState<Video[]>([]);
   const [currentUserId, setCurrentUserId] = useState('');
   const [isPremium, setIsPremium] = useState(false);
@@ -53,10 +55,15 @@ const Feed = () => {
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const touchStartY = useRef(0);
+  const touchStartX = useRef(0);
+  const touchStartTime = useRef(0);
   const isPulling = useRef(false);
+  const isSwipingVertically = useRef(false);
   const preloadedVideosRef = useRef<Set<string>>(new Set());
 
   const PULL_THRESHOLD = 80;
+  const SWIPE_THRESHOLD = 50;
+  const SWIPE_VELOCITY_THRESHOLD = 0.3;
 
   useEffect(() => {
     checkAuthAndFetch();
@@ -208,31 +215,79 @@ const Feed = () => {
     }
   }, [activeIndex, videos, hasMore, isLoadingMore, triggerScrollHaptic, preloadVideo]);
 
-  // Pull to refresh handlers
+  // Swipe gesture handlers with acceleration
   const handleTouchStart = (e: React.TouchEvent) => {
+    const touch = e.touches[0];
+    touchStartY.current = touch.clientY;
+    touchStartX.current = touch.clientX;
+    touchStartTime.current = Date.now();
+    isSwipingVertically.current = false;
+    
+    // Initialize audio on first touch
+    initAudio();
+    
+    // Check for pull to refresh
     if (containerRef.current?.scrollTop === 0) {
-      touchStartY.current = e.touches[0].clientY;
       isPulling.current = true;
     }
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
-    if (!isPulling.current || containerRef.current?.scrollTop !== 0) return;
+    const touch = e.touches[0];
+    const deltaY = touch.clientY - touchStartY.current;
+    const deltaX = Math.abs(touch.clientX - touchStartX.current);
     
-    const currentY = e.touches[0].clientY;
-    const distance = currentY - touchStartY.current;
+    // Determine swipe direction on first significant move
+    if (!isSwipingVertically.current && Math.abs(deltaY) > 10) {
+      isSwipingVertically.current = Math.abs(deltaY) > deltaX;
+    }
     
-    if (distance > 0) {
-      setPullDistance(Math.min(distance, PULL_THRESHOLD * 1.5));
+    // Handle pull to refresh only at top
+    if (isPulling.current && containerRef.current?.scrollTop === 0 && deltaY > 0) {
+      setPullDistance(Math.min(deltaY, PULL_THRESHOLD * 1.5));
     }
   };
 
-  const handleTouchEnd = async () => {
+  const handleTouchEnd = async (e: React.TouchEvent) => {
+    const touch = e.changedTouches[0];
+    const deltaY = touchStartY.current - touch.clientY;
+    const deltaTime = Date.now() - touchStartTime.current;
+    const velocity = Math.abs(deltaY) / deltaTime;
+    
+    // Handle pull to refresh
     if (pullDistance >= PULL_THRESHOLD && !isRefreshing) {
       await handleRefresh();
     }
     setPullDistance(0);
     isPulling.current = false;
+    
+    // Handle fast swipe gestures for video navigation
+    if (isSwipingVertically.current && velocity > SWIPE_VELOCITY_THRESHOLD) {
+      const container = containerRef.current;
+      if (!container) return;
+      
+      if (deltaY > SWIPE_THRESHOLD && activeIndex < videos.length - 1) {
+        // Swipe up - next video with acceleration
+        const targetIndex = activeIndex + 1;
+        container.scrollTo({
+          top: targetIndex * window.innerHeight,
+          behavior: 'smooth'
+        });
+        triggerScrollHaptic();
+        playSwipeSound();
+      } else if (deltaY < -SWIPE_THRESHOLD && activeIndex > 0) {
+        // Swipe down - previous video with acceleration
+        const targetIndex = activeIndex - 1;
+        container.scrollTo({
+          top: targetIndex * window.innerHeight,
+          behavior: 'smooth'
+        });
+        triggerScrollHaptic();
+        playSwipeSound();
+      }
+    }
+    
+    isSwipingVertically.current = false;
   };
 
   useEffect(() => {
