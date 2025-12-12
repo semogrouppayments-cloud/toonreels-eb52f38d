@@ -8,6 +8,7 @@ import LikeAnimation from '@/components/LikeAnimation';
 import { useNavigate } from 'react-router-dom';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import DownloadQualityDialog from '@/components/DownloadQualityDialog';
+import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 
 interface VideoPlayerProps {
   video: {
@@ -33,6 +34,7 @@ interface VideoPlayerProps {
 
 const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClick, onDelete }: VideoPlayerProps) => {
   const navigate = useNavigate();
+  const { triggerLikeHaptic } = useHapticFeedback();
   const [liked, setLiked] = useState(false);
   const [likesCount, setLikesCount] = useState(video.likes_count);
   const [commentsCount, setCommentsCount] = useState(0);
@@ -265,13 +267,16 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
     const DOUBLE_TAP_DELAY = 300;
 
     if (now - lastTapRef.current < DOUBLE_TAP_DELAY) {
-      // Double tap - like
+      // Double tap - like with haptic feedback
       const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
       const x = 'touches' in e ? e.changedTouches[0]?.clientX || 0 : e.clientX;
       const y = 'touches' in e ? e.changedTouches[0]?.clientY || 0 : e.clientY;
       
       const id = animationIdRef.current++;
       setLikeAnimations(prev => [...prev, { id, x, y }]);
+      
+      // Trigger haptic feedback on like
+      triggerLikeHaptic();
       
       if (!liked) {
         handleLike();
