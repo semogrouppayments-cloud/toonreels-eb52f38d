@@ -9,6 +9,7 @@ import { useNavigate } from 'react-router-dom';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import DownloadQualityDialog from '@/components/DownloadQualityDialog';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
+import { useSoundEffects } from '@/hooks/useSoundEffects';
 
 interface VideoPlayerProps {
   video: {
@@ -35,6 +36,7 @@ interface VideoPlayerProps {
 const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClick, onDelete }: VideoPlayerProps) => {
   const navigate = useNavigate();
   const { triggerLikeHaptic } = useHapticFeedback();
+  const { playLikeSound, playTapSound } = useSoundEffects();
   const [liked, setLiked] = useState(false);
   const [likesCount, setLikesCount] = useState(video.likes_count);
   const [commentsCount, setCommentsCount] = useState(0);
@@ -46,6 +48,7 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
   const [isMuted, setIsMuted] = useState(true);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
+  const [isBuffering, setIsBuffering] = useState(false);
   const { signedUrl, loading, error } = useSignedVideoUrl(video.video_url);
   const lastTapRef = useRef<number>(0);
   const animationIdRef = useRef<number>(0);
@@ -53,6 +56,7 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
   const watchStartTimeRef = useRef<number>(Date.now());
   const analyticsTrackedRef = useRef<boolean>(false);
   const hasTrackedViewRef = useRef<boolean>(false);
+  const playAttemptRef = useRef<number>(0);
 
   const isOwnVideo = currentUserId === video.creator_id;
 
@@ -81,53 +85,110 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
     setSavesCount(count || 0);
   };
 
-  // Handle active state - play/pause based on visibility
+  // Handle active state - play/pause based on visibility with better mobile support
   useEffect(() => {
     const videoEl = videoRef.current;
     if (!videoEl) return;
 
-    if (isActive) {
-      // Video is now active - play it and auto-unmute
-      videoEl.currentTime = 0;
-      videoEl.muted = false;
-      setIsMuted(false);
-      const playPromise = videoEl.play();
-      if (playPromise !== undefined) {
-        playPromise
-          .then(() => {
-            setIsPlaying(true);
-            // Track view only once per video
-            if (!hasTrackedViewRef.current) {
-              incrementViewCount();
-              hasTrackedViewRef.current = true;
-              watchStartTimeRef.current = Date.now();
-              analyticsTrackedRef.current = false;
+    const attemptPlay = async () => {
+      if (!isActive) {
+        // Video is not active - pause and mute
+        videoEl.pause();
+        videoEl.muted = true;
+        setIsMuted(true);
+        setIsPlaying(false);
+        // Track analytics when leaving
+        if (!analyticsTrackedRef.current && hasTrackedViewRef.current) {
+          trackVideoAnalytics(false);
+        }
+        return;
+      }
+
+      // Video is now active - prepare and play
+      playAttemptRef.current++;
+      const currentAttempt = playAttemptRef.current;
+      
+      try {
+        // Reset video position
+        videoEl.currentTime = 0;
+        
+        // First try to play muted (always works on mobile)
+        videoEl.muted = true;
+        setIsMuted(true);
+        
+        await videoEl.play();
+        setIsPlaying(true);
+        
+        // Track view only once per video
+        if (!hasTrackedViewRef.current) {
+          incrementViewCount();
+          hasTrackedViewRef.current = true;
+          watchStartTimeRef.current = Date.now();
+          analyticsTrackedRef.current = false;
+        }
+        
+        // After successful muted play, try to unmute
+        // Only if this is still the current attempt
+        if (currentAttempt === playAttemptRef.current) {
+          setTimeout(() => {
+            if (videoEl && currentAttempt === playAttemptRef.current) {
+              videoEl.muted = false;
+              setIsMuted(false);
             }
-          })
-          .catch(() => {
-            // If autoplay with sound fails, try muted
-            videoEl.muted = true;
-            setIsMuted(true);
-            videoEl.play().then(() => setIsPlaying(true)).catch(() => setIsPlaying(false));
-          });
+          }, 100);
+        }
+      } catch (err) {
+        // Playback failed - likely user hasn't interacted yet
+        console.log('Autoplay failed, waiting for user interaction');
+        setIsPlaying(false);
       }
-    } else {
-      // Video is not active - pause and mute
-      videoEl.pause();
-      videoEl.muted = true;
-      setIsMuted(true);
-      setIsPlaying(false);
-      // Track analytics when leaving
-      if (!analyticsTrackedRef.current && hasTrackedViewRef.current) {
-        trackVideoAnalytics(false);
+    };
+
+    attemptPlay();
+  }, [isActive, signedUrl]);
+
+  // Handle video events for better mobile playback
+  useEffect(() => {
+    const videoEl = videoRef.current;
+    if (!videoEl) return;
+
+    const handleWaiting = () => setIsBuffering(true);
+    const handlePlaying = () => setIsBuffering(false);
+    const handleCanPlay = () => setIsBuffering(false);
+    const handleStalled = () => {
+      // Video stalled - try to recover
+      if (isActive && videoEl.paused) {
+        videoEl.play().catch(() => {});
       }
-    }
+    };
+    const handleError = () => {
+      // On error, try reloading the video
+      if (signedUrl && isActive) {
+        videoEl.load();
+        videoEl.play().catch(() => {});
+      }
+    };
+
+    videoEl.addEventListener('waiting', handleWaiting);
+    videoEl.addEventListener('playing', handlePlaying);
+    videoEl.addEventListener('canplay', handleCanPlay);
+    videoEl.addEventListener('stalled', handleStalled);
+    videoEl.addEventListener('error', handleError);
+
+    return () => {
+      videoEl.removeEventListener('waiting', handleWaiting);
+      videoEl.removeEventListener('playing', handlePlaying);
+      videoEl.removeEventListener('canplay', handleCanPlay);
+      videoEl.removeEventListener('stalled', handleStalled);
+      videoEl.removeEventListener('error', handleError);
+    };
   }, [isActive, signedUrl]);
 
   // Reset tracking when video changes
   useEffect(() => {
     hasTrackedViewRef.current = false;
     analyticsTrackedRef.current = false;
+    playAttemptRef.current = 0;
   }, [video.id]);
 
   const checkIfLiked = async () => {
@@ -267,7 +328,7 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
     const DOUBLE_TAP_DELAY = 300;
 
     if (now - lastTapRef.current < DOUBLE_TAP_DELAY) {
-      // Double tap - like with haptic feedback
+      // Double tap - like with haptic and sound feedback
       const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
       const x = 'touches' in e ? e.changedTouches[0]?.clientX || 0 : e.clientX;
       const y = 'touches' in e ? e.changedTouches[0]?.clientY || 0 : e.clientY;
@@ -275,18 +336,20 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
       const id = animationIdRef.current++;
       setLikeAnimations(prev => [...prev, { id, x, y }]);
       
-      // Trigger haptic feedback on like
+      // Trigger haptic and sound feedback on like
       triggerLikeHaptic();
+      playLikeSound();
       
       if (!liked) {
         handleLike();
       }
       lastTapRef.current = 0; // Reset to prevent triple tap
     } else {
-      // Single tap - toggle play/pause
+      // Single tap - toggle play/pause with subtle feedback
       lastTapRef.current = now;
       setTimeout(() => {
         if (lastTapRef.current === now) {
+          playTapSound();
           togglePlayPause();
         }
       }, DOUBLE_TAP_DELAY);
@@ -452,7 +515,7 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
       >
         {loading ? (
           <div className="flex items-center justify-center">
-            <span className="text-white text-sm">Loading...</span>
+            <div className="animate-spin rounded-full h-8 w-8 border-2 border-white border-t-transparent" />
           </div>
         ) : error ? (
           <div className="flex items-center justify-center">
@@ -466,16 +529,25 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
             loop
             muted={isMuted}
             playsInline
-            preload="auto"
+            webkit-playsinline="true"
+            x5-playsinline="true"
+            preload="metadata"
             style={{ 
-              maxHeight: 'calc(100vh - 80px)', // Leave space for bottom nav
+              maxHeight: 'calc(100vh - 80px)',
               marginBottom: '80px'
             }}
           />
         )}
         
+        {/* Buffering indicator */}
+        {isBuffering && isActive && (
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <div className="animate-spin rounded-full h-10 w-10 border-3 border-white border-t-transparent" />
+          </div>
+        )}
+        
         {/* Play/Pause indicator */}
-        {!isPlaying && isActive && (
+        {!isPlaying && isActive && !isBuffering && (
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
             <div className="bg-black/50 rounded-full p-4">
               <Play className="h-12 w-12 text-white fill-white" />
