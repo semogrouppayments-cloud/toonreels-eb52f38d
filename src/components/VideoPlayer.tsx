@@ -1,7 +1,7 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { Heart, MessageCircle, Download, Flag, Trash2, Volume2, VolumeX, Bookmark, BookmarkCheck, Play, Pause } from 'lucide-react';
+import { Heart, MessageCircle, Download, Flag, Trash2, Volume2, VolumeX, Bookmark, BookmarkCheck, Play, Settings } from 'lucide-react';
 import { toast } from 'sonner';
 import { useSignedVideoUrl } from '@/hooks/useSignedVideoUrl';
 import LikeAnimation from '@/components/LikeAnimation';
@@ -10,6 +10,12 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import DownloadQualityDialog from '@/components/DownloadQualityDialog';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { useSoundEffects } from '@/hooks/useSoundEffects';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 interface VideoPlayerProps {
   video: {
@@ -49,10 +55,15 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
   const [isPlaying, setIsPlaying] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
   const [isBuffering, setIsBuffering] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const [videoQuality, setVideoQuality] = useState<'HD' | 'SD'>('HD');
+  const [showQualityMenu, setShowQualityMenu] = useState(false);
   const { signedUrl, loading, error } = useSignedVideoUrl(video.video_url);
   const lastTapRef = useRef<number>(0);
   const animationIdRef = useRef<number>(0);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const progressBarRef = useRef<HTMLDivElement>(null);
   const watchStartTimeRef = useRef<number>(Date.now());
   const analyticsTrackedRef = useRef<boolean>(false);
   const hasTrackedViewRef = useRef<boolean>(false);
@@ -169,11 +180,18 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
       }
     };
 
+    const handleTimeUpdate = () => setCurrentTime(videoEl.currentTime);
+    const handleLoadedMetadata = () => setDuration(videoEl.duration);
+    const handleDurationChange = () => setDuration(videoEl.duration);
+
     videoEl.addEventListener('waiting', handleWaiting);
     videoEl.addEventListener('playing', handlePlaying);
     videoEl.addEventListener('canplay', handleCanPlay);
     videoEl.addEventListener('stalled', handleStalled);
     videoEl.addEventListener('error', handleError);
+    videoEl.addEventListener('timeupdate', handleTimeUpdate);
+    videoEl.addEventListener('loadedmetadata', handleLoadedMetadata);
+    videoEl.addEventListener('durationchange', handleDurationChange);
 
     return () => {
       videoEl.removeEventListener('waiting', handleWaiting);
@@ -181,6 +199,9 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
       videoEl.removeEventListener('canplay', handleCanPlay);
       videoEl.removeEventListener('stalled', handleStalled);
       videoEl.removeEventListener('error', handleError);
+      videoEl.removeEventListener('timeupdate', handleTimeUpdate);
+      videoEl.removeEventListener('loadedmetadata', handleLoadedMetadata);
+      videoEl.removeEventListener('durationchange', handleDurationChange);
     };
   }, [isActive, signedUrl]);
 
@@ -380,6 +401,35 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
     setLikeAnimations(prev => prev.filter(anim => anim.id !== id));
   };
 
+  const handleProgressBarClick = useCallback((e: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>) => {
+    e.stopPropagation();
+    const progressBar = progressBarRef.current;
+    const videoEl = videoRef.current;
+    if (!progressBar || !videoEl || !duration) return;
+
+    const rect = progressBar.getBoundingClientRect();
+    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+    const clickPosition = (clientX - rect.left) / rect.width;
+    const newTime = clickPosition * duration;
+    
+    videoEl.currentTime = Math.max(0, Math.min(newTime, duration));
+    setCurrentTime(newTime);
+  }, [duration]);
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const handleQualityChange = (quality: 'HD' | 'SD') => {
+    setVideoQuality(quality);
+    setShowQualityMenu(false);
+    toast.success(`Video quality set to ${quality}`);
+  };
+
+  const progressPercent = duration > 0 ? (currentTime / duration) * 100 : 0;
+
   const handleFollow = async (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!currentUserId) {
@@ -559,15 +609,74 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
       {/* Gradient overlay */}
       <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
       
-      {/* Volume Control */}
-      <Button
-        size="icon"
-        variant="ghost"
-        onClick={toggleMute}
-        className="absolute top-4 right-3 z-20 rounded-full h-8 w-8 bg-black/40 text-white hover:bg-black/60"
+      {/* Top Controls */}
+      <div className="absolute top-4 right-3 z-20 flex items-center gap-2">
+        {/* Quality Selector */}
+        <DropdownMenu open={showQualityMenu} onOpenChange={setShowQualityMenu}>
+          <DropdownMenuTrigger asChild>
+            <Button
+              size="icon"
+              variant="ghost"
+              onClick={(e) => e.stopPropagation()}
+              className="rounded-full h-8 w-8 bg-black/40 text-white hover:bg-black/60"
+            >
+              <Settings className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="min-w-[100px]" onClick={(e) => e.stopPropagation()}>
+            <DropdownMenuItem 
+              onClick={() => handleQualityChange('HD')}
+              className={videoQuality === 'HD' ? 'bg-primary/10 text-primary' : ''}
+            >
+              HD (720p+)
+            </DropdownMenuItem>
+            <DropdownMenuItem 
+              onClick={() => handleQualityChange('SD')}
+              className={videoQuality === 'SD' ? 'bg-primary/10 text-primary' : ''}
+            >
+              SD (480p)
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        {/* Volume Control */}
+        <Button
+          size="icon"
+          variant="ghost"
+          onClick={toggleMute}
+          className="rounded-full h-8 w-8 bg-black/40 text-white hover:bg-black/60"
+        >
+          {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+        </Button>
+      </div>
+      
+      {/* Progress Bar */}
+      <div 
+        className="absolute left-0 right-0 z-20 px-3"
+        style={{ bottom: '90px' }}
       >
-        {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
-      </Button>
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] text-white/80 font-medium min-w-[32px]">
+            {formatTime(currentTime)}
+          </span>
+          <div
+            ref={progressBarRef}
+            className="flex-1 h-1 bg-white/30 rounded-full cursor-pointer relative group"
+            onClick={handleProgressBarClick}
+            onTouchStart={handleProgressBarClick}
+          >
+            <div 
+              className="h-full bg-primary rounded-full transition-all duration-100 relative"
+              style={{ width: `${progressPercent}%` }}
+            >
+              <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 bg-primary rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-lg" />
+            </div>
+          </div>
+          <span className="text-[10px] text-white/80 font-medium min-w-[32px] text-right">
+            {formatTime(duration)}
+          </span>
+        </div>
+      </div>
       
       {/* Video Info - moved up with bottom padding */}
       <div className="absolute left-2 right-14 text-white z-10" style={{ bottom: '100px' }}>
