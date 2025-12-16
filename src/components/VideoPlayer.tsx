@@ -57,8 +57,10 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
   const [isBuffering, setIsBuffering] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+  const [bufferedPercent, setBufferedPercent] = useState(0);
   const [videoQuality, setVideoQuality] = useState<'HD' | 'SD'>('HD');
-  const [showQualityMenu, setShowQualityMenu] = useState(false);
+  const [playbackSpeed, setPlaybackSpeed] = useState<number>(1);
+  const [showSettingsMenu, setShowSettingsMenu] = useState(false);
   const { signedUrl, loading, error } = useSignedVideoUrl(video.video_url);
   const lastTapRef = useRef<number>(0);
   const animationIdRef = useRef<number>(0);
@@ -183,6 +185,12 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
     const handleTimeUpdate = () => setCurrentTime(videoEl.currentTime);
     const handleLoadedMetadata = () => setDuration(videoEl.duration);
     const handleDurationChange = () => setDuration(videoEl.duration);
+    const handleProgress = () => {
+      if (videoEl.buffered.length > 0 && videoEl.duration > 0) {
+        const bufferedEnd = videoEl.buffered.end(videoEl.buffered.length - 1);
+        setBufferedPercent((bufferedEnd / videoEl.duration) * 100);
+      }
+    };
 
     videoEl.addEventListener('waiting', handleWaiting);
     videoEl.addEventListener('playing', handlePlaying);
@@ -192,6 +200,7 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
     videoEl.addEventListener('timeupdate', handleTimeUpdate);
     videoEl.addEventListener('loadedmetadata', handleLoadedMetadata);
     videoEl.addEventListener('durationchange', handleDurationChange);
+    videoEl.addEventListener('progress', handleProgress);
 
     return () => {
       videoEl.removeEventListener('waiting', handleWaiting);
@@ -202,6 +211,7 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
       videoEl.removeEventListener('timeupdate', handleTimeUpdate);
       videoEl.removeEventListener('loadedmetadata', handleLoadedMetadata);
       videoEl.removeEventListener('durationchange', handleDurationChange);
+      videoEl.removeEventListener('progress', handleProgress);
     };
   }, [isActive, signedUrl]);
 
@@ -424,8 +434,15 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
 
   const handleQualityChange = (quality: 'HD' | 'SD') => {
     setVideoQuality(quality);
-    setShowQualityMenu(false);
     toast.success(`Video quality set to ${quality}`);
+  };
+
+  const handleSpeedChange = (speed: number) => {
+    setPlaybackSpeed(speed);
+    if (videoRef.current) {
+      videoRef.current.playbackRate = speed;
+    }
+    toast.success(`Playback speed: ${speed}x`);
   };
 
   const progressPercent = duration > 0 ? (currentTime / duration) * 100 : 0;
@@ -611,8 +628,8 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
       
       {/* Top Controls */}
       <div className="absolute top-4 right-3 z-20 flex items-center gap-2">
-        {/* Quality Selector */}
-        <DropdownMenu open={showQualityMenu} onOpenChange={setShowQualityMenu}>
+        {/* Settings (Quality & Speed) */}
+        <DropdownMenu open={showSettingsMenu} onOpenChange={setShowSettingsMenu}>
           <DropdownMenuTrigger asChild>
             <Button
               size="icon"
@@ -623,7 +640,8 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
               <Settings className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="min-w-[100px]" onClick={(e) => e.stopPropagation()}>
+          <DropdownMenuContent align="end" className="min-w-[140px] bg-background" onClick={(e) => e.stopPropagation()}>
+            <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">Quality</div>
             <DropdownMenuItem 
               onClick={() => handleQualityChange('HD')}
               className={videoQuality === 'HD' ? 'bg-primary/10 text-primary' : ''}
@@ -636,6 +654,16 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
             >
               SD (480p)
             </DropdownMenuItem>
+            <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground border-t mt-1 pt-2">Speed</div>
+            {[0.5, 1, 1.5, 2].map((speed) => (
+              <DropdownMenuItem 
+                key={speed}
+                onClick={() => handleSpeedChange(speed)}
+                className={playbackSpeed === speed ? 'bg-primary/10 text-primary' : ''}
+              >
+                {speed}x {speed === 1 && '(Normal)'}
+              </DropdownMenuItem>
+            ))}
           </DropdownMenuContent>
         </DropdownMenu>
 
@@ -653,7 +681,7 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
       {/* Progress Bar */}
       <div 
         className="absolute left-0 right-0 z-20 px-3"
-        style={{ bottom: '90px' }}
+        style={{ bottom: '110px' }}
       >
         <div className="flex items-center gap-2">
           <span className="text-[10px] text-white/80 font-medium min-w-[32px]">
@@ -661,12 +689,18 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
           </span>
           <div
             ref={progressBarRef}
-            className="flex-1 h-1 bg-white/30 rounded-full cursor-pointer relative group"
+            className="flex-1 h-1 bg-white/20 rounded-full cursor-pointer relative group"
             onClick={handleProgressBarClick}
             onTouchStart={handleProgressBarClick}
           >
+            {/* Buffered progress */}
             <div 
-              className="h-full bg-primary rounded-full transition-all duration-100 relative"
+              className="absolute inset-0 h-full bg-white/40 rounded-full"
+              style={{ width: `${bufferedPercent}%` }}
+            />
+            {/* Playback progress */}
+            <div 
+              className="absolute inset-0 h-full bg-primary rounded-full transition-all duration-100"
               style={{ width: `${progressPercent}%` }}
             >
               <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 bg-primary rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-lg" />
@@ -678,8 +712,8 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
         </div>
       </div>
       
-      {/* Video Info - moved up with bottom padding */}
-      <div className="absolute left-2 right-14 text-white z-10" style={{ bottom: '100px' }}>
+      {/* Video Info */}
+      <div className="absolute left-2 right-14 text-white z-10" style={{ bottom: '125px' }}>
         <div className="flex items-center gap-1.5 mb-0.5">
           <div 
             className="flex items-center gap-1 cursor-pointer hover:opacity-80 transition-opacity"
@@ -724,8 +758,8 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
         )}
       </div>
 
-      {/* Action Buttons - moved up */}
-      <div className="absolute right-1 flex flex-col gap-2 z-10" style={{ bottom: '100px' }}>
+      {/* Action Buttons */}
+      <div className="absolute right-1 flex flex-col gap-2 z-10" style={{ bottom: '125px' }}>
         {/* Like */}
         <button
           onClick={(e) => handleActionClick(e, handleLike)}
