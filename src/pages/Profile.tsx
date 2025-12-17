@@ -924,10 +924,10 @@ const Profile = () => {
                   isPremium={false}
                   isActive={index === selectedVideoIndex}
                   onCommentsClick={() => {}}
-                  onDelete={video.creator_id === currentUserId ? () => {
+                  onDelete={() => {
                     setSelectedVideoIndex(null);
-                    fetchUserVideos(null);
-                  } : undefined}
+                    setVideos(videos.filter(v => v.id !== video.id));
+                  }}
                 />
               </div>
             ))}

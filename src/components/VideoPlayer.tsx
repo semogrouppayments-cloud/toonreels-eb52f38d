@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { Heart, MessageCircle, Download, Flag, Trash2, Volume2, VolumeX, Bookmark, BookmarkCheck, Play, Settings } from 'lucide-react';
+import { Heart, MessageCircle, Download, Flag, Trash2, Volume2, VolumeX, Bookmark, BookmarkCheck, Play, Settings, Repeat } from 'lucide-react';
 import { toast } from 'sonner';
 import { useSignedVideoUrl } from '@/hooks/useSignedVideoUrl';
 import LikeAnimation from '@/components/LikeAnimation';
@@ -16,6 +16,16 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 interface VideoPlayerProps {
   video: {
@@ -61,6 +71,8 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
   const [videoQuality, setVideoQuality] = useState<'HD' | 'SD'>('HD');
   const [playbackSpeed, setPlaybackSpeed] = useState<number>(1);
   const [showSettingsMenu, setShowSettingsMenu] = useState(false);
+  const [isLooping, setIsLooping] = useState(true);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const { signedUrl, loading, error } = useSignedVideoUrl(video.video_url);
   const lastTapRef = useRef<number>(0);
   const animationIdRef = useRef<number>(0);
@@ -553,6 +565,30 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
     }
   };
 
+  const handleDeleteVideo = async () => {
+    try {
+      const deleteToast = toast.loading('Deleting video...');
+      
+      const { error } = await supabase
+        .from('videos')
+        .delete()
+        .eq('id', video.id);
+      
+      if (error) throw error;
+      
+      toast.success('Video deleted successfully!', { id: deleteToast });
+      setShowDeleteDialog(false);
+      
+      // Call the onDelete callback to update parent state
+      if (onDelete) {
+        onDelete();
+      }
+    } catch (error) {
+      console.error('Error deleting video:', error);
+      toast.error('Failed to delete video');
+    }
+  };
+
   const handleActionClick = (e: React.MouseEvent, action: () => void) => {
     e.stopPropagation();
     action();
@@ -591,7 +627,7 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
             ref={videoRef}
             src={signedUrl || ''}
             className="w-full h-full object-contain"
-            loop
+            loop={isLooping}
             muted={isMuted}
             playsInline
             webkit-playsinline="true"
@@ -662,6 +698,17 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
                 {speed}x {speed === 1 && '(Normal)'}
               </DropdownMenuItem>
             ))}
+            <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground border-t mt-1 pt-2">Loop</div>
+            <DropdownMenuItem 
+              onClick={() => {
+                setIsLooping(!isLooping);
+                toast.success(isLooping ? 'Loop disabled' : 'Loop enabled');
+              }}
+              className="flex items-center gap-2"
+            >
+              <Repeat className={`h-4 w-4 ${isLooping ? 'text-primary' : ''}`} />
+              {isLooping ? 'Disable Loop' : 'Enable Loop'}
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
 
@@ -824,9 +871,9 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
         )}
 
         {/* Delete - only for owners */}
-        {isOwnVideo && onDelete && (
+        {isOwnVideo && (
           <button
-            onClick={(e) => handleActionClick(e, onDelete)}
+            onClick={(e) => handleActionClick(e, () => setShowDeleteDialog(true))}
             className="flex flex-col items-center"
           >
             <div className="rounded-full h-9 w-9 flex items-center justify-center text-destructive">
@@ -862,6 +909,28 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
           </div>
         </div>
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete your video
+              and remove it from our servers.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDeleteVideo}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Download Quality Dialog */}
       <DownloadQualityDialog
