@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Moon, Sun, Download, FileImage } from "lucide-react";
+import { ArrowLeft, Moon, Sun } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -223,29 +223,6 @@ const Settings = () => {
       }
     } catch (error) {
       toast.error('Failed to save');
-    }
-  };
-
-  const colorGuides = [
-    { name: 'Black Color Guide', file: 'ToonReels_Black.png', path: '/guides/ToonReels_Black.png' },
-    { name: 'Blue Color Guide', file: 'ToonReels_Blue.png', path: '/guides/ToonReels_Blue.png' },
-    { name: 'White Color Guide', file: 'ToonReels_White.png', path: '/guides/ToonReels_White.png' },
-    { name: 'Red Color Guide', file: 'ToonReels_Shorts_Red.png', path: '/guides/ToonReels_Shorts_Red.png' },
-  ];
-
-  const handleDownload = async (guide: typeof colorGuides[0]) => {
-    try {
-      const response = await fetch(guide.path);
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = guide.file;
-      link.click();
-      window.URL.revokeObjectURL(url);
-      toast.success(`Downloaded ${guide.name}`);
-    } catch (error) {
-      toast.error('Failed to download guide');
     }
   };
 
@@ -694,50 +671,6 @@ const Settings = () => {
               </Accordion>
             </CardContent>
           </Card>
-
-          {/* Color Guides - Creatives Only */}
-          {isCreative && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <FileImage className="h-5 w-5" />
-                  Video Upload Color Guides
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Download these color guide templates to help format your videos correctly for ToonReels.
-                </p>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {colorGuides.map((guide) => (
-                    <div
-                      key={guide.file}
-                      className="flex items-center justify-between p-3 rounded-lg border border-border bg-card hover:bg-accent transition-colors"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-md bg-primary/10">
-                          <FileImage className="h-5 w-5 text-primary" />
-                        </div>
-                        <div>
-                          <p className="font-semibold text-sm">{guide.name}</p>
-                          <p className="text-xs text-muted-foreground">{guide.file}</p>
-                        </div>
-                      </div>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleDownload(guide)}
-                        className="gap-2"
-                      >
-                        <Download className="h-4 w-4" />
-                        Download
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
 
           <Card>
             <CardHeader><CardTitle>Help Center</CardTitle></CardHeader>
