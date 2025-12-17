@@ -711,7 +711,7 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
       </div>
       
       {/* Video Info */}
-      <div className="absolute left-2 right-14 text-white z-10" style={{ bottom: '125px' }}>
+      <div className="absolute left-2 right-14 text-white z-10" style={{ bottom: '150px' }}>
         <div className="flex items-center gap-1.5 mb-0.5">
           <div 
             className="flex items-center gap-1 cursor-pointer hover:opacity-80 transition-opacity"
@@ -757,7 +757,7 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
       </div>
 
       {/* Action Buttons */}
-      <div className="absolute right-1 flex flex-col gap-2 z-10" style={{ bottom: '125px' }}>
+      <div className="absolute right-1 flex flex-col gap-2 z-10" style={{ bottom: '150px' }}>
         {/* Like */}
         <button
           onClick={(e) => handleActionClick(e, handleLike)}
