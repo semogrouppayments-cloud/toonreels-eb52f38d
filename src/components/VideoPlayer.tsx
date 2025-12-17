@@ -103,26 +103,26 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
     const videoEl = videoRef.current;
     if (!videoEl) return;
 
-    const attemptPlay = async () => {
-      if (!isActive) {
-        // Video is not active - pause and mute
-        videoEl.pause();
-        videoEl.muted = true;
-        setIsMuted(true);
-        setIsPlaying(false);
-        // Track analytics when leaving
-        if (!analyticsTrackedRef.current && hasTrackedViewRef.current) {
-          trackVideoAnalytics(false);
-        }
-        return;
+    // Immediately pause non-active videos
+    if (!isActive) {
+      videoEl.pause();
+      videoEl.muted = true;
+      setIsMuted(true);
+      setIsPlaying(false);
+      // Track analytics when leaving
+      if (!analyticsTrackedRef.current && hasTrackedViewRef.current) {
+        trackVideoAnalytics(false);
       }
+      return;
+    }
 
-      // Video is now active - prepare and play
+    // Video is active - attempt to play
+    const attemptPlay = async () => {
       playAttemptRef.current++;
       const currentAttempt = playAttemptRef.current;
       
       try {
-        // Reset video position
+        // Reset video position for fresh start
         videoEl.currentTime = 0;
         
         // First try to play muted (always works on mobile)
@@ -141,17 +141,15 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
         }
         
         // After successful muted play, try to unmute
-        // Only if this is still the current attempt
         if (currentAttempt === playAttemptRef.current) {
           setTimeout(() => {
-            if (videoEl && currentAttempt === playAttemptRef.current) {
+            if (videoEl && currentAttempt === playAttemptRef.current && isActive) {
               videoEl.muted = false;
               setIsMuted(false);
             }
           }, 100);
         }
       } catch (err) {
-        // Playback failed - likely user hasn't interacted yet
         console.log('Autoplay failed, waiting for user interaction');
         setIsPlaying(false);
       }
