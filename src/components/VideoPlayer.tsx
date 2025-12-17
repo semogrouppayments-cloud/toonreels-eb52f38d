@@ -73,6 +73,10 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
   const [showSettingsMenu, setShowSettingsMenu] = useState(false);
   const [isLooping, setIsLooping] = useState(true);
   const [showCaptions, setShowCaptions] = useState(true);
+  const [captionFontSize, setCaptionFontSize] = useState<'small' | 'medium' | 'large'>('medium');
+  const [captionOpacity, setCaptionOpacity] = useState<number>(70);
+  const [captionPosition, setCaptionPosition] = useState<'top' | 'middle' | 'bottom'>('bottom');
+  const [showCaptionSettings, setShowCaptionSettings] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const { signedUrl, loading, error } = useSignedVideoUrl(video.video_url);
   const lastTapRef = useRef<number>(0);
@@ -668,19 +672,81 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
       
       {/* Top Controls */}
       <div className="absolute top-4 right-3 z-20 flex items-center gap-2">
-        {/* Captions Toggle */}
-        <Button
-          size="icon"
-          variant="ghost"
-          onClick={(e) => {
-            e.stopPropagation();
-            setShowCaptions(!showCaptions);
-            toast.success(showCaptions ? 'Captions off' : 'Captions on');
-          }}
-          className="rounded-full h-8 w-8 bg-black/40 text-white hover:bg-black/60"
-        >
-          {showCaptions ? <Captions className="h-4 w-4" /> : <CaptionsOff className="h-4 w-4" />}
-        </Button>
+        {/* Captions Settings */}
+        <DropdownMenu open={showCaptionSettings} onOpenChange={setShowCaptionSettings}>
+          <DropdownMenuTrigger asChild>
+            <Button
+              size="icon"
+              variant="ghost"
+              onClick={(e) => e.stopPropagation()}
+              className="rounded-full h-8 w-8 bg-black/40 text-white hover:bg-black/60"
+            >
+              {showCaptions ? <Captions className="h-4 w-4" /> : <CaptionsOff className="h-4 w-4" />}
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="min-w-[160px] bg-background z-50" onClick={(e) => e.stopPropagation()}>
+            {/* Toggle Captions */}
+            <DropdownMenuItem 
+              onClick={() => {
+                setShowCaptions(!showCaptions);
+                toast.success(showCaptions ? 'Captions off' : 'Captions on');
+              }}
+              className="flex items-center gap-2"
+            >
+              {showCaptions ? <CaptionsOff className="h-4 w-4" /> : <Captions className="h-4 w-4" />}
+              {showCaptions ? 'Turn Off' : 'Turn On'}
+            </DropdownMenuItem>
+            
+            {showCaptions && (
+              <>
+                {/* Font Size */}
+                <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground border-t mt-1 pt-2">Font Size</div>
+                {(['small', 'medium', 'large'] as const).map((size) => (
+                  <DropdownMenuItem 
+                    key={size}
+                    onClick={() => {
+                      setCaptionFontSize(size);
+                      toast.success(`Caption size: ${size}`);
+                    }}
+                    className={captionFontSize === size ? 'bg-primary/10 text-primary' : ''}
+                  >
+                    {size.charAt(0).toUpperCase() + size.slice(1)}
+                  </DropdownMenuItem>
+                ))}
+                
+                {/* Background Opacity */}
+                <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground border-t mt-1 pt-2">Background</div>
+                {[30, 50, 70, 90].map((opacity) => (
+                  <DropdownMenuItem 
+                    key={opacity}
+                    onClick={() => {
+                      setCaptionOpacity(opacity);
+                      toast.success(`Background: ${opacity}%`);
+                    }}
+                    className={captionOpacity === opacity ? 'bg-primary/10 text-primary' : ''}
+                  >
+                    {opacity}% Opacity
+                  </DropdownMenuItem>
+                ))}
+                
+                {/* Position */}
+                <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground border-t mt-1 pt-2">Position</div>
+                {(['top', 'middle', 'bottom'] as const).map((pos) => (
+                  <DropdownMenuItem 
+                    key={pos}
+                    onClick={() => {
+                      setCaptionPosition(pos);
+                      toast.success(`Position: ${pos}`);
+                    }}
+                    className={captionPosition === pos ? 'bg-primary/10 text-primary' : ''}
+                  >
+                    {pos.charAt(0).toUpperCase() + pos.slice(1)}
+                  </DropdownMenuItem>
+                ))}
+              </>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
         
         {/* Settings (Quality & Speed) */}
         <DropdownMenu open={showSettingsMenu} onOpenChange={setShowSettingsMenu}>
@@ -694,7 +760,7 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
               <Settings className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="min-w-[140px] bg-background" onClick={(e) => e.stopPropagation()}>
+          <DropdownMenuContent align="end" className="min-w-[140px] bg-background z-50" onClick={(e) => e.stopPropagation()}>
             <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">Quality</div>
             <DropdownMenuItem 
               onClick={() => handleQualityChange('HD')}
@@ -745,9 +811,24 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
       
       {/* Auto Captions Display */}
       {showCaptions && (
-        <div className="absolute left-4 right-4 z-20 text-center" style={{ bottom: '180px' }}>
-          <div className="inline-block bg-black/70 px-3 py-1.5 rounded-lg max-w-[90%]">
-            <p className="text-white text-sm font-medium">
+        <div 
+          className="absolute left-4 right-4 z-20 text-center"
+          style={{ 
+            top: captionPosition === 'top' ? '60px' : undefined,
+            bottom: captionPosition === 'bottom' ? '180px' : captionPosition === 'middle' ? '50%' : undefined,
+            transform: captionPosition === 'middle' ? 'translateY(50%)' : undefined
+          }}
+        >
+          <div 
+            className="inline-block px-3 py-1.5 rounded-lg max-w-[90%]"
+            style={{ backgroundColor: `rgba(0, 0, 0, ${captionOpacity / 100})` }}
+          >
+            <p 
+              className={`text-white font-medium ${
+                captionFontSize === 'small' ? 'text-xs' : 
+                captionFontSize === 'medium' ? 'text-sm' : 'text-base'
+              }`}
+            >
               {video.description || video.title}
             </p>
           </div>
