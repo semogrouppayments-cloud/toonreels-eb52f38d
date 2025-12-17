@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { Heart, MessageCircle, Download, Flag, Trash2, Volume2, VolumeX, Bookmark, BookmarkCheck, Play, Settings, Repeat } from 'lucide-react';
+import { Heart, MessageCircle, Download, Flag, Trash2, Volume2, VolumeX, Bookmark, BookmarkCheck, Play, Settings, Repeat, Captions, CaptionsOff } from 'lucide-react';
 import { toast } from 'sonner';
 import { useSignedVideoUrl } from '@/hooks/useSignedVideoUrl';
 import LikeAnimation from '@/components/LikeAnimation';
@@ -72,6 +72,7 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
   const [playbackSpeed, setPlaybackSpeed] = useState<number>(1);
   const [showSettingsMenu, setShowSettingsMenu] = useState(false);
   const [isLooping, setIsLooping] = useState(true);
+  const [showCaptions, setShowCaptions] = useState(true);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const { signedUrl, loading, error } = useSignedVideoUrl(video.video_url);
   const lastTapRef = useRef<number>(0);
@@ -660,8 +661,27 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
       {/* Gradient overlay */}
       <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
       
+      {/* ToonReels Branding */}
+      <div className="absolute top-12 right-3 z-20">
+        <span className="text-white/40 text-xl font-bold tracking-wide">ToonReels</span>
+      </div>
+      
       {/* Top Controls */}
       <div className="absolute top-4 right-3 z-20 flex items-center gap-2">
+        {/* Captions Toggle */}
+        <Button
+          size="icon"
+          variant="ghost"
+          onClick={(e) => {
+            e.stopPropagation();
+            setShowCaptions(!showCaptions);
+            toast.success(showCaptions ? 'Captions off' : 'Captions on');
+          }}
+          className="rounded-full h-8 w-8 bg-black/40 text-white hover:bg-black/60"
+        >
+          {showCaptions ? <Captions className="h-4 w-4" /> : <CaptionsOff className="h-4 w-4" />}
+        </Button>
+        
         {/* Settings (Quality & Speed) */}
         <DropdownMenu open={showSettingsMenu} onOpenChange={setShowSettingsMenu}>
           <DropdownMenuTrigger asChild>
@@ -722,6 +742,17 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
           {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
         </Button>
       </div>
+      
+      {/* Auto Captions Display */}
+      {showCaptions && (
+        <div className="absolute left-4 right-4 z-20 text-center" style={{ bottom: '180px' }}>
+          <div className="inline-block bg-black/70 px-3 py-1.5 rounded-lg max-w-[90%]">
+            <p className="text-white text-sm font-medium">
+              {video.description || video.title}
+            </p>
+          </div>
+        </div>
+      )}
       
       {/* Progress Bar */}
       <div 
