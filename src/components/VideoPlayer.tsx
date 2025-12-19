@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { Heart, MessageCircle, Download, Flag, Trash2, Volume2, VolumeX, Bookmark, BookmarkCheck, Play, Settings, Repeat, Captions, CaptionsOff, Loader2 } from 'lucide-react';
+import { Heart, MessageCircle, Download, Flag, Trash2, Volume2, VolumeX, Bookmark, BookmarkCheck, Play, Settings, Repeat } from 'lucide-react';
 import { toast } from 'sonner';
 import { useSignedVideoUrl } from '@/hooks/useSignedVideoUrl';
 import LikeAnimation from '@/components/LikeAnimation';
@@ -27,15 +27,6 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 
-// Caption types
-interface CaptionSegment {
-  id: number;
-  start: number;
-  end: number;
-  text: string;
-  speaker?: string;
-}
-
 interface VideoPlayerProps {
   video: {
     id: string;
@@ -57,14 +48,6 @@ interface VideoPlayerProps {
   onCommentsClick: () => void;
   onDelete?: () => void;
 }
-
-// Caption cache to avoid re-transcription
-const captionCache = new Map<string, CaptionSegment[]>();
-
-// Whisper transcription worker state
-let whisperPipeline: any = null;
-let isLoadingModel = false;
-const modelLoadPromise: { promise: Promise<any> | null } = { promise: null };
 
 const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClick, onDelete }: VideoPlayerProps) => {
   const navigate = useNavigate();
@@ -89,19 +72,7 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
   const [playbackSpeed, setPlaybackSpeed] = useState<number>(1);
   const [showSettingsMenu, setShowSettingsMenu] = useState(false);
   const [isLooping, setIsLooping] = useState(true);
-  const [showCaptions, setShowCaptions] = useState(true);
-  const [captionFontSize, setCaptionFontSize] = useState<'small' | 'medium' | 'large'>('medium');
-  const [captionOpacity, setCaptionOpacity] = useState<number>(70);
-  const [captionPosition, setCaptionPosition] = useState<'top' | 'middle' | 'bottom'>('bottom');
-  const [showCaptionSettings, setShowCaptionSettings] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  
-  // Caption state
-  const [captions, setCaptions] = useState<CaptionSegment[]>([]);
-  const [currentCaption, setCurrentCaption] = useState<CaptionSegment | null>(null);
-  const [isTranscribing, setIsTranscribing] = useState(false);
-  const [transcriptionProgress, setTranscriptionProgress] = useState(0);
-  const [captionAnimationKey, setCaptionAnimationKey] = useState(0);
   
   const { signedUrl, loading, error } = useSignedVideoUrl(video.video_url);
   const lastTapRef = useRef<number>(0);
@@ -112,164 +83,8 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
   const analyticsTrackedRef = useRef<boolean>(false);
   const hasTrackedViewRef = useRef<boolean>(false);
   const playAttemptRef = useRef<number>(0);
-  const audioContextRef = useRef<AudioContext | null>(null);
 
   const isOwnVideo = currentUserId === video.creator_id;
-
-  // Load Whisper model
-  const loadWhisperModel = useCallback(async () => {
-    if (whisperPipeline) return whisperPipeline;
-    if (modelLoadPromise.promise) return modelLoadPromise.promise;
-    
-    isLoadingModel = true;
-    setTranscriptionProgress(5);
-    
-    modelLoadPromise.promise = (async () => {
-      try {
-        const { pipeline } = await import('@huggingface/transformers');
-        setTranscriptionProgress(20);
-        
-        whisperPipeline = await pipeline(
-          'automatic-speech-recognition',
-          'onnx-community/whisper-tiny.en',
-          { 
-            device: 'webgpu',
-            dtype: 'fp32'
-          }
-        );
-        
-        setTranscriptionProgress(40);
-        isLoadingModel = false;
-        return whisperPipeline;
-      } catch (err) {
-        // Fallback to CPU if WebGPU not available
-        try {
-          const { pipeline } = await import('@huggingface/transformers');
-          whisperPipeline = await pipeline(
-            'automatic-speech-recognition',
-            'onnx-community/whisper-tiny.en'
-          );
-          setTranscriptionProgress(40);
-          isLoadingModel = false;
-          return whisperPipeline;
-        } catch (fallbackErr) {
-          console.error('Failed to load Whisper model:', fallbackErr);
-          isLoadingModel = false;
-          throw fallbackErr;
-        }
-      }
-    })();
-    
-    return modelLoadPromise.promise;
-  }, []);
-
-  // Extract audio from video and transcribe
-  const transcribeVideo = useCallback(async (videoUrl: string) => {
-    // Check cache first
-    if (captionCache.has(video.id)) {
-      setCaptions(captionCache.get(video.id)!);
-      return;
-    }
-    
-    setIsTranscribing(true);
-    setTranscriptionProgress(0);
-    
-    try {
-      // Load the Whisper model
-      const transcriber = await loadWhisperModel();
-      setTranscriptionProgress(50);
-      
-      // Transcribe directly from video URL
-      const result = await transcriber(videoUrl, {
-        chunk_length_s: 30,
-        stride_length_s: 5,
-        return_timestamps: true,
-        language: 'en',
-      });
-      
-      setTranscriptionProgress(90);
-      
-      // Parse results into caption segments
-      const segments: CaptionSegment[] = [];
-      
-      if (result.chunks && Array.isArray(result.chunks)) {
-        result.chunks.forEach((chunk: any, index: number) => {
-          if (chunk.text && chunk.text.trim()) {
-            segments.push({
-              id: index,
-              start: chunk.timestamp?.[0] || index * 3,
-              end: chunk.timestamp?.[1] || (index + 1) * 3,
-              text: chunk.text.trim(),
-            });
-          }
-        });
-      } else if (result.text) {
-        // Fallback: split text into segments based on duration
-        const words = result.text.split(' ');
-        const wordsPerSegment = 8;
-        const segmentDuration = 3;
-        
-        for (let i = 0; i < words.length; i += wordsPerSegment) {
-          const segmentWords = words.slice(i, i + wordsPerSegment);
-          const segmentIndex = Math.floor(i / wordsPerSegment);
-          segments.push({
-            id: segmentIndex,
-            start: segmentIndex * segmentDuration,
-            end: (segmentIndex + 1) * segmentDuration,
-            text: segmentWords.join(' '),
-          });
-        }
-      }
-      
-      // Cache the results
-      captionCache.set(video.id, segments);
-      setCaptions(segments);
-      setTranscriptionProgress(100);
-      
-    } catch (err) {
-      console.error('Transcription failed:', err);
-      // Fallback to description-based captions
-      const fallbackCaptions: CaptionSegment[] = [{
-        id: 0,
-        start: 0,
-        end: duration || 60,
-        text: video.description || video.title,
-      }];
-      setCaptions(fallbackCaptions);
-    } finally {
-      setIsTranscribing(false);
-    }
-  }, [video.id, video.description, video.title, duration, loadWhisperModel]);
-
-  // Update current caption based on video time
-  useEffect(() => {
-    if (!showCaptions || captions.length === 0) {
-      setCurrentCaption(null);
-      return;
-    }
-    
-    const caption = captions.find(
-      c => currentTime >= c.start && currentTime <= c.end
-    );
-    
-    if (caption && caption.id !== currentCaption?.id) {
-      setCurrentCaption(caption);
-      setCaptionAnimationKey(prev => prev + 1);
-    } else if (!caption && currentCaption) {
-      setCurrentCaption(null);
-    }
-  }, [currentTime, captions, showCaptions, currentCaption?.id]);
-
-  // Trigger transcription when video becomes active and URL is available
-  useEffect(() => {
-    if (isActive && signedUrl && showCaptions && captions.length === 0 && !isTranscribing) {
-      // Small delay to let video start loading
-      const timer = setTimeout(() => {
-        transcribeVideo(signedUrl);
-      }, 500);
-      return () => clearTimeout(timer);
-    }
-  }, [isActive, signedUrl, showCaptions, captions.length, isTranscribing, transcribeVideo]);
 
   // Initial data fetch
   useEffect(() => {
@@ -416,13 +231,6 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
     hasTrackedViewRef.current = false;
     analyticsTrackedRef.current = false;
     playAttemptRef.current = 0;
-    // Reset captions for new video
-    if (!captionCache.has(video.id)) {
-      setCaptions([]);
-      setCurrentCaption(null);
-    } else {
-      setCaptions(captionCache.get(video.id)!);
-    }
   }, [video.id]);
 
   const checkIfLiked = async () => {
@@ -787,20 +595,6 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
     action();
   };
 
-  // Caption font size classes
-  const captionSizeClasses = {
-    small: 'text-sm',
-    medium: 'text-base',
-    large: 'text-lg'
-  };
-
-  // Caption position styles
-  const captionPositionStyles = {
-    top: { top: '80px', bottom: 'auto', transform: 'none' },
-    middle: { top: '50%', bottom: 'auto', transform: 'translateY(-50%)' },
-    bottom: { top: 'auto', bottom: '200px', transform: 'none' }
-  };
-
   return (
     <div 
       className="relative w-full bg-black snap-start snap-always"
@@ -868,100 +662,13 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
       {/* Gradient overlay */}
       <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
       
-      {/* ToonReels Branding - Moved to Top Left */}
+      {/* ToonReels Branding - Top Left */}
       <div className="absolute top-12 left-3 z-20">
         <span className="text-white/40 text-xl font-bold tracking-wide">ToonReels</span>
       </div>
       
       {/* Top Controls */}
       <div className="absolute top-4 right-3 z-20 flex items-center gap-2">
-        {/* Captions Settings */}
-        <DropdownMenu open={showCaptionSettings} onOpenChange={setShowCaptionSettings}>
-          <DropdownMenuTrigger asChild>
-            <Button
-              size="icon"
-              variant="ghost"
-              onClick={(e) => e.stopPropagation()}
-              className="rounded-full h-8 w-8 bg-black/40 text-white hover:bg-black/60 relative"
-            >
-              {showCaptions ? <Captions className="h-4 w-4" /> : <CaptionsOff className="h-4 w-4" />}
-              {isTranscribing && (
-                <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-primary animate-pulse" />
-              )}
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="min-w-[160px] bg-background z-50" onClick={(e) => e.stopPropagation()}>
-            {/* Toggle Captions */}
-            <DropdownMenuItem 
-              onClick={() => {
-                setShowCaptions(!showCaptions);
-                toast.success(showCaptions ? 'Captions off' : 'Captions on');
-              }}
-              className="flex items-center gap-2"
-            >
-              {showCaptions ? <CaptionsOff className="h-4 w-4" /> : <Captions className="h-4 w-4" />}
-              {showCaptions ? 'Turn Off' : 'Turn On'}
-            </DropdownMenuItem>
-            
-            {showCaptions && (
-              <>
-                {/* Transcription Status */}
-                {isTranscribing && (
-                  <div className="px-2 py-1.5 text-xs text-muted-foreground flex items-center gap-2 border-t mt-1 pt-2">
-                    <Loader2 className="h-3 w-3 animate-spin" />
-                    Generating... {transcriptionProgress}%
-                  </div>
-                )}
-                
-                {/* Font Size */}
-                <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground border-t mt-1 pt-2">Font Size</div>
-                {(['small', 'medium', 'large'] as const).map((size) => (
-                  <DropdownMenuItem 
-                    key={size}
-                    onClick={() => {
-                      setCaptionFontSize(size);
-                      toast.success(`Caption size: ${size}`);
-                    }}
-                    className={captionFontSize === size ? 'bg-primary/10 text-primary' : ''}
-                  >
-                    {size.charAt(0).toUpperCase() + size.slice(1)}
-                  </DropdownMenuItem>
-                ))}
-                
-                {/* Background Opacity */}
-                <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground border-t mt-1 pt-2">Background</div>
-                {[30, 50, 70, 90].map((opacity) => (
-                  <DropdownMenuItem 
-                    key={opacity}
-                    onClick={() => {
-                      setCaptionOpacity(opacity);
-                      toast.success(`Background: ${opacity}%`);
-                    }}
-                    className={captionOpacity === opacity ? 'bg-primary/10 text-primary' : ''}
-                  >
-                    {opacity}% Opacity
-                  </DropdownMenuItem>
-                ))}
-                
-                {/* Position */}
-                <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground border-t mt-1 pt-2">Position</div>
-                {(['top', 'middle', 'bottom'] as const).map((pos) => (
-                  <DropdownMenuItem 
-                    key={pos}
-                    onClick={() => {
-                      setCaptionPosition(pos);
-                      toast.success(`Position: ${pos}`);
-                    }}
-                    className={captionPosition === pos ? 'bg-primary/10 text-primary' : ''}
-                  >
-                    {pos.charAt(0).toUpperCase() + pos.slice(1)}
-                  </DropdownMenuItem>
-                ))}
-              </>
-            )}
-          </DropdownMenuContent>
-        </DropdownMenu>
-        
         {/* Settings (Quality & Speed) */}
         <DropdownMenu open={showSettingsMenu} onOpenChange={setShowSettingsMenu}>
           <DropdownMenuTrigger asChild>
@@ -1022,75 +729,6 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
           {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
         </Button>
       </div>
-      
-      {/* Auto Captions Display - TikTok Style */}
-      {showCaptions && currentCaption && (
-        <div 
-          className="absolute left-4 right-4 z-20 flex justify-center pointer-events-none"
-          style={captionPositionStyles[captionPosition]}
-        >
-          <div 
-            key={captionAnimationKey}
-            className="max-w-[90%] animate-in fade-in slide-in-from-bottom-2 duration-200"
-            style={{
-              backgroundColor: `rgba(0, 0, 0, ${captionOpacity / 100})`,
-              padding: '8px 16px',
-              borderRadius: '8px',
-              backdropFilter: 'blur(4px)',
-            }}
-          >
-            <p 
-              className={`text-white font-bold text-center leading-relaxed ${captionSizeClasses[captionFontSize]}`}
-              style={{
-                textShadow: '2px 2px 4px rgba(0,0,0,0.8), -1px -1px 2px rgba(0,0,0,0.6)',
-                letterSpacing: '0.02em',
-              }}
-            >
-              {currentCaption.text}
-            </p>
-          </div>
-        </div>
-      )}
-      
-      {/* Transcription Loading Indicator */}
-      {showCaptions && isTranscribing && !currentCaption && (
-        <div 
-          className="absolute left-4 right-4 z-20 flex justify-center pointer-events-none"
-          style={captionPositionStyles[captionPosition]}
-        >
-          <div 
-            className="flex items-center gap-2 px-4 py-2 rounded-lg"
-            style={{ backgroundColor: `rgba(0, 0, 0, ${captionOpacity / 100})` }}
-          >
-            <Loader2 className="h-4 w-4 animate-spin text-white" />
-            <span className="text-white text-sm font-medium">Generating captions...</span>
-          </div>
-        </div>
-      )}
-      
-      {/* Fallback caption when no speech detected */}
-      {showCaptions && !isTranscribing && captions.length > 0 && !currentCaption && currentTime > 0 && (
-        <div 
-          className="absolute left-4 right-4 z-20 flex justify-center pointer-events-none"
-          style={captionPositionStyles[captionPosition]}
-        >
-          <div 
-            className="max-w-[90%]"
-            style={{
-              backgroundColor: `rgba(0, 0, 0, ${captionOpacity / 100})`,
-              padding: '8px 16px',
-              borderRadius: '8px',
-              backdropFilter: 'blur(4px)',
-            }}
-          >
-            <p 
-              className={`text-white/60 font-medium text-center ${captionSizeClasses[captionFontSize]}`}
-            >
-              {video.description || video.title}
-            </p>
-          </div>
-        </div>
-      )}
       
       {/* Progress Bar */}
       <div 
