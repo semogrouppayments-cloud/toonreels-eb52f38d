@@ -450,7 +450,6 @@ export type Database = {
           id: string
           is_premium: boolean | null
           is_verified: boolean | null
-          profile_pin: string | null
           selected_avatar: string | null
           updated_at: string
           user_type: Database["public"]["Enums"]["user_type"]
@@ -465,7 +464,6 @@ export type Database = {
           id: string
           is_premium?: boolean | null
           is_verified?: boolean | null
-          profile_pin?: string | null
           selected_avatar?: string | null
           updated_at?: string
           user_type?: Database["public"]["Enums"]["user_type"]
@@ -480,7 +478,6 @@ export type Database = {
           id?: string
           is_premium?: boolean | null
           is_verified?: boolean | null
-          profile_pin?: string | null
           selected_avatar?: string | null
           updated_at?: string
           user_type?: Database["public"]["Enums"]["user_type"]
@@ -720,6 +717,22 @@ export type Database = {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
+        Returns: boolean
+      }
+      set_parental_pin: {
+        Args: { _raw_pin: string; _user_id: string }
+        Returns: undefined
+      }
+      set_profile_pin: {
+        Args: { _raw_pin: string; _user_id: string }
+        Returns: undefined
+      }
+      verify_parental_pin: {
+        Args: { _raw_pin: string; _user_id: string }
+        Returns: boolean
+      }
+      verify_profile_pin: {
+        Args: { _raw_pin: string; _user_id: string }
         Returns: boolean
       }
     }
