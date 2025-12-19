@@ -23,7 +23,6 @@ import { useTheme } from "@/contexts/ThemeContext";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import bcrypt from "bcryptjs";
 
 const Settings = () => {
   const navigate = useNavigate();
@@ -150,13 +149,13 @@ const Settings = () => {
       
       await supabase.from('profiles').update(updates).eq('id', userId);
       
-      // Save PIN to secure table if changed
+      // Save PIN using server-side hashing
       if (profilePin && profilePin.trim()) {
-        const hashedPin = await bcrypt.hash(profilePin.trim(), 10);
-        await supabase.from('profile_secrets').upsert({
-          user_id: userId,
-          profile_pin: hashedPin
-        }, { onConflict: 'user_id' });
+        const { error } = await supabase.rpc('set_profile_pin', {
+          _user_id: userId,
+          _raw_pin: profilePin.trim()
+        });
+        if (error) throw error;
       }
       
       toast.success('Profile settings saved');
@@ -180,13 +179,18 @@ const Settings = () => {
     try {
       const updates: any = { user_id: userId, screen_time_limit: screenTimeLimit, school_hours_lock: schoolHoursLock, bedtime_lock: bedtimeLock };
       
-      // Only hash and update PIN if it was changed
+      // Save other settings first (without PIN)
+      await supabase.from('parental_controls').upsert(updates);
+      
+      // Save PIN using server-side hashing if provided
       if (parentalPin && parentalPin.trim()) {
-        const hashedPin = await bcrypt.hash(parentalPin.trim(), 10);
-        updates.parental_pin = hashedPin;
+        const { error } = await supabase.rpc('set_parental_pin', {
+          _user_id: userId,
+          _raw_pin: parentalPin.trim()
+        });
+        if (error) throw error;
       }
       
-      await supabase.from('parental_controls').upsert(updates);
       toast.success('Parental controls saved');
     } catch (error) {
       toast.error('Failed to save');
