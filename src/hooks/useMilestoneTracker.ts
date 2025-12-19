@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 
-export type MilestoneType = 'likes' | 'followers' | 'uploads';
+export type MilestoneType = 'likes' | 'followers' | 'uploads' | 'views';
 
 interface MilestoneEvent {
   type: MilestoneType;
@@ -11,6 +11,7 @@ const MILESTONES = {
   likes: [1000, 10000, 50000, 100000, 200000, 500000, 20000000],
   followers: [1000, 10000, 50000, 100000, 200000, 500000, 20000000],
   uploads: [500, 1000, 50000, 1000000],
+  views: [1000, 10000, 50000, 100000, 200000, 500000, 20000000],
 };
 
 const STORAGE_KEY = 'toonreels_achieved_milestones';
@@ -18,9 +19,9 @@ const STORAGE_KEY = 'toonreels_achieved_milestones';
 const getAchievedMilestones = (): Record<string, number[]> => {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
-    return stored ? JSON.parse(stored) : { likes: [], followers: [], uploads: [] };
+    return stored ? JSON.parse(stored) : { likes: [], followers: [], uploads: [], views: [] };
   } catch {
-    return { likes: [], followers: [], uploads: [] };
+    return { likes: [], followers: [], uploads: [], views: [] };
   }
 };
 

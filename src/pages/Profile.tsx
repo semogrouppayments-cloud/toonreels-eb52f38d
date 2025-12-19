@@ -113,6 +113,15 @@ const Profile = () => {
     }
   }, [totalLikes, isOwnProfile]);
 
+  useEffect(() => {
+    if (isOwnProfile && totalViews > 0) {
+      const milestone = checkAndTriggerMilestone('views', totalViews);
+      if (milestone) {
+        setMilestoneToShow({ type: 'views', value: milestone });
+      }
+    }
+  }, [totalViews, isOwnProfile]);
+
   const videoEditSchema = z.object({
     title: z.string().trim().min(1, { message: "Title is required" }).max(100, { message: "Title must be less than 100 characters" }),
     description: z.string().trim().max(500, { message: "Description must be less than 500 characters" }).optional()

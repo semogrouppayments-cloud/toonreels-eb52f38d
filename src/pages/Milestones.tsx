@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Trophy, Heart, Users, Video, Lock } from 'lucide-react';
+import { ArrowLeft, Trophy, Heart, Users, Video, Lock, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import BottomNav from '@/components/BottomNav';
 
 interface MilestoneBadge {
   id: string;
-  type: 'likes' | 'followers' | 'uploads';
+  type: 'likes' | 'followers' | 'uploads' | 'views';
   value: number;
   label: string;
   icon: React.ReactNode;
@@ -20,9 +20,9 @@ const STORAGE_KEY = 'toonreels_achieved_milestones';
 const getAchievedMilestones = (): Record<string, number[]> => {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
-    return stored ? JSON.parse(stored) : { likes: [], followers: [], uploads: [] };
+    return stored ? JSON.parse(stored) : { likes: [], followers: [], uploads: [], views: [] };
   } catch {
-    return { likes: [], followers: [], uploads: [] };
+    return { likes: [], followers: [], uploads: [], views: [] };
   }
 };
 
@@ -34,7 +34,7 @@ const formatNumber = (num: number): string => {
 
 const Milestones = () => {
   const navigate = useNavigate();
-  const [achievedMilestones, setAchievedMilestones] = useState<Record<string, number[]>>({ likes: [], followers: [], uploads: [] });
+  const [achievedMilestones, setAchievedMilestones] = useState<Record<string, number[]>>({ likes: [], followers: [], uploads: [], views: [] });
 
   useEffect(() => {
     setAchievedMilestones(getAchievedMilestones());
@@ -49,6 +49,15 @@ const Milestones = () => {
     { id: 'likes-200000', type: 'likes', value: 200000, label: '200K Likes', icon: <Heart className="w-6 h-6" />, achieved: achievedMilestones.likes?.includes(200000), color: 'from-red-500 to-pink-500' },
     { id: 'likes-500000', type: 'likes', value: 500000, label: '500K Likes', icon: <Heart className="w-6 h-6" />, achieved: achievedMilestones.likes?.includes(500000), color: 'from-red-500 to-pink-500' },
     { id: 'likes-20000000', type: 'likes', value: 20000000, label: '20M Likes', icon: <Heart className="w-6 h-6" />, achieved: achievedMilestones.likes?.includes(20000000), color: 'from-red-500 to-pink-500' },
+    
+    // Views milestones
+    { id: 'views-1000', type: 'views', value: 1000, label: '1K Views', icon: <Eye className="w-6 h-6" />, achieved: achievedMilestones.views?.includes(1000), color: 'from-amber-500 to-yellow-500' },
+    { id: 'views-10000', type: 'views', value: 10000, label: '10K Views', icon: <Eye className="w-6 h-6" />, achieved: achievedMilestones.views?.includes(10000), color: 'from-amber-500 to-yellow-500' },
+    { id: 'views-50000', type: 'views', value: 50000, label: '50K Views', icon: <Eye className="w-6 h-6" />, achieved: achievedMilestones.views?.includes(50000), color: 'from-amber-500 to-yellow-500' },
+    { id: 'views-100000', type: 'views', value: 100000, label: '100K Views', icon: <Eye className="w-6 h-6" />, achieved: achievedMilestones.views?.includes(100000), color: 'from-amber-500 to-yellow-500' },
+    { id: 'views-200000', type: 'views', value: 200000, label: '200K Views', icon: <Eye className="w-6 h-6" />, achieved: achievedMilestones.views?.includes(200000), color: 'from-amber-500 to-yellow-500' },
+    { id: 'views-500000', type: 'views', value: 500000, label: '500K Views', icon: <Eye className="w-6 h-6" />, achieved: achievedMilestones.views?.includes(500000), color: 'from-amber-500 to-yellow-500' },
+    { id: 'views-20000000', type: 'views', value: 20000000, label: '20M Views', icon: <Eye className="w-6 h-6" />, achieved: achievedMilestones.views?.includes(20000000), color: 'from-amber-500 to-yellow-500' },
     
     // Followers milestones
     { id: 'followers-1000', type: 'followers', value: 1000, label: '1K Followers', icon: <Users className="w-6 h-6" />, achieved: achievedMilestones.followers?.includes(1000), color: 'from-blue-500 to-purple-500' },
@@ -71,6 +80,7 @@ const Milestones = () => {
 
   const groupedMilestones = {
     likes: allMilestones.filter(m => m.type === 'likes'),
+    views: allMilestones.filter(m => m.type === 'views'),
     followers: allMilestones.filter(m => m.type === 'followers'),
     uploads: allMilestones.filter(m => m.type === 'uploads'),
   };
@@ -103,6 +113,19 @@ const Milestones = () => {
           </div>
           <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
             {groupedMilestones.likes.map((milestone) => (
+              <MilestoneBadgeCard key={milestone.id} milestone={milestone} />
+            ))}
+          </div>
+        </section>
+
+        {/* Views Section */}
+        <section>
+          <div className="flex items-center gap-2 mb-4">
+            <Eye className="w-5 h-5 text-amber-500" />
+            <h2 className="text-lg font-semibold">Views Milestones</h2>
+          </div>
+          <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
+            {groupedMilestones.views.map((milestone) => (
               <MilestoneBadgeCard key={milestone.id} milestone={milestone} />
             ))}
           </div>
