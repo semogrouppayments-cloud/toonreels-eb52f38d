@@ -7,7 +7,7 @@ import CommentsSheet from '@/components/CommentsSheet';
 import BottomNav from '@/components/BottomNav';
 import { toast } from 'sonner';
 import { RefreshCw, Loader2 } from 'lucide-react';
-import toonreelsLogo from '@/assets/toonreels-logo-long.png';
+import toonreelsLogo from '@/assets/toonreels-logo.png';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { useSoundEffects } from '@/hooks/useSoundEffects';
 
