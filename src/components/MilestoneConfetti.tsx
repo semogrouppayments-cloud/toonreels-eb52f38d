@@ -12,7 +12,7 @@ interface ConfettiPiece {
 
 interface MilestoneConfettiProps {
   milestone: number;
-  type: 'likes' | 'followers' | 'uploads';
+  type: 'likes' | 'followers' | 'uploads' | 'views';
   onComplete: () => void;
 }
 
@@ -25,6 +25,7 @@ const MilestoneConfetti = ({ milestone, type, onComplete }: MilestoneConfettiPro
       case 'likes': return ['#ef4444', '#f97316', '#ec4899', '#f43f5e', '#fbbf24'];
       case 'followers': return ['#3b82f6', '#8b5cf6', '#06b6d4', '#6366f1', '#a855f7'];
       case 'uploads': return ['#22c55e', '#84cc16', '#10b981', '#14b8a6', '#34d399'];
+      case 'views': return ['#f59e0b', '#fbbf24', '#f97316', '#eab308', '#fcd34d'];
       default: return ['#ef4444', '#f97316', '#eab308', '#22c55e', '#3b82f6'];
     }
   };
@@ -40,6 +41,7 @@ const MilestoneConfetti = ({ milestone, type, onComplete }: MilestoneConfettiPro
       case 'likes': return 'Likes';
       case 'followers': return 'Followers';
       case 'uploads': return 'Uploads';
+      case 'views': return 'Views';
       default: return '';
     }
   };
