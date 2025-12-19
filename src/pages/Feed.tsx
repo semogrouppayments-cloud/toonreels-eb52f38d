@@ -7,7 +7,7 @@ import CommentsSheet from '@/components/CommentsSheet';
 import BottomNav from '@/components/BottomNav';
 import { toast } from 'sonner';
 import { RefreshCw, Loader2 } from 'lucide-react';
-import toonreelsLogo from '@/assets/toonreels-logo.png';
+
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { useSoundEffects } from '@/hooks/useSoundEffects';
 
@@ -347,10 +347,6 @@ const Feed = () => {
         </div>
       )}
 
-      {/* Logo in top left - better positioned */}
-      <div className="fixed top-3 left-3 z-30">
-        <img src={toonreelsLogo} alt="ToonReels" className="h-6 w-auto drop-shadow-lg" />
-      </div>
 
       {videos.map((video, index) => (
         <div 
