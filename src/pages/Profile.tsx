@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { LogOut, Settings, Video, Camera, Edit, BarChart3, Bookmark, Eye, Heart, Trash2, BadgeCheck } from 'lucide-react';
+import { LogOut, Settings, Video, Camera, Edit, BarChart3, Bookmark, Eye, Heart, Trash2, BadgeCheck, Trophy, Flag } from 'lucide-react';
 import BottomNav from '@/components/BottomNav';
 import NotificationBell from '@/components/NotificationBell';
 import { toast } from 'sonner';
@@ -12,6 +12,7 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import VideoPlayer from '@/components/VideoPlayer';
 import ProfileSkeleton from '@/components/ProfileSkeleton';
 import MilestoneConfetti from '@/components/MilestoneConfetti';
+import VerificationRequestDialog from '@/components/VerificationRequestDialog';
 import { checkAndTriggerMilestone, MilestoneType } from '@/hooks/useMilestoneTracker';
 import {
   Dialog,
@@ -42,6 +43,7 @@ interface Profile {
   bio: string;
   avatar_url: string;
   cover_photo_url?: string;
+  is_verified?: boolean;
 }
 
 interface Video {
@@ -80,6 +82,8 @@ const Profile = () => {
   const [editVideoDescription, setEditVideoDescription] = useState('');
   const [deletingVideo, setDeletingVideo] = useState<string | null>(null);
   const [milestoneToShow, setMilestoneToShow] = useState<{ type: MilestoneType; value: number } | null>(null);
+  const [showVerificationDialog, setShowVerificationDialog] = useState(false);
+  const [verificationStatus, setVerificationStatus] = useState<string | null>(null);
 
   // Check for milestones when stats load
   useEffect(() => {
@@ -142,12 +146,23 @@ const Profile = () => {
         fetchFollowCounts(targetUserId),
         fetchStatsCounts(targetUserId),
         checkIfCreative(currentUser.id),
+        fetchVerificationStatus(isOwn ? currentUser.id : targetUserId),
         !isOwn ? checkIfFollowingUser(currentUser.id, targetUserId) : Promise.resolve()
       ]);
     };
     
     loadProfile();
   }, [window.location.search]);
+
+  const fetchVerificationStatus = async (userId: string) => {
+    const { data } = await supabase
+      .from('creator_verifications')
+      .select('status')
+      .eq('user_id', userId)
+      .maybeSingle();
+    
+    setVerificationStatus(data?.status || null);
+  };
 
   const fetchProfileData = async (targetUserId: string) => {
     const { data } = await supabase
@@ -569,6 +584,15 @@ const Profile = () => {
             {isOwnProfile ? (
               <>
                 <NotificationBell />
+                <Button
+                  variant="secondary"
+                  size="icon"
+                  className="rounded-full"
+                  onClick={() => navigate('/milestones')}
+                  title="View Milestones"
+                >
+                  <Trophy className="h-5 w-5" />
+                </Button>
                 {isCreative && (
                   <Button
                     variant="secondary"
@@ -597,13 +621,29 @@ const Profile = () => {
                 </Button>
               </>
             ) : (
-              <Button
-                onClick={handleFollowToggle}
-                variant={isFollowing ? "outline" : "default"}
-                className="rounded-full"
-              >
-                {isFollowing ? 'Unfollow' : 'Follow'}
-              </Button>
+              <div className="flex items-center gap-2">
+                {/* Report unverified creator button */}
+                {profile.user_type === 'creative' && !profile.is_verified && (
+                  <Button
+                    variant="secondary"
+                    size="icon"
+                    className="rounded-full"
+                    onClick={() => {
+                      toast.info('Report feature coming soon. Unverified creators should be reported if content is inappropriate.');
+                    }}
+                    title="Report unverified creator"
+                  >
+                    <Flag className="h-5 w-5 text-orange-500" />
+                  </Button>
+                )}
+                <Button
+                  onClick={handleFollowToggle}
+                  variant={isFollowing ? "outline" : "default"}
+                  className="rounded-full"
+                >
+                  {isFollowing ? 'Unfollow' : 'Follow'}
+                </Button>
+              </div>
             )}
           </div>
 
@@ -652,8 +692,9 @@ const Profile = () => {
                     <h1 className="text-xl md:text-2xl font-black text-white drop-shadow-lg">
                       {profile.username}
                     </h1>
-                    {profile.id === currentUserId && (
-                      <BadgeCheck className="h-5 w-5 text-black drop-shadow-lg" fill="#FFD700" />
+                    {/* Verification Badge - only for verified creators */}
+                    {profile.user_type === 'creative' && profile.is_verified && (
+                      <BadgeCheck className="h-5 w-5 text-blue-500 drop-shadow-lg" fill="white" />
                     )}
                     {isOwnProfile && (
                       <Button
@@ -670,9 +711,28 @@ const Profile = () => {
                     )}
                   </div>
                 )}
-                <p className="text-white/90 drop-shadow-lg font-semibold capitalize text-xs md:text-sm">
-                  {profile.user_type}
-                </p>
+                <div className="flex items-center gap-2">
+                  <p className="text-white/90 drop-shadow-lg font-semibold capitalize text-xs md:text-sm">
+                    {profile.user_type}
+                  </p>
+                  {/* Verification status for own profile */}
+                  {isOwnProfile && profile.user_type === 'creative' && !profile.is_verified && (
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      className="h-6 text-xs rounded-full"
+                      onClick={() => setShowVerificationDialog(true)}
+                      disabled={verificationStatus === 'pending'}
+                    >
+                      {verificationStatus === 'pending' ? 'Pending Review' : 'Get Verified'}
+                    </Button>
+                  )}
+                  {profile.user_type === 'creative' && !profile.is_verified && !isOwnProfile && (
+                    <span className="text-orange-400 text-xs font-medium drop-shadow-lg">
+                      ⚠️ Unverified
+                    </span>
+                  )}
+                </div>
                 
                 {/* Bio Section */}
                 {editingBio && isOwnProfile ? (
@@ -1080,6 +1140,13 @@ const Profile = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Verification Request Dialog */}
+      <VerificationRequestDialog
+        open={showVerificationDialog}
+        onOpenChange={setShowVerificationDialog}
+        onSuccess={() => setVerificationStatus('pending')}
+      />
 
       <BottomNav />
       </div>
