@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -55,6 +55,8 @@ interface Video {
 
 const Profile = () => {
   const navigate = useNavigate();
+  const touchStartXRef = useRef<number>(0);
+  const touchStartYRef = useRef<number>(0);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [videos, setVideos] = useState<Video[]>([]);
   const [editingUsername, setEditingUsername] = useState(false);
@@ -457,10 +459,31 @@ const Profile = () => {
     }
   };
 
+  // Swipe right to go back (only when viewing another user's profile)
+  const handleSwipeStart = (e: React.TouchEvent) => {
+    touchStartXRef.current = e.touches[0].clientX;
+    touchStartYRef.current = e.touches[0].clientY;
+  };
+
+  const handleSwipeEnd = (e: React.TouchEvent) => {
+    const deltaX = e.changedTouches[0].clientX - touchStartXRef.current;
+    const deltaY = Math.abs(e.changedTouches[0].clientY - touchStartYRef.current);
+    
+    // Only trigger horizontal swipe if it's more horizontal than vertical
+    if (deltaX > 80 && deltaY < 50 && !isOwnProfile) {
+      // Swipe right - go back
+      navigate(-1);
+    }
+  };
+
   if (!profile) return <ProfileSkeleton />;
 
   return (
-    <div className="min-h-screen bg-background pb-20">
+    <div 
+      className="min-h-screen bg-background pb-20"
+      onTouchStart={handleSwipeStart}
+      onTouchEnd={handleSwipeEnd}
+    >
       <div className="max-w-2xl mx-auto">
         {/* Header with Cover Photo */}
         <div className="relative bg-gradient-to-br from-primary via-accent to-fun-yellow h-64 overflow-hidden rounded-3xl mx-4 mt-4">
