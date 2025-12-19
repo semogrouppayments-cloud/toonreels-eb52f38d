@@ -9,8 +9,6 @@ interface LikeAnimationProps {
 
 interface Particle {
   id: number;
-  x: number;
-  y: number;
   angle: number;
   speed: number;
   size: number;
@@ -22,12 +20,9 @@ const LikeAnimation = ({ x, y, onComplete }: LikeAnimationProps) => {
   const [particles, setParticles] = useState<Particle[]>([]);
 
   useEffect(() => {
-    // Generate particles
     const colors = ['#ef4444', '#f97316', '#eab308', '#ec4899', '#f43f5e'];
     const newParticles: Particle[] = Array.from({ length: 12 }, (_, i) => ({
       id: i,
-      x: 0,
-      y: 0,
       angle: (i * 30) * (Math.PI / 180),
       speed: 80 + Math.random() * 60,
       size: 6 + Math.random() * 8,
@@ -54,6 +49,41 @@ const LikeAnimation = ({ x, y, onComplete }: LikeAnimationProps) => {
         transform: 'translate(-50%, -50%)',
       }}
     >
+      {/* Ring explosion effects */}
+      <div
+        className="absolute rounded-full border-4 border-red-500"
+        style={{
+          width: 20,
+          height: 20,
+          left: '50%',
+          top: '50%',
+          transform: 'translate(-50%, -50%)',
+          animation: 'ring-explode 0.6s ease-out forwards',
+        }}
+      />
+      <div
+        className="absolute rounded-full border-2 border-orange-400"
+        style={{
+          width: 20,
+          height: 20,
+          left: '50%',
+          top: '50%',
+          transform: 'translate(-50%, -50%)',
+          animation: 'ring-explode 0.6s ease-out 0.1s forwards',
+        }}
+      />
+      <div
+        className="absolute rounded-full border-2 border-pink-400"
+        style={{
+          width: 20,
+          height: 20,
+          left: '50%',
+          top: '50%',
+          transform: 'translate(-50%, -50%)',
+          animation: 'ring-explode 0.6s ease-out 0.2s forwards',
+        }}
+      />
+
       {/* Particles */}
       {particles.map((particle) => (
         <div
@@ -67,8 +97,6 @@ const LikeAnimation = ({ x, y, onComplete }: LikeAnimationProps) => {
             top: '50%',
             transform: 'translate(-50%, -50%)',
             animation: `particle-burst-${particle.id % 4} 0.8s ease-out forwards`,
-            ['--angle' as string]: `${particle.angle}rad`,
-            ['--speed' as string]: `${particle.speed}px`,
           }}
         />
       ))}
@@ -86,6 +114,21 @@ const LikeAnimation = ({ x, y, onComplete }: LikeAnimationProps) => {
       />
 
       <style>{`
+        @keyframes ring-explode {
+          0% {
+            width: 20px;
+            height: 20px;
+            opacity: 1;
+            border-width: 4px;
+          }
+          100% {
+            width: 160px;
+            height: 160px;
+            opacity: 0;
+            border-width: 1px;
+          }
+        }
+
         @keyframes heart-pop {
           0% {
             transform: translate(-50%, -50%) scale(0);
@@ -111,47 +154,23 @@ const LikeAnimation = ({ x, y, onComplete }: LikeAnimationProps) => {
         }
         
         @keyframes particle-burst-0 {
-          0% {
-            transform: translate(-50%, -50%) scale(1);
-            opacity: 1;
-          }
-          100% {
-            transform: translate(calc(-50% + 80px), calc(-50% - 60px)) scale(0);
-            opacity: 0;
-          }
+          0% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+          100% { transform: translate(calc(-50% + 80px), calc(-50% - 60px)) scale(0); opacity: 0; }
         }
         
         @keyframes particle-burst-1 {
-          0% {
-            transform: translate(-50%, -50%) scale(1);
-            opacity: 1;
-          }
-          100% {
-            transform: translate(calc(-50% - 70px), calc(-50% - 50px)) scale(0);
-            opacity: 0;
-          }
+          0% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+          100% { transform: translate(calc(-50% - 70px), calc(-50% - 50px)) scale(0); opacity: 0; }
         }
         
         @keyframes particle-burst-2 {
-          0% {
-            transform: translate(-50%, -50%) scale(1);
-            opacity: 1;
-          }
-          100% {
-            transform: translate(calc(-50% + 60px), calc(-50% + 70px)) scale(0);
-            opacity: 0;
-          }
+          0% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+          100% { transform: translate(calc(-50% + 60px), calc(-50% + 70px)) scale(0); opacity: 0; }
         }
         
         @keyframes particle-burst-3 {
-          0% {
-            transform: translate(-50%, -50%) scale(1);
-            opacity: 1;
-          }
-          100% {
-            transform: translate(calc(-50% - 65px), calc(-50% + 55px)) scale(0);
-            opacity: 0;
-          }
+          0% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+          100% { transform: translate(calc(-50% - 65px), calc(-50% + 55px)) scale(0); opacity: 0; }
         }
       `}</style>
     </div>
