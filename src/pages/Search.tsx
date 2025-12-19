@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Search as SearchIcon, Play, Heart, Eye } from 'lucide-react';
 import BottomNav from '@/components/BottomNav';
-import toonreelsLogo from '@/assets/toonreels-logo-long.png';
+import toonreelsLogo from '@/assets/toonreels-logo.png';
 
 const CATEGORIES = [
   { id: 'all', label: 'All', emoji: '🎬' },
