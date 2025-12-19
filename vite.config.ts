@@ -17,9 +17,9 @@ export default defineConfig(({ mode }) => ({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'robots.txt'],
       manifest: {
-        name: 'AniSpark Kids - Animation Shorts',
-        short_name: 'AniSpark',
-        description: 'Watch and share amazing animation shorts for kids',
+        name: 'ToonReels - Animated Fun for Kids',
+        short_name: 'ToonReels',
+        description: 'Watch and share amazing animated cartoons for kids',
         theme_color: '#FF0000',
         background_color: '#000000',
         display: 'standalone',
