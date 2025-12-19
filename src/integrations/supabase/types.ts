@@ -135,6 +135,65 @@ export type Database = {
         }
         Relationships: []
       }
+      creator_verifications: {
+        Row: {
+          business_document_url: string | null
+          business_email: string
+          company_name: string | null
+          created_at: string | null
+          full_name: string
+          id: string
+          id_document_url: string | null
+          rejection_reason: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          submitted_at: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          business_document_url?: string | null
+          business_email: string
+          company_name?: string | null
+          created_at?: string | null
+          full_name: string
+          id?: string
+          id_document_url?: string | null
+          rejection_reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          submitted_at?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          business_document_url?: string | null
+          business_email?: string
+          company_name?: string | null
+          created_at?: string | null
+          full_name?: string
+          id?: string
+          id_document_url?: string | null
+          rejection_reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          submitted_at?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "creator_verifications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       follows: {
         Row: {
           created_at: string
@@ -390,6 +449,7 @@ export type Database = {
           created_at: string
           id: string
           is_premium: boolean | null
+          is_verified: boolean | null
           profile_pin: string | null
           selected_avatar: string | null
           updated_at: string
@@ -404,6 +464,7 @@ export type Database = {
           created_at?: string
           id: string
           is_premium?: boolean | null
+          is_verified?: boolean | null
           profile_pin?: string | null
           selected_avatar?: string | null
           updated_at?: string
@@ -418,6 +479,7 @@ export type Database = {
           created_at?: string
           id?: string
           is_premium?: boolean | null
+          is_verified?: boolean | null
           profile_pin?: string | null
           selected_avatar?: string | null
           updated_at?: string
