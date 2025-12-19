@@ -51,8 +51,9 @@ interface VideoPlayerProps {
 
 const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClick, onDelete }: VideoPlayerProps) => {
   const navigate = useNavigate();
-  const { triggerLikeHaptic } = useHapticFeedback();
+  const { triggerLikeHaptic, triggerHaptic } = useHapticFeedback();
   const { playLikeSound, playTapSound } = useSoundEffects();
+  const [isExpanded, setIsExpanded] = useState(false);
   const [liked, setLiked] = useState(false);
   const [likesCount, setLikesCount] = useState(video.likes_count);
   const [commentsCount, setCommentsCount] = useState(0);
@@ -83,6 +84,8 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
   const analyticsTrackedRef = useRef<boolean>(false);
   const hasTrackedViewRef = useRef<boolean>(false);
   const playAttemptRef = useRef<number>(0);
+  const touchStartXRef = useRef<number>(0);
+  const touchStartYRef = useRef<number>(0);
 
   const isOwnVideo = currentUserId === video.creator_id;
 
@@ -325,6 +328,7 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
   };
 
   const handleLike = async () => {
+    triggerHaptic('medium');
     try {
       if (liked) {
         await supabase.from('likes').delete().match({ video_id: video.id, user_id: currentUserId });
@@ -398,6 +402,26 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
     }
   };
 
+  // Swipe left to navigate to creator profile
+  const handleSwipeStart = (e: React.TouchEvent) => {
+    touchStartXRef.current = e.touches[0].clientX;
+    touchStartYRef.current = e.touches[0].clientY;
+  };
+
+  const handleSwipeEnd = (e: React.TouchEvent) => {
+    const deltaX = touchStartXRef.current - e.changedTouches[0].clientX;
+    const deltaY = Math.abs(touchStartYRef.current - e.changedTouches[0].clientY);
+    
+    // Only trigger horizontal swipe if it's more horizontal than vertical
+    if (Math.abs(deltaX) > 80 && deltaY < 50) {
+      if (deltaX > 0) {
+        // Swipe left - go to creator profile
+        triggerHaptic('medium');
+        navigate(`/profile?userId=${video.creator_id}`);
+      }
+    }
+  };
+
   const togglePlayPause = () => {
     const videoEl = videoRef.current;
     if (!videoEl) return;
@@ -460,6 +484,7 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
 
   const handleFollow = async (e: React.MouseEvent) => {
     e.stopPropagation();
+    triggerHaptic('medium');
     if (!currentUserId) {
       toast.error('Please sign in to follow creators');
       return;
@@ -488,6 +513,7 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
 
   const handleSave = async (e: React.MouseEvent) => {
     e.stopPropagation();
+    triggerHaptic('light');
     if (!currentUserId) {
       toast.error('Please sign in to save videos');
       return;
@@ -610,10 +636,12 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
         />
       ))}
       
-      {/* Video container with tap handler */}
+      {/* Video container with tap handler and swipe gestures */}
       <div 
         className="absolute inset-0 flex items-center justify-center"
         onClick={handleTap}
+        onTouchStart={handleSwipeStart}
+        onTouchEnd={handleSwipeEnd}
       >
         {loading ? (
           <div className="flex items-center justify-center">
@@ -797,7 +825,15 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
             </button>
           )}
         </div>
-        <p className="text-[11px] opacity-90 line-clamp-1 leading-tight mb-0.5">{video.description || video.title}</p>
+        <p 
+          className={`text-[11px] opacity-90 leading-tight mb-0.5 cursor-pointer ${!isExpanded ? 'line-clamp-1' : ''}`}
+          onClick={(e) => {
+            e.stopPropagation();
+            setIsExpanded(!isExpanded);
+          }}
+        >
+          {video.description || video.title}
+        </p>
         {/* Hashtags under description */}
         {video.tags && video.tags.length > 0 && (
           <div className="flex flex-wrap gap-1">
