@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Search as SearchIcon, Play, Heart, Eye } from 'lucide-react';
 import BottomNav from '@/components/BottomNav';
-import toonreelsLogo from '@/assets/toonreels-logo.png';
+
 
 const CATEGORIES = [
   { id: 'all', label: 'All', emoji: '🎬' },
@@ -138,7 +138,7 @@ const Search = () => {
       {/* Header with Logo */}
       <div className="sticky top-0 z-40 bg-background/95 backdrop-blur-sm border-b border-border">
         <div className="p-4">
-          <img src={toonreelsLogo} alt="ToonReels" className="h-8 w-auto mb-4" />
+          
           
           {/* Search Bar */}
           <div className="flex gap-2">
