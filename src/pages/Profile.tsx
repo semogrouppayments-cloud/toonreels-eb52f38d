@@ -11,6 +11,8 @@ import { toast } from 'sonner';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import VideoPlayer from '@/components/VideoPlayer';
 import ProfileSkeleton from '@/components/ProfileSkeleton';
+import MilestoneConfetti from '@/components/MilestoneConfetti';
+import { checkAndTriggerMilestone, MilestoneType } from '@/hooks/useMilestoneTracker';
 import {
   Dialog,
   DialogContent,
@@ -77,6 +79,35 @@ const Profile = () => {
   const [editVideoTitle, setEditVideoTitle] = useState('');
   const [editVideoDescription, setEditVideoDescription] = useState('');
   const [deletingVideo, setDeletingVideo] = useState<string | null>(null);
+  const [milestoneToShow, setMilestoneToShow] = useState<{ type: MilestoneType; value: number } | null>(null);
+
+  // Check for milestones when stats load
+  useEffect(() => {
+    if (isOwnProfile && followersCount > 0) {
+      const milestone = checkAndTriggerMilestone('followers', followersCount);
+      if (milestone) {
+        setMilestoneToShow({ type: 'followers', value: milestone });
+      }
+    }
+  }, [followersCount, isOwnProfile]);
+
+  useEffect(() => {
+    if (isOwnProfile && videos.length > 0) {
+      const milestone = checkAndTriggerMilestone('uploads', videos.length);
+      if (milestone) {
+        setMilestoneToShow({ type: 'uploads', value: milestone });
+      }
+    }
+  }, [videos.length, isOwnProfile]);
+
+  useEffect(() => {
+    if (isOwnProfile && totalLikes > 0) {
+      const milestone = checkAndTriggerMilestone('likes', totalLikes);
+      if (milestone) {
+        setMilestoneToShow({ type: 'likes', value: milestone });
+      }
+    }
+  }, [totalLikes, isOwnProfile]);
 
   const videoEditSchema = z.object({
     title: z.string().trim().min(1, { message: "Title is required" }).max(100, { message: "Title must be less than 100 characters" }),
@@ -479,12 +510,22 @@ const Profile = () => {
   if (!profile) return <ProfileSkeleton />;
 
   return (
-    <div 
-      className="min-h-screen bg-background pb-20"
-      onTouchStart={handleSwipeStart}
-      onTouchEnd={handleSwipeEnd}
-    >
-      <div className="max-w-2xl mx-auto">
+    <>
+      {/* Milestone Confetti */}
+      {milestoneToShow && (
+        <MilestoneConfetti
+          milestone={milestoneToShow.value}
+          type={milestoneToShow.type}
+          onComplete={() => setMilestoneToShow(null)}
+        />
+      )}
+      
+      <div 
+        className="min-h-screen bg-background pb-20"
+        onTouchStart={handleSwipeStart}
+        onTouchEnd={handleSwipeEnd}
+      >
+        <div className="max-w-2xl mx-auto">
         {/* Header with Cover Photo */}
         <div className="relative bg-gradient-to-br from-primary via-accent to-fun-yellow h-64 overflow-hidden rounded-3xl mx-4 mt-4">
           {/* Cover Photo - fills the entire header with gradient overlay */}
@@ -1041,7 +1082,8 @@ const Profile = () => {
       </AlertDialog>
 
       <BottomNav />
-    </div>
+      </div>
+    </>
   );
 };
 
