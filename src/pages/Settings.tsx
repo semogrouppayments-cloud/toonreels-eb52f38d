@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Moon, Sun } from "lucide-react";
+import { ArrowLeft, Moon, Sun, RefreshCw } from "lucide-react";
+import { usePWAUpdate } from "@/hooks/usePWAUpdate";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -27,6 +28,7 @@ import { toast } from "sonner";
 const Settings = () => {
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
+  const { updateAvailable, checking, checkForUpdates, applyUpdate } = usePWAUpdate();
   
   const [username, setUsername] = useState("");
   const [selectedAvatar, setSelectedAvatar] = useState("🦊");
@@ -439,6 +441,36 @@ const Settings = () => {
                   </AccordionContent>
                 </AccordionItem>
               </Accordion>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader><CardTitle>App Updates</CardTitle></CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <p className="text-sm text-muted-foreground">
+                  Keep ToonReels up to date for the best experience and latest features.
+                </p>
+                {updateAvailable ? (
+                  <div className="bg-primary/10 border border-primary/20 rounded-lg p-4">
+                    <p className="text-sm font-semibold text-primary mb-2">New version available!</p>
+                    <Button onClick={() => applyUpdate()} className="w-full">
+                      <RefreshCw className="h-4 w-4 mr-2" />
+                      Update Now
+                    </Button>
+                  </div>
+                ) : (
+                  <Button 
+                    onClick={checkForUpdates} 
+                    disabled={checking}
+                    variant="outline" 
+                    className="w-full"
+                  >
+                    <RefreshCw className={`h-4 w-4 mr-2 ${checking ? 'animate-spin' : ''}`} />
+                    {checking ? 'Checking...' : 'Check for Updates'}
+                  </Button>
+                )}
+              </div>
             </CardContent>
           </Card>
 
