@@ -1,4 +1,12 @@
-// Service Worker for Push Notifications
+// Service Worker for Push Notifications and PWA Updates
+
+// Handle skip waiting message from the app
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+});
+
 self.addEventListener('push', function(event) {
   const options = {
     body: event.data ? event.data.text() : 'New notification from ToonReels',
