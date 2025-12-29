@@ -218,31 +218,37 @@ const CreatorDashboard = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
           <Card className="p-6">
             <h3 className="text-lg font-black mb-4">Top 5 Videos by Views</h3>
-            <ResponsiveContainer width="100%" height={250}>
-              <BarChart data={videoPerformance} layout="horizontal">
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis 
-                  type="number"
-                  stroke="hsl(var(--muted-foreground))"
-                  fontSize={12}
-                />
-                <YAxis 
-                  type="category"
-                  dataKey="title" 
-                  stroke="hsl(var(--muted-foreground))"
-                  fontSize={12}
-                  width={100}
-                />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: 'hsl(var(--card))',
-                    border: '1px solid hsl(var(--border))',
-                    borderRadius: '8px',
-                  }}
-                />
-                <Bar dataKey="views" fill="hsl(var(--primary))" radius={[0, 8, 8, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+            {videoPerformance.length > 0 ? (
+              <ResponsiveContainer width="100%" height={250}>
+                <BarChart data={videoPerformance} layout="horizontal">
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                  <XAxis 
+                    type="number"
+                    stroke="hsl(var(--muted-foreground))"
+                    fontSize={12}
+                  />
+                  <YAxis 
+                    type="category"
+                    dataKey="title" 
+                    stroke="hsl(var(--muted-foreground))"
+                    fontSize={12}
+                    width={100}
+                  />
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: 'hsl(var(--card))',
+                      border: '1px solid hsl(var(--border))',
+                      borderRadius: '8px',
+                    }}
+                  />
+                  <Bar dataKey="views" fill="hsl(var(--primary))" radius={[0, 8, 8, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="h-[250px] flex items-center justify-center text-muted-foreground">
+                <p className="text-sm">No videos uploaded yet. Upload your first video to see stats!</p>
+              </div>
+            )}
           </Card>
 
           <Card className="p-6">

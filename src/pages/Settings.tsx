@@ -1,10 +1,10 @@
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Moon, Sun, RefreshCw } from "lucide-react";
+import { ArrowLeft, Moon, Sun, RefreshCw, ChevronDown } from "lucide-react";
 import { usePWAUpdate } from "@/hooks/usePWAUpdate";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -59,6 +59,17 @@ const Settings = () => {
   const [notifPush, setNotifPush] = useState(false);
   const [notifSound, setNotifSound] = useState(true);
   const [isCreative, setIsCreative] = useState(false);
+
+  // Collapsible section states
+  const [openSections, setOpenSections] = useState<string[]>([]);
+
+  const toggleSection = (section: string) => {
+    setOpenSections(prev => 
+      prev.includes(section) 
+        ? prev.filter(s => s !== section)
+        : [...prev, section]
+    );
+  };
 
   useEffect(() => {
     fetchUserSettings();
@@ -252,28 +263,44 @@ const Settings = () => {
     }
   };
 
+  // Collapsible section header component
+  const SectionHeader = ({ title, section }: { title: string; section: string }) => (
+    <CollapsibleTrigger 
+      onClick={() => toggleSection(section)}
+      className="flex items-center justify-between w-full p-3 bg-card rounded-xl border border-border hover:bg-accent/50 transition-colors"
+    >
+      <span className="font-bold text-sm">{title}</span>
+      <ChevronDown 
+        className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${
+          openSections.includes(section) ? 'rotate-180' : ''
+        }`} 
+      />
+    </CollapsibleTrigger>
+  );
+
   if (loading) return <div className="min-h-screen bg-background flex items-center justify-center"><p>Loading...</p></div>;
 
   return (
     <div className="min-h-screen bg-background pb-24">
       <div className="max-w-4xl mx-auto p-4">
-        <div className="mb-6 flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate('/profile')} className="rounded-full"><ArrowLeft className="h-6 w-6" /></Button>
-          <h1 className="text-2xl font-black">ToonReels Settings</h1>
+        <div className="mb-4 flex items-center gap-3">
+          <Button variant="ghost" size="icon" onClick={() => navigate('/profile')} className="rounded-full"><ArrowLeft className="h-5 w-5" /></Button>
+          <h1 className="text-xl font-black">Settings</h1>
         </div>
 
-        <div className="space-y-4">
-          <Card>
-            <CardHeader><CardTitle>Account & Profile</CardTitle></CardHeader>
-            <CardContent>
+        <div className="space-y-2">
+          {/* Account & Profile */}
+          <Collapsible open={openSections.includes('account')}>
+            <SectionHeader title="Account & Profile" section="account" />
+            <CollapsibleContent className="mt-2 bg-card rounded-xl border border-border p-3">
               <Accordion type="single" collapsible>
                 <AccordionItem value="profile">
-                  <AccordionTrigger>Profile Name & Avatar</AccordionTrigger>
+                  <AccordionTrigger className="text-xs">Profile Name & Avatar</AccordionTrigger>
                   <AccordionContent className="space-y-3">
-                    <div className="space-y-2"><Label>Username</Label><Input value={username} onChange={(e) => setUsername(e.target.value)} /></div>
-                    <div className="space-y-2"><Label>Avatar</Label>
+                    <div className="space-y-2"><Label className="text-xs">Username</Label><Input value={username} onChange={(e) => setUsername(e.target.value)} className="text-sm h-8" /></div>
+                    <div className="space-y-2"><Label className="text-xs">Avatar</Label>
                       <Select value={selectedAvatar} onValueChange={setSelectedAvatar}>
-                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectTrigger className="h-8 text-sm"><SelectValue /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="🦊">🦊 Fox</SelectItem>
                           <SelectItem value="🐱">🐱 Cat</SelectItem>
@@ -281,181 +308,203 @@ const Settings = () => {
                         </SelectContent>
                       </Select>
                     </div>
-                    <Button onClick={saveProfileSettings}>Save</Button>
+                    <Button onClick={saveProfileSettings} size="sm" className="h-7 text-xs">Save</Button>
                   </AccordionContent>
                 </AccordionItem>
                 <AccordionItem value="age">
-                  <AccordionTrigger>Age Range</AccordionTrigger>
+                  <AccordionTrigger className="text-xs">Age Range</AccordionTrigger>
                   <AccordionContent className="space-y-3">
                     <Select value={ageRange} onValueChange={setAgeRange}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectTrigger className="h-8 text-sm"><SelectValue /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="7-9">7-9 years</SelectItem>
                         <SelectItem value="10-12">10-12 years</SelectItem>
                         <SelectItem value="13-15">13-15 years</SelectItem>
                       </SelectContent>
                     </Select>
-                    <Button onClick={saveProfileSettings}>Save</Button>
+                    <Button onClick={saveProfileSettings} size="sm" className="h-7 text-xs">Save</Button>
                   </AccordionContent>
                 </AccordionItem>
                 <AccordionItem value="theme">
-                  <AccordionTrigger>Theme</AccordionTrigger>
+                  <AccordionTrigger className="text-xs">Theme</AccordionTrigger>
                   <AccordionContent>
                     <div className="flex items-center justify-between">
-                      <Label className="flex items-center gap-2">{theme === "dark" ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}{theme === "dark" ? "Dark" : "Light"}</Label>
+                      <Label className="flex items-center gap-2 text-xs">{theme === "dark" ? <Moon className="h-3 w-3" /> : <Sun className="h-3 w-3" />}{theme === "dark" ? "Dark" : "Light"}</Label>
                       <Switch checked={theme === "dark"} onCheckedChange={toggleTheme} />
                     </div>
                   </AccordionContent>
                 </AccordionItem>
                 <AccordionItem value="pin">
-                  <AccordionTrigger>Profile PIN</AccordionTrigger>
+                  <AccordionTrigger className="text-xs">Profile PIN</AccordionTrigger>
                   <AccordionContent className="space-y-3">
-                    <Input type="password" maxLength={4} value={profilePin} onChange={(e) => setProfilePin(e.target.value.replace(/\D/g, ''))} placeholder="••••" />
-                    <Button onClick={saveProfileSettings}>Save PIN</Button>
+                    <Input type="password" maxLength={4} value={profilePin} onChange={(e) => setProfilePin(e.target.value.replace(/\D/g, ''))} placeholder="••••" className="h-8 text-sm" />
+                    <Button onClick={saveProfileSettings} size="sm" className="h-7 text-xs">Save PIN</Button>
                   </AccordionContent>
                 </AccordionItem>
               </Accordion>
-            </CardContent>
-          </Card>
+            </CollapsibleContent>
+          </Collapsible>
 
-          <Card>
-            <CardHeader><CardTitle>Safety & Content</CardTitle></CardHeader>
-            <CardContent>
+          {/* Safety & Content */}
+          <Collapsible open={openSections.includes('safety')}>
+            <SectionHeader title="Safety & Content" section="safety" />
+            <CollapsibleContent className="mt-2 bg-card rounded-xl border border-border p-3">
               <Accordion type="single" collapsible>
                 <AccordionItem value="cartoon">
-                  <AccordionTrigger>Cartoon-Only Mode</AccordionTrigger>
+                  <AccordionTrigger className="text-xs">Cartoon-Only Mode</AccordionTrigger>
                   <AccordionContent className="space-y-3">
-                    <div className="flex justify-between"><Label>Enabled</Label><Switch checked={cartoonOnlyMode} onCheckedChange={setCartoonOnlyMode} /></div>
-                    <Button onClick={saveContentSettings}>Save</Button>
+                    <div className="flex justify-between"><Label className="text-xs">Enabled</Label><Switch checked={cartoonOnlyMode} onCheckedChange={setCartoonOnlyMode} /></div>
+                    <Button onClick={saveContentSettings} size="sm" className="h-7 text-xs">Save</Button>
                   </AccordionContent>
                 </AccordionItem>
                 <AccordionItem value="categories">
-                  <AccordionTrigger>Categories</AccordionTrigger>
+                  <AccordionTrigger className="text-xs">Categories</AccordionTrigger>
                   <AccordionContent className="space-y-3">
                     {['comedy', 'adventure', 'learning', 'music'].map(cat => (
-                      <div key={cat} className="flex justify-between"><Label className="capitalize">{cat}</Label>
+                      <div key={cat} className="flex justify-between"><Label className="capitalize text-xs">{cat}</Label>
                         <Switch checked={contentCategories.includes(cat)} onCheckedChange={(c) => c ? setContentCategories([...contentCategories, cat]) : setContentCategories(contentCategories.filter(x => x !== cat))} />
                       </div>
                     ))}
-                    <Button onClick={saveContentSettings}>Save</Button>
+                    <Button onClick={saveContentSettings} size="sm" className="h-7 text-xs">Save</Button>
                   </AccordionContent>
                 </AccordionItem>
               </Accordion>
-            </CardContent>
-          </Card>
+            </CollapsibleContent>
+          </Collapsible>
 
-          <Card>
-            <CardHeader><CardTitle>Parental Controls</CardTitle></CardHeader>
-            <CardContent>
+          {/* Parental Controls */}
+          <Collapsible open={openSections.includes('parental')}>
+            <SectionHeader title="Parental Controls" section="parental" />
+            <CollapsibleContent className="mt-2 bg-card rounded-xl border border-border p-3">
               <Accordion type="single" collapsible>
                 <AccordionItem value="screen">
-                  <AccordionTrigger>Screen Time</AccordionTrigger>
+                  <AccordionTrigger className="text-xs">Screen Time</AccordionTrigger>
                   <AccordionContent className="space-y-3">
-                    <Input type="number" value={screenTimeLimit} onChange={(e) => setScreenTimeLimit(parseInt(e.target.value) || 0)} />
-                    <Button onClick={saveParentalControls}>Save</Button>
+                    <Input type="number" value={screenTimeLimit} onChange={(e) => setScreenTimeLimit(parseInt(e.target.value) || 0)} className="h-8 text-sm" />
+                    <Button onClick={saveParentalControls} size="sm" className="h-7 text-xs">Save</Button>
                   </AccordionContent>
                 </AccordionItem>
                 <AccordionItem value="school">
-                  <AccordionTrigger>School Hours Lock</AccordionTrigger>
+                  <AccordionTrigger className="text-xs">School Hours Lock</AccordionTrigger>
                   <AccordionContent className="space-y-3">
-                    <div className="flex justify-between"><Label>Enabled</Label><Switch checked={schoolHoursLock} onCheckedChange={setSchoolHoursLock} /></div>
-                    <Button onClick={saveParentalControls}>Save</Button>
+                    <div className="flex justify-between"><Label className="text-xs">Enabled</Label><Switch checked={schoolHoursLock} onCheckedChange={setSchoolHoursLock} /></div>
+                    <Button onClick={saveParentalControls} size="sm" className="h-7 text-xs">Save</Button>
                   </AccordionContent>
                 </AccordionItem>
               </Accordion>
-            </CardContent>
-          </Card>
+            </CollapsibleContent>
+          </Collapsible>
 
-          <Card>
-            <CardHeader><CardTitle>Playback</CardTitle></CardHeader>
-            <CardContent>
+          {/* Playback */}
+          <Collapsible open={openSections.includes('playback')}>
+            <SectionHeader title="Playback" section="playback" />
+            <CollapsibleContent className="mt-2 bg-card rounded-xl border border-border p-3">
               <Accordion type="single" collapsible>
                 <AccordionItem value="autoplay">
-                  <AccordionTrigger>Autoplay</AccordionTrigger>
+                  <AccordionTrigger className="text-xs">Autoplay</AccordionTrigger>
                   <AccordionContent className="space-y-3">
-                    <div className="flex justify-between"><Label>Enabled</Label><Switch checked={autoplay} onCheckedChange={setAutoplay} /></div>
-                    <Button onClick={savePlaybackSettings}>Save</Button>
+                    <div className="flex justify-between"><Label className="text-xs">Enabled</Label><Switch checked={autoplay} onCheckedChange={setAutoplay} /></div>
+                    <Button onClick={savePlaybackSettings} size="sm" className="h-7 text-xs">Save</Button>
                   </AccordionContent>
                 </AccordionItem>
                 <AccordionItem value="quality">
-                  <AccordionTrigger>Video Quality</AccordionTrigger>
+                  <AccordionTrigger className="text-xs">Video Quality</AccordionTrigger>
                   <AccordionContent className="space-y-3">
                     <Select value={videoQuality} onValueChange={setVideoQuality}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectTrigger className="h-8 text-sm"><SelectValue /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="auto">Auto</SelectItem>
                         <SelectItem value="high">High</SelectItem>
                         <SelectItem value="medium">Medium</SelectItem>
                       </SelectContent>
                     </Select>
-                    <Button onClick={savePlaybackSettings}>Save</Button>
+                    <Button onClick={savePlaybackSettings} size="sm" className="h-7 text-xs">Save</Button>
                   </AccordionContent>
                 </AccordionItem>
-                <AccordionItem value="stats">
-                  <AccordionTrigger>Your Stats</AccordionTrigger>
+                <AccordionItem value="subtitles">
+                  <AccordionTrigger className="text-xs">Subtitles</AccordionTrigger>
                   <AccordionContent className="space-y-3">
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="bg-background/20 backdrop-blur-md rounded-2xl p-3 border border-border shadow-lg">
-                        <p className="text-2xl font-black text-foreground">{totalViews}</p>
-                        <p className="text-xs text-muted-foreground font-semibold">Views</p>
-                      </div>
-                      <div className="bg-background/20 backdrop-blur-md rounded-2xl p-3 border border-border shadow-lg">
-                        <p className="text-2xl font-black text-foreground">{totalLikes}</p>
-                        <p className="text-xs text-muted-foreground font-semibold">Likes</p>
-                      </div>
-                      <div className="bg-background/20 backdrop-blur-md rounded-2xl p-3 border border-border shadow-lg">
-                        <p className="text-2xl font-black text-foreground">{followersCount}</p>
-                        <p className="text-xs text-muted-foreground font-semibold">Followers</p>
-                      </div>
-                      <div className="bg-background/20 backdrop-blur-md rounded-2xl p-3 border border-border shadow-lg">
-                        <p className="text-2xl font-black text-foreground">{videosCount}</p>
-                        <p className="text-xs text-muted-foreground font-semibold">Videos</p>
-                      </div>
-                    </div>
+                    <div className="flex justify-between"><Label className="text-xs">Enabled</Label><Switch checked={subtitlesEnabled} onCheckedChange={setSubtitlesEnabled} /></div>
+                    <Select value={subtitlesSize} onValueChange={setSubtitlesSize}>
+                      <SelectTrigger className="h-8 text-sm"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="small">Small</SelectItem>
+                        <SelectItem value="medium">Medium</SelectItem>
+                        <SelectItem value="large">Large</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Button onClick={savePlaybackSettings} size="sm" className="h-7 text-xs">Save</Button>
                   </AccordionContent>
                 </AccordionItem>
+                {isCreative && (
+                  <AccordionItem value="stats">
+                    <AccordionTrigger className="text-xs">Your Stats</AccordionTrigger>
+                    <AccordionContent className="space-y-3">
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="bg-background/20 backdrop-blur-md rounded-xl p-2 border border-border shadow-lg">
+                          <p className="text-lg font-black text-foreground">{totalViews}</p>
+                          <p className="text-[10px] text-muted-foreground font-semibold">Views</p>
+                        </div>
+                        <div className="bg-background/20 backdrop-blur-md rounded-xl p-2 border border-border shadow-lg">
+                          <p className="text-lg font-black text-foreground">{totalLikes}</p>
+                          <p className="text-[10px] text-muted-foreground font-semibold">Likes</p>
+                        </div>
+                        <div className="bg-background/20 backdrop-blur-md rounded-xl p-2 border border-border shadow-lg">
+                          <p className="text-lg font-black text-foreground">{followersCount}</p>
+                          <p className="text-[10px] text-muted-foreground font-semibold">Followers</p>
+                        </div>
+                        <div className="bg-background/20 backdrop-blur-md rounded-xl p-2 border border-border shadow-lg">
+                          <p className="text-lg font-black text-foreground">{videosCount}</p>
+                          <p className="text-[10px] text-muted-foreground font-semibold">Videos</p>
+                        </div>
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                )}
               </Accordion>
-            </CardContent>
-          </Card>
+            </CollapsibleContent>
+          </Collapsible>
 
-          <Card>
-            <CardHeader><CardTitle>Notifications</CardTitle></CardHeader>
-            <CardContent>
+          {/* Notifications */}
+          <Collapsible open={openSections.includes('notifications')}>
+            <SectionHeader title="Notifications" section="notifications" />
+            <CollapsibleContent className="mt-2 bg-card rounded-xl border border-border p-3">
               <Accordion type="single" collapsible>
                 <AccordionItem value="notification-types">
-                  <AccordionTrigger>Notification Types</AccordionTrigger>
+                  <AccordionTrigger className="text-xs">Notification Types</AccordionTrigger>
                   <AccordionContent className="space-y-3">
-                    <div className="flex justify-between"><Label>Likes</Label><Switch checked={notifLikes} onCheckedChange={setNotifLikes} /></div>
-                    <div className="flex justify-between"><Label>Comments</Label><Switch checked={notifComments} onCheckedChange={setNotifComments} /></div>
-                    <div className="flex justify-between"><Label>Follows</Label><Switch checked={notifFollows} onCheckedChange={setNotifFollows} /></div>
-                    <div className="flex justify-between"><Label>Replies</Label><Switch checked={notifReplies} onCheckedChange={setNotifReplies} /></div>
-                    <Button onClick={saveNotificationSettings}>Save</Button>
+                    <div className="flex justify-between"><Label className="text-xs">Likes</Label><Switch checked={notifLikes} onCheckedChange={setNotifLikes} /></div>
+                    <div className="flex justify-between"><Label className="text-xs">Comments</Label><Switch checked={notifComments} onCheckedChange={setNotifComments} /></div>
+                    <div className="flex justify-between"><Label className="text-xs">Follows</Label><Switch checked={notifFollows} onCheckedChange={setNotifFollows} /></div>
+                    <div className="flex justify-between"><Label className="text-xs">Replies</Label><Switch checked={notifReplies} onCheckedChange={setNotifReplies} /></div>
+                    <Button onClick={saveNotificationSettings} size="sm" className="h-7 text-xs">Save</Button>
                   </AccordionContent>
                 </AccordionItem>
                 <AccordionItem value="notification-settings">
-                  <AccordionTrigger>Notification Settings</AccordionTrigger>
+                  <AccordionTrigger className="text-xs">Notification Settings</AccordionTrigger>
                   <AccordionContent className="space-y-3">
-                    <div className="flex justify-between"><Label>Push Notifications</Label><Switch checked={notifPush} onCheckedChange={setNotifPush} /></div>
-                    <div className="flex justify-between"><Label>Sound</Label><Switch checked={notifSound} onCheckedChange={setNotifSound} /></div>
-                    <Button onClick={saveNotificationSettings}>Save</Button>
+                    <div className="flex justify-between"><Label className="text-xs">Push Notifications</Label><Switch checked={notifPush} onCheckedChange={setNotifPush} /></div>
+                    <div className="flex justify-between"><Label className="text-xs">Sound</Label><Switch checked={notifSound} onCheckedChange={setNotifSound} /></div>
+                    <Button onClick={saveNotificationSettings} size="sm" className="h-7 text-xs">Save</Button>
                   </AccordionContent>
                 </AccordionItem>
               </Accordion>
-            </CardContent>
-          </Card>
+            </CollapsibleContent>
+          </Collapsible>
 
-          <Card>
-            <CardHeader><CardTitle>App Updates</CardTitle></CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <p className="text-sm text-muted-foreground">
-                  Keep ToonReels up to date for the best experience and latest features.
+          {/* App Updates */}
+          <Collapsible open={openSections.includes('updates')}>
+            <SectionHeader title="App Updates" section="updates" />
+            <CollapsibleContent className="mt-2 bg-card rounded-xl border border-border p-3">
+              <div className="space-y-3">
+                <p className="text-xs text-muted-foreground">
+                  Keep ToonReels up to date for the best experience.
                 </p>
                 {updateAvailable ? (
-                  <div className="bg-primary/10 border border-primary/20 rounded-lg p-4">
-                    <p className="text-sm font-semibold text-primary mb-2">New version available!</p>
-                    <Button onClick={() => applyUpdate()} className="w-full">
-                      <RefreshCw className="h-4 w-4 mr-2" />
+                  <div className="bg-primary/10 border border-primary/20 rounded-lg p-3">
+                    <p className="text-xs font-semibold text-primary mb-2">New version available!</p>
+                    <Button onClick={() => applyUpdate()} size="sm" className="w-full h-7 text-xs">
+                      <RefreshCw className="h-3 w-3 mr-1" />
                       Update Now
                     </Button>
                   </div>
@@ -464,72 +513,74 @@ const Settings = () => {
                     onClick={checkForUpdates} 
                     disabled={checking}
                     variant="outline" 
-                    className="w-full"
+                    size="sm"
+                    className="w-full h-7 text-xs"
                   >
-                    <RefreshCw className={`h-4 w-4 mr-2 ${checking ? 'animate-spin' : ''}`} />
+                    <RefreshCw className={`h-3 w-3 mr-1 ${checking ? 'animate-spin' : ''}`} />
                     {checking ? 'Checking...' : 'Check for Updates'}
                   </Button>
                 )}
               </div>
-            </CardContent>
-          </Card>
+            </CollapsibleContent>
+          </Collapsible>
 
-          <Card>
-            <CardHeader><CardTitle>FAQ</CardTitle></CardHeader>
-            <CardContent>
+          {/* FAQ */}
+          <Collapsible open={openSections.includes('faq')}>
+            <SectionHeader title="FAQ" section="faq" />
+            <CollapsibleContent className="mt-2 bg-card rounded-xl border border-border p-3">
               <Accordion type="single" collapsible>
                 <AccordionItem value="what">
-                  <AccordionTrigger>What is ToonReels?</AccordionTrigger>
+                  <AccordionTrigger className="text-xs">What is ToonReels?</AccordionTrigger>
                   <AccordionContent>
-                    <p className="text-sm text-muted-foreground">ToonReels is a kid-safe cartoon reels platform made by SE-Motoons. Kids can watch short animated clips, music toons, fun stories, and educational shorts — all age filtered.</p>
+                    <p className="text-xs text-muted-foreground">ToonReels is a kid-safe cartoon reels platform made by SE-Motoons. Kids can watch short animated clips, music toons, fun stories, and educational shorts — all age filtered.</p>
                   </AccordionContent>
                 </AccordionItem>
                 <AccordionItem value="cartoon">
-                  <AccordionTrigger>Why only cartoon content?</AccordionTrigger>
+                  <AccordionTrigger className="text-xs">Why only cartoon content?</AccordionTrigger>
                   <AccordionContent>
-                    <p className="text-sm text-muted-foreground">ToonReels is designed strictly for kids. We automatically block adult themes, scary content, violence, political content, and anything unsafe.</p>
+                    <p className="text-xs text-muted-foreground">ToonReels is designed strictly for kids. We automatically block adult themes, scary content, violence, political content, and anything unsafe.</p>
                   </AccordionContent>
                 </AccordionItem>
                 <AccordionItem value="report">
-                  <AccordionTrigger>How do I report something inappropriate?</AccordionTrigger>
+                  <AccordionTrigger className="text-xs">How do I report something inappropriate?</AccordionTrigger>
                   <AccordionContent>
-                    <p className="text-sm text-muted-foreground">Tap the Report button on any reel or any creator's profile. Our moderation team reviews reports within 24–72 hours.</p>
+                    <p className="text-xs text-muted-foreground">Tap the Report button on any reel or any creator's profile. Our moderation team reviews reports within 24–72 hours.</p>
                   </AccordionContent>
                 </AccordionItem>
                 <AccordionItem value="comments">
-                  <AccordionTrigger>Are comments safe?</AccordionTrigger>
+                  <AccordionTrigger className="text-xs">Are comments safe?</AccordionTrigger>
                   <AccordionContent>
-                    <p className="text-sm text-muted-foreground">Comments are filtered with AI kid-safe moderation, keyword blocking, and human review for flagged comments. Parents can disable comments completely in Settings → Parental Controls.</p>
+                    <p className="text-xs text-muted-foreground">Comments are filtered with AI kid-safe moderation, keyword blocking, and human review for flagged comments. Parents can disable comments completely in Settings → Parental Controls.</p>
                   </AccordionContent>
                 </AccordionItem>
                 <AccordionItem value="messaging">
-                  <AccordionTrigger>Can kids message each other?</AccordionTrigger>
+                  <AccordionTrigger className="text-xs">Can kids message each other?</AccordionTrigger>
                   <AccordionContent>
-                    <p className="text-sm text-muted-foreground">Messaging is off by default. Parents can enable limited messaging after setting a Parent PIN.</p>
+                    <p className="text-xs text-muted-foreground">Messaging is off by default. Parents can enable limited messaging after setting a Parent PIN.</p>
                   </AccordionContent>
                 </AccordionItem>
                 <AccordionItem value="uploads">
-                  <AccordionTrigger>How do uploads work?</AccordionTrigger>
+                  <AccordionTrigger className="text-xs">How do uploads work?</AccordionTrigger>
                   <AccordionContent>
-                    <p className="text-sm text-muted-foreground">Creators can upload reels from the Upload tab. All uploads are reviewed before being public.</p>
+                    <p className="text-xs text-muted-foreground">Creators can upload reels from the Upload tab. All uploads are reviewed before being public.</p>
                   </AccordionContent>
                 </AccordionItem>
                 <AccordionItem value="download">
-                  <AccordionTrigger>Why can't I download reels?</AccordionTrigger>
+                  <AccordionTrigger className="text-xs">Why can't I download reels?</AccordionTrigger>
                   <AccordionContent>
-                    <p className="text-sm text-muted-foreground">Downloading reel videos is a premium feature.</p>
+                    <p className="text-xs text-muted-foreground">Downloading reel videos is a premium feature.</p>
                   </AccordionContent>
                 </AccordionItem>
                 <AccordionItem value="delete">
-                  <AccordionTrigger>How do I delete my account?</AccordionTrigger>
+                  <AccordionTrigger className="text-xs">How do I delete my account?</AccordionTrigger>
                   <AccordionContent>
-                    <p className="text-sm text-muted-foreground">To delete your account, go to <span className="font-semibold">Settings → Privacy Center</span>, scroll down, and click the <span className="font-semibold text-destructive">"Delete Account"</span> button. You'll be asked to confirm before your account is permanently deleted. This action cannot be undone and will remove all your videos, likes, comments, and followers.</p>
+                    <p className="text-xs text-muted-foreground">To delete your account, go to <span className="font-semibold">Settings → Privacy Center</span>, scroll down, and click the <span className="font-semibold text-destructive">"Delete Account"</span> button. You'll be asked to confirm before your account is permanently deleted. This action cannot be undone and will remove all your videos, likes, comments, and followers.</p>
                   </AccordionContent>
                 </AccordionItem>
                 <AccordionItem value="contact">
-                  <AccordionTrigger>How do I contact ToonReels?</AccordionTrigger>
+                  <AccordionTrigger className="text-xs">How do I contact ToonReels?</AccordionTrigger>
                   <AccordionContent>
-                    <div className="text-sm text-muted-foreground space-y-1">
+                    <div className="text-xs text-muted-foreground space-y-1">
                       <p>Email: info@se-motoons.com</p>
                       <p>Website: www.semotoons.com</p>
                       <p>App Icon: TR (ToonReels official avatar)</p>
@@ -537,16 +588,17 @@ const Settings = () => {
                   </AccordionContent>
                 </AccordionItem>
               </Accordion>
-            </CardContent>
-          </Card>
+            </CollapsibleContent>
+          </Collapsible>
 
-          <Card>
-            <CardHeader><CardTitle>Terms of Use</CardTitle></CardHeader>
-            <CardContent>
+          {/* Terms of Use */}
+          <Collapsible open={openSections.includes('terms')}>
+            <SectionHeader title="Terms of Use" section="terms" />
+            <CollapsibleContent className="mt-2 bg-card rounded-xl border border-border p-3">
               <Accordion type="single" collapsible>
                 <AccordionItem value="terms">
-                  <AccordionTrigger>View Terms</AccordionTrigger>
-                  <AccordionContent className="space-y-3 text-sm text-muted-foreground">
+                  <AccordionTrigger className="text-xs">View Terms</AccordionTrigger>
+                  <AccordionContent className="space-y-2 text-xs text-muted-foreground">
                     <p className="font-semibold">Last updated: 2025</p>
                     <p>Welcome to ToonReels, a kid-friendly cartoon reels app created by SE-Motoons. By using ToonReels, you agree to these Terms of Use.</p>
                     
@@ -592,22 +644,23 @@ const Settings = () => {
                   </AccordionContent>
                 </AccordionItem>
               </Accordion>
-            </CardContent>
-          </Card>
+            </CollapsibleContent>
+          </Collapsible>
 
-          <Card>
-            <CardHeader><CardTitle>Privacy Center</CardTitle></CardHeader>
-            <CardContent>
+          {/* Privacy Center */}
+          <Collapsible open={openSections.includes('privacy')}>
+            <SectionHeader title="Privacy Center" section="privacy" />
+            <CollapsibleContent className="mt-2 bg-card rounded-xl border border-border p-3">
               <Accordion type="single" collapsible>
                 <AccordionItem value="privacy">
-                  <AccordionTrigger>View Privacy Policy</AccordionTrigger>
-                  <AccordionContent className="space-y-3 text-sm text-muted-foreground">
+                  <AccordionTrigger className="text-xs">View Privacy Policy</AccordionTrigger>
+                  <AccordionContent className="space-y-2 text-xs text-muted-foreground">
                     <p className="font-semibold">ToonReels is COPPA-compliant and designed for child safety.</p>
                     
                     <div>
                       <p className="font-semibold text-foreground">1. What information we collect</p>
                       <p>We collect minimal data: profile name/nickname, avatar (emojis), age range (not exact birth date), parent/guardian email (optional), and uploaded content.</p>
-                      <p className="mt-2">We do NOT collect: exact addresses, phone numbers, legal names, financial data, or facial recognition data</p>
+                      <p className="mt-1">We do NOT collect: exact addresses, phone numbers, legal names, financial data, or facial recognition data</p>
                     </div>
 
                     <div>
@@ -635,23 +688,23 @@ const Settings = () => {
                       <p>We use encryption, secure storage, and safety auditing. No system is 100% secure, but we take strong measures to protect children.</p>
                     </div>
 
-                    <div className="pt-4 border-t">
+                    <div className="pt-3 border-t">
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
-                          <Button variant="destructive" className="w-full">
+                          <Button variant="destructive" size="sm" className="w-full h-7 text-xs">
                             Delete Account
                           </Button>
                         </AlertDialogTrigger>
                         <AlertDialogContent>
                           <AlertDialogHeader>
-                            <AlertDialogTitle>Are you sure you want to delete your account?</AlertDialogTitle>
-                            <AlertDialogDescription>
+                            <AlertDialogTitle className="text-sm">Are you sure you want to delete your account?</AlertDialogTitle>
+                            <AlertDialogDescription className="text-xs">
                               This action cannot be undone. This will permanently delete your account and remove all your data including videos, likes, comments, and followers from our servers.
                             </AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction onClick={handleDeleteAccount} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                            <AlertDialogCancel className="h-8 text-xs">Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={handleDeleteAccount} className="bg-destructive text-destructive-foreground hover:bg-destructive/90 h-8 text-xs">
                               Yes, Delete My Account
                             </AlertDialogAction>
                           </AlertDialogFooter>
@@ -661,16 +714,17 @@ const Settings = () => {
                   </AccordionContent>
                 </AccordionItem>
               </Accordion>
-            </CardContent>
-          </Card>
+            </CollapsibleContent>
+          </Collapsible>
 
-          <Card>
-            <CardHeader><CardTitle>User Safety Guide</CardTitle></CardHeader>
-            <CardContent>
+          {/* User Safety Guide */}
+          <Collapsible open={openSections.includes('safetyguide')}>
+            <SectionHeader title="User Safety Guide" section="safetyguide" />
+            <CollapsibleContent className="mt-2 bg-card rounded-xl border border-border p-3">
               <Accordion type="single" collapsible>
                 <AccordionItem value="safety">
-                  <AccordionTrigger>View Safety Guide</AccordionTrigger>
-                  <AccordionContent className="space-y-3 text-sm text-muted-foreground">
+                  <AccordionTrigger className="text-xs">View Safety Guide</AccordionTrigger>
+                  <AccordionContent className="space-y-2 text-xs text-muted-foreground">
                     <p className="font-semibold">ToonReels is built around kid safety first.</p>
                     
                     <div>
@@ -705,55 +759,56 @@ const Settings = () => {
                   </AccordionContent>
                 </AccordionItem>
               </Accordion>
-            </CardContent>
-          </Card>
+            </CollapsibleContent>
+          </Collapsible>
 
-          <Card>
-            <CardHeader><CardTitle>Help Center</CardTitle></CardHeader>
-            <CardContent>
+          {/* Help Center */}
+          <Collapsible open={openSections.includes('help')}>
+            <SectionHeader title="Help Center" section="help" />
+            <CollapsibleContent className="mt-2 bg-card rounded-xl border border-border p-3">
               <Accordion type="single" collapsible>
                 <AccordionItem value="support">
-                  <AccordionTrigger>General Support</AccordionTrigger>
+                  <AccordionTrigger className="text-xs">General Support</AccordionTrigger>
                   <AccordionContent>
-                    <div className="text-sm text-muted-foreground space-y-1">
+                    <div className="text-xs text-muted-foreground space-y-1">
                       <p>Email: info@se-motoons.com</p>
                       <p>Website: www.semotoons.com</p>
                     </div>
                   </AccordionContent>
                 </AccordionItem>
                 <AccordionItem value="loading">
-                  <AccordionTrigger>What should I do if a reel won't load?</AccordionTrigger>
+                  <AccordionTrigger className="text-xs">What should I do if a reel won't load?</AccordionTrigger>
                   <AccordionContent>
-                    <p className="text-sm text-muted-foreground">Try refreshing your internet, closing & reopening the app, or restarting your device.</p>
+                    <p className="text-xs text-muted-foreground">Try refreshing your internet, closing & reopening the app, or restarting your device.</p>
                   </AccordionContent>
                 </AccordionItem>
                 <AccordionItem value="upload-help">
-                  <AccordionTrigger>How do I upload a reel?</AccordionTrigger>
+                  <AccordionTrigger className="text-xs">How do I upload a reel?</AccordionTrigger>
                   <AccordionContent>
-                    <p className="text-sm text-muted-foreground">Go to Upload → Select Thumbnail → Add Title → Submit.</p>
+                    <p className="text-xs text-muted-foreground">Go to Upload → Select Thumbnail → Add Title → Submit.</p>
                   </AccordionContent>
                 </AccordionItem>
                 <AccordionItem value="protection">
-                  <AccordionTrigger>How does ToonReels protect kids?</AccordionTrigger>
+                  <AccordionTrigger className="text-xs">How does ToonReels protect kids?</AccordionTrigger>
                   <AccordionContent>
-                    <p className="text-sm text-muted-foreground">Filters violent/adult content, human moderators, parental PIN, and messaging locked by default.</p>
+                    <p className="text-xs text-muted-foreground">Filters violent/adult content, human moderators, parental PIN, and messaging locked by default.</p>
                   </AccordionContent>
                 </AccordionItem>
                 <AccordionItem value="pin-reset">
-                  <AccordionTrigger>How do I reset my parent PIN?</AccordionTrigger>
+                  <AccordionTrigger className="text-xs">How do I reset my parent PIN?</AccordionTrigger>
                   <AccordionContent>
-                    <p className="text-sm text-muted-foreground">Go to Settings → Parental Controls → "Forgot PIN?" You will be asked to verify your email.</p>
+                    <p className="text-xs text-muted-foreground">Go to Settings → Parental Controls → "Forgot PIN?" You will be asked to verify your email.</p>
                   </AccordionContent>
                 </AccordionItem>
                 <AccordionItem value="icon">
-                  <AccordionTrigger>App Icon / Avatar Info</AccordionTrigger>
+                  <AccordionTrigger className="text-xs">App Icon / Avatar Info</AccordionTrigger>
                   <AccordionContent>
-                    <p className="text-sm text-muted-foreground">The official ToonReels app icon is: TR with a red-orange gradient background.</p>
+                    <p className="text-xs text-muted-foreground">The official ToonReels app icon is: TR with a red-orange gradient background.</p>
                   </AccordionContent>
                 </AccordionItem>
               </Accordion>
-            </CardContent>
-          </Card>
+            </CollapsibleContent>
+          </Collapsible>
         </div>
       </div>
       <BottomNav />
