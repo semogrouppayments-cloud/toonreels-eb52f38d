@@ -593,15 +593,17 @@ const Profile = () => {
             {isOwnProfile ? (
               <>
                 <NotificationBell />
-                <Button
-                  variant="secondary"
-                  size="icon"
-                  className="rounded-full"
-                  onClick={() => navigate('/milestones')}
-                  title="View Milestones"
-                >
-                  <Trophy className="h-5 w-5" />
-                </Button>
+                {isCreative && (
+                  <Button
+                    variant="secondary"
+                    size="icon"
+                    className="rounded-full"
+                    onClick={() => navigate('/milestones')}
+                    title="View Milestones"
+                  >
+                    <Trophy className="h-5 w-5" />
+                  </Button>
+                )}
                 {isCreative && (
                   <Button
                     variant="secondary"
@@ -759,8 +761,8 @@ const Profile = () => {
                         {newBio.length}/200
                       </span>
                     </div>
-                    <div className="flex gap-2">
-                      <Button size="sm" onClick={handleBioUpdate} className="h-7 text-xs">
+                    <div className="flex gap-1">
+                      <Button size="sm" onClick={handleBioUpdate} className="h-6 text-[10px] px-2">
                         Save
                       </Button>
                       <Button 
@@ -770,7 +772,7 @@ const Profile = () => {
                           setEditingBio(false);
                           setNewBio(profile.bio || '');
                         }}
-                        className="h-7 text-xs text-white"
+                        className="h-6 text-[10px] px-2 text-white"
                       >
                         Cancel
                       </Button>
