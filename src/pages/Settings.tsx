@@ -493,7 +493,7 @@ const Settings = () => {
                 <AccordionItem value="report">
                   <AccordionTrigger>How do I report something inappropriate?</AccordionTrigger>
                   <AccordionContent>
-                    <p className="text-sm text-muted-foreground mb-2">Tap the Report button on any reel or any creator's profile. Our moderation team reviews reports within 24–72 hours.</p>
+                    <p className="text-sm text-muted-foreground">Tap the Report button on any reel or any creator's profile. Our moderation team reviews reports within 24–72 hours.</p>
                   </AccordionContent>
                 </AccordionItem>
                 <AccordionItem value="comments">
