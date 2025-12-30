@@ -159,7 +159,7 @@ const Auth = () => {
   if (showSplash) {
     return (
       <div 
-        className={`flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-primary via-accent to-fun-yellow transition-opacity duration-500 ${splashFading ? 'opacity-0' : 'opacity-100'}`}
+        className={`flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-fun-yellow via-accent to-primary transition-opacity duration-500 ${splashFading ? 'opacity-0' : 'opacity-100'}`}
       >
         <img 
           src={toonreelsLogo} 
