@@ -40,6 +40,7 @@ interface VideoPlayerProps {
     profiles: {
       username: string;
       avatar_url: string;
+      is_verified: boolean;
     };
   };
   currentUserId: string;
@@ -801,6 +802,11 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
               </AvatarFallback>
             </Avatar>
             <span className="font-medium text-xs">{video.profiles.username}</span>
+            {video.profiles.is_verified && (
+              <span className="bg-yellow-400 text-black text-[8px] px-1.5 py-0.5 rounded-full font-bold flex items-center gap-0.5">
+                ✓
+              </span>
+            )}
           </div>
           
           {/* Follow/Following button */}

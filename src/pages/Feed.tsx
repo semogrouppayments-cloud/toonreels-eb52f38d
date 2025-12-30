@@ -23,6 +23,7 @@ interface Video {
   profiles: {
     username: string;
     avatar_url: string;
+    is_verified: boolean;
   };
 }
 
@@ -95,7 +96,7 @@ const Feed = () => {
       .from('videos')
       .select(`
         *,
-        profiles(username, avatar_url)
+        profiles(username, avatar_url, is_verified)
       `)
       .order('created_at', { ascending: false })
       .range(from, to);
