@@ -527,10 +527,24 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
   };
 
   const handleDownloadWithQuality = async (quality: string) => {
-    const downloadToast = toast.loading('Preparing download...');
+    const downloadToast = toast.loading('Preparing watermarked download...');
     
     try {
-      const response = await fetch(signedUrl || video.video_url);
+      // Use the secure Edge Function for downloads - it handles watermarking and logging
+      const { data, error: functionError } = await supabase.functions.invoke('download-video', {
+        body: { video_id: video.id }
+      });
+      
+      if (functionError) {
+        throw new Error(functionError.message || 'Download failed');
+      }
+      
+      if (!data?.download_url) {
+        throw new Error('No download URL received');
+      }
+      
+      // Download from the signed URL provided by Edge Function
+      const response = await fetch(data.download_url);
       if (!response.ok) throw new Error('Failed to fetch video');
       
       const videoBlob = await response.blob();
@@ -538,18 +552,13 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
       const url = URL.createObjectURL(videoBlob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `${video.title}_${quality}.mp4`;
+      link.download = `${data.title || video.title}_ToonReels.mp4`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
       
-      await supabase.from('video_downloads').insert({
-        video_id: video.id,
-        user_id: currentUserId
-      });
-      
-      toast.success(`Downloaded in ${quality} quality!`, { id: downloadToast });
+      toast.success('Downloaded with ToonReels watermark!', { id: downloadToast });
     } catch (error) {
       console.error('Download error:', error);
       toast.error('Failed to download video', { id: downloadToast });
