@@ -329,42 +329,34 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
 
   const handleLike = async () => {
     triggerHaptic('medium');
+    if (!currentUserId) {
+      toast.error('Please sign in to like videos');
+      return;
+    }
+
+    const nextLiked = !liked;
+    const nextCount = Math.max(0, likesCount + (nextLiked ? 1 : -1));
+
+    // Optimistic UI (instant feedback)
+    setLiked(nextLiked);
+    setLikesCount(nextCount);
+
     try {
-      if (liked) {
-        await supabase.from('likes').delete().match({ video_id: video.id, user_id: currentUserId });
-        setLikesCount(prev => prev - 1);
-        
-        const { data: currentVideo } = await supabase
-          .from('videos')
-          .select('likes_count')
-          .eq('id', video.id)
-          .single();
-        
-        if (currentVideo) {
-          await supabase
-            .from('videos')
-            .update({ likes_count: Math.max(0, currentVideo.likes_count - 1) })
-            .eq('id', video.id);
-        }
-      } else {
+      if (nextLiked) {
         await supabase.from('likes').insert({ video_id: video.id, user_id: currentUserId });
-        setLikesCount(prev => prev + 1);
-        
-        const { data: currentVideo } = await supabase
-          .from('videos')
-          .select('likes_count')
-          .eq('id', video.id)
-          .single();
-        
-        if (currentVideo) {
-          await supabase
-            .from('videos')
-            .update({ likes_count: currentVideo.likes_count + 1 })
-            .eq('id', video.id);
-        }
+      } else {
+        await supabase.from('likes').delete().match({ video_id: video.id, user_id: currentUserId });
       }
-      setLiked(!liked);
+
+      // Best-effort aggregate update (keeps lists / dashboards in sync)
+      await supabase
+        .from('videos')
+        .update({ likes_count: nextCount })
+        .eq('id', video.id);
     } catch (error) {
+      // Rollback
+      setLiked(liked);
+      setLikesCount(likesCount);
       toast.error('Failed to like video');
     }
   };
