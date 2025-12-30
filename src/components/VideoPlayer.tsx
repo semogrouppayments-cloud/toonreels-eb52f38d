@@ -674,8 +674,8 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
         <span className="text-white/40 text-xl font-bold tracking-wide">ToonReels</span>
       </div>
       
-      {/* Top Controls */}
-      <div className="absolute top-4 right-3 z-20 flex items-center gap-2">
+      {/* Top Controls - aligned with ToonReels branding */}
+      <div className="absolute top-12 right-3 z-20 flex items-center gap-2">
         {/* Settings (Quality & Speed) */}
         <DropdownMenu open={showSettingsMenu} onOpenChange={setShowSettingsMenu}>
           <DropdownMenuTrigger asChild>
