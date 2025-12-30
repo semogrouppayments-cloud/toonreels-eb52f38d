@@ -40,6 +40,7 @@ interface CreatorResult {
   username: string;
   avatar_url: string | null;
   user_type: 'viewer' | 'creative';
+  follower_count: number;
 }
 
 const normalizeSearch = (raw: string) => raw.trim().replace(/^@/, '');
@@ -92,14 +93,39 @@ const Search = () => {
 
     const t = window.setTimeout(async () => {
       // Both Creatives and Viewers can only search Creatives
-      const { data } = await supabase
+      const { data: profiles } = await supabase
         .from('profiles')
         .select('id, username, avatar_url, user_type')
         .eq('user_type', 'creative')
         .ilike('username', `%${term}%`)
         .limit(6);
 
-      setCreatorResults((data as CreatorResult[]) || []);
+      if (!profiles || profiles.length === 0) {
+        setCreatorResults([]);
+        setShowCreatorResults(true);
+        return;
+      }
+
+      // Get follower counts for each creator
+      const creatorIds = profiles.map(p => p.id);
+      const { data: followCounts } = await supabase
+        .from('follows')
+        .select('following_id')
+        .in('following_id', creatorIds);
+
+      // Count followers per creator
+      const followerMap: Record<string, number> = {};
+      (followCounts || []).forEach(f => {
+        followerMap[f.following_id] = (followerMap[f.following_id] || 0) + 1;
+      });
+
+      const resultsWithCounts: CreatorResult[] = profiles.map(p => ({
+        ...p,
+        user_type: p.user_type as 'viewer' | 'creative',
+        follower_count: followerMap[p.id] || 0
+      }));
+
+      setCreatorResults(resultsWithCounts);
       setShowCreatorResults(true);
     }, 200);
 
@@ -237,9 +263,11 @@ const Search = () => {
                       </Avatar>
                       <div className="min-w-0 flex-1">
                         <p className="text-sm font-semibold text-foreground truncate">{c.username}</p>
-                        <p className="text-[11px] text-muted-foreground truncate">Creative</p>
+                        <p className="text-[11px] text-muted-foreground truncate">
+                          {c.follower_count} {c.follower_count === 1 ? 'follower' : 'followers'}
+                        </p>
                       </div>
-                      <span className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full font-medium">
+                      <span className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full font-medium shrink-0">
                         Creative
                       </span>
                     </button>
