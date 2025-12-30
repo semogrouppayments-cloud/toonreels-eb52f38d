@@ -26,13 +26,13 @@ export default defineConfig(({ mode }) => ({
         orientation: 'portrait',
         icons: [
           {
-            src: '/toonreels-logo.png',
+            src: '/toonreels-icon.png',
             sizes: '192x192',
             type: 'image/png',
             purpose: 'any maskable'
           },
           {
-            src: '/toonreels-logo.png',
+            src: '/toonreels-icon.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'any maskable'
