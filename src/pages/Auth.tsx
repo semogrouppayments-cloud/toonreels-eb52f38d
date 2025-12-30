@@ -9,7 +9,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Play, Sparkles, Eye, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { z } from 'zod';
-import toonreelsLogo from '@/assets/toonreels-logo.png';
+
 
 // Validation schemas
 const emailSchema = z.string().email('Please enter a valid email address').max(255, 'Email is too long');
@@ -32,7 +32,6 @@ const signInSchema = z.object({
 
 const Auth = () => {
   const navigate = useNavigate();
-  const [showSplash, setShowSplash] = useState(true);
   const [isSignUp, setIsSignUp] = useState(false);
   const [loading, setLoading] = useState(false);
   const [checkingSession, setCheckingSession] = useState(true);
@@ -40,25 +39,7 @@ const Auth = () => {
   const [password, setPassword] = useState('');
   const [username, setUsername] = useState('');
   const [userType, setUserType] = useState<'viewer' | 'creative'>('viewer');
-  const [errors, setErrors] = useState<{ email?: string; password?: string; username?: string }>({});
-
-  const [splashFading, setSplashFading] = useState(false);
-
-  // Splash screen timer with fade-out
-  useEffect(() => {
-    const fadeTimer = setTimeout(() => {
-      setSplashFading(true);
-    }, 5500); // Start fade at 5.5s
-
-    const hideTimer = setTimeout(() => {
-      setShowSplash(false);
-    }, 6000); // Hide at 6s
-
-    return () => {
-      clearTimeout(fadeTimer);
-      clearTimeout(hideTimer);
-    };
-  }, []);
+  const [errors, setErrors] = useState<{ email?: string; password?: string; username?: string }>({})
 
   // Check for existing session on mount - remember login
   useEffect(() => {
@@ -155,30 +136,14 @@ const Auth = () => {
     }
   };
 
-  // Show splash screen first
-  if (showSplash) {
+  // Show loading while checking session
+  if (checkingSession) {
     return (
-      <div className={`flex min-h-screen items-center justify-center bg-gradient-to-br from-primary via-accent to-fun-yellow overflow-hidden transition-opacity duration-500 ${splashFading ? 'opacity-0' : 'opacity-100'}`}>
-        <div className="text-center animate-in fade-in zoom-in duration-500">
-          <div className="mb-6 inline-flex items-center justify-center">
-            <img 
-              src={toonreelsLogo} 
-              alt="ToonReels Logo" 
-              className="h-32 w-32 rounded-3xl shadow-elevated animate-[bounce_1s_ease-in-out_infinite]" 
-            />
-          </div>
-          <h1 className="text-4xl font-black text-background mb-2 drop-shadow-lg animate-in slide-in-from-bottom-4 duration-700 delay-300">
-            ToonReels
-          </h1>
-          <p className="text-lg text-background/90 font-semibold animate-in slide-in-from-bottom-4 duration-700 delay-500">
-            Animated Fun for Kids!
-          </p>
-        </div>
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
-
-  // Show loading while checking session
   if (checkingSession) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
