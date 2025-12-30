@@ -26,12 +26,23 @@ function getCorsHeaders(origin: string | null): Record<string, string> {
   };
 }
 
+// Sanitize username to prevent command injection in FFmpeg
+function sanitizeUsername(username: string): string {
+  // Allow only alphanumeric characters, underscores, and hyphens
+  // Remove or escape characters that could break FFmpeg filter syntax
+  return username
+    .replace(/[^a-zA-Z0-9_-]/g, '')
+    .substring(0, 30);
+}
+
 // Helper function to add watermark using FFmpeg
 async function addWatermarkToVideo(
   videoBuffer: Uint8Array,
   username: string,
   videoId: string
 ): Promise<Uint8Array> {
+  // Sanitize username to prevent command injection
+  const safeUsername = sanitizeUsername(username);
   // Create temporary files
   const inputPath = `/tmp/input_${videoId}.mp4`;
   const outputPath = `/tmp/output_${videoId}.mp4`;
@@ -42,13 +53,13 @@ async function addWatermarkToVideo(
     
     // FFmpeg command to add watermark text and outro
     // Add "ToonReels" watermark in bottom-left corner
-    // Add outro with username in the last 2 seconds
+    // Add outro with sanitized username in the last 2 seconds
     const ffmpegCommand = new Deno.Command("ffmpeg", {
       args: [
         "-i", inputPath,
         "-vf", 
         `drawtext=text='ToonReels':fontsize=24:fontcolor=white@0.7:x=10:y=h-th-10:shadowcolor=black@0.5:shadowx=2:shadowy=2,` +
-        `drawtext=text='@${username}':fontsize=20:fontcolor=white:x=(w-text_w)/2:y=h-th-20:enable='gte(t,duration-2)':shadowcolor=black@0.8:shadowx=2:shadowy=2`,
+        `drawtext=text='@${safeUsername}':fontsize=20:fontcolor=white:x=(w-text_w)/2:y=h-th-20:enable='gte(t,duration-2)':shadowcolor=black@0.8:shadowx=2:shadowy=2`,
         "-codec:a", "copy",
         "-y",
         outputPath
