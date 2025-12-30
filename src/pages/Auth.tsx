@@ -9,6 +9,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Play, Sparkles, Eye, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { z } from 'zod';
+import toonreelsLogo from '@/assets/toonreels-logo.png';
 
 
 // Validation schemas
@@ -35,11 +36,29 @@ const Auth = () => {
   const [isSignUp, setIsSignUp] = useState(false);
   const [loading, setLoading] = useState(false);
   const [checkingSession, setCheckingSession] = useState(true);
+  const [showSplash, setShowSplash] = useState(true);
+  const [splashFading, setSplashFading] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [username, setUsername] = useState('');
   const [userType, setUserType] = useState<'viewer' | 'creative'>('viewer');
   const [errors, setErrors] = useState<{ email?: string; password?: string; username?: string }>({})
+
+  // Splash screen timer
+  useEffect(() => {
+    const fadeTimer = setTimeout(() => {
+      setSplashFading(true);
+    }, 5500);
+
+    const hideTimer = setTimeout(() => {
+      setShowSplash(false);
+    }, 6000);
+
+    return () => {
+      clearTimeout(fadeTimer);
+      clearTimeout(hideTimer);
+    };
+  }, []);
 
   // Check for existing session on mount - remember login
   useEffect(() => {
@@ -136,14 +155,28 @@ const Auth = () => {
     }
   };
 
-  // Show loading while checking session
-  if (checkingSession) {
+  // Show branded splash screen
+  if (showSplash) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div 
+        className={`flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-primary via-accent to-fun-purple transition-opacity duration-500 ${splashFading ? 'opacity-0' : 'opacity-100'}`}
+      >
+        <img 
+          src={toonreelsLogo} 
+          alt="ToonReels" 
+          className="w-32 h-32 mb-6 animate-bounce"
+        />
+        <h1 className="text-4xl font-black text-primary-foreground mb-2 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-300">
+          ToonReels
+        </h1>
+        <p className="text-primary-foreground/80 text-lg animate-in fade-in slide-in-from-bottom-4 duration-700 delay-500">
+          Watch. Create. Share.
+        </p>
       </div>
     );
   }
+
+  // Show loading while checking session
   if (checkingSession) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
