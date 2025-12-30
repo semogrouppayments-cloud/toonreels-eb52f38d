@@ -44,15 +44,15 @@ const Auth = () => {
   const [userType, setUserType] = useState<'viewer' | 'creative'>('viewer');
   const [errors, setErrors] = useState<{ email?: string; password?: string; username?: string }>({})
 
-  // Splash screen timer
+  // Splash screen timer - 4 seconds
   useEffect(() => {
     const fadeTimer = setTimeout(() => {
       setSplashFading(true);
-    }, 5500);
+    }, 3500);
 
     const hideTimer = setTimeout(() => {
       setShowSplash(false);
-    }, 6000);
+    }, 4000);
 
     return () => {
       clearTimeout(fadeTimer);
@@ -157,19 +157,46 @@ const Auth = () => {
 
   // Show branded splash screen
   if (showSplash) {
+    // Generate floating bubbles
+    const bubbles = Array.from({ length: 12 }, (_, i) => ({
+      id: i,
+      size: Math.random() * 40 + 20,
+      left: Math.random() * 100,
+      delay: Math.random() * 2,
+      duration: Math.random() * 2 + 3,
+    }));
+
     return (
       <div 
-        className={`flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-fun-yellow via-accent to-primary transition-opacity duration-500 ${splashFading ? 'opacity-0' : 'opacity-100'}`}
+        className={`flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-fun-yellow via-accent to-primary transition-opacity duration-500 overflow-hidden relative ${splashFading ? 'opacity-0' : 'opacity-100'}`}
       >
+        {/* Floating bubbles */}
+        {bubbles.map((bubble) => (
+          <div
+            key={bubble.id}
+            className="absolute rounded-full bg-white/20 backdrop-blur-sm"
+            style={{
+              width: bubble.size,
+              height: bubble.size,
+              left: `${bubble.left}%`,
+              bottom: '-10%',
+              animation: `floatUp ${bubble.duration}s ease-in-out ${bubble.delay}s infinite`,
+            }}
+          />
+        ))}
+        
+        {/* Logo glow effect */}
+        <div className="absolute w-48 h-48 bg-white/30 rounded-full blur-3xl animate-pulse" />
+        
         <img 
           src={toonreelsLogo} 
           alt="ToonReels" 
-          className="w-32 h-32 mb-6 animate-bounce drop-shadow-2xl"
+          className="w-32 h-32 mb-6 animate-bounce drop-shadow-2xl relative z-10"
         />
-        <h1 className="text-4xl font-black text-white mb-2 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-300 drop-shadow-lg">
+        <h1 className="text-4xl font-black text-white mb-2 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-300 drop-shadow-lg relative z-10">
           ToonReels
         </h1>
-        <p className="text-white/80 text-lg animate-in fade-in slide-in-from-bottom-4 duration-700 delay-500 drop-shadow-md">
+        <p className="text-white/80 text-lg animate-in fade-in slide-in-from-bottom-4 duration-700 delay-500 drop-shadow-md relative z-10">
           Watch. Create. Share.
         </p>
       </div>
