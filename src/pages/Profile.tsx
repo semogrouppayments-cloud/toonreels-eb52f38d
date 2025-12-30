@@ -1053,6 +1053,7 @@ const Profile = () => {
                     profiles: {
                       username: profile?.username || '',
                       avatar_url: profile?.avatar_url || '',
+                      is_verified: profile?.is_verified || false,
                     }
                   }}
                   currentUserId={currentUserId || ''}
