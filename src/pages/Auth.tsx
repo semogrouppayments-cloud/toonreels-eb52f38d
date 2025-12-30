@@ -42,13 +42,22 @@ const Auth = () => {
   const [userType, setUserType] = useState<'viewer' | 'creative'>('viewer');
   const [errors, setErrors] = useState<{ email?: string; password?: string; username?: string }>({});
 
-  // Splash screen timer
-  useEffect(() => {
-    const splashTimer = setTimeout(() => {
-      setShowSplash(false);
-    }, 1000);
+  const [splashFading, setSplashFading] = useState(false);
 
-    return () => clearTimeout(splashTimer);
+  // Splash screen timer with fade-out
+  useEffect(() => {
+    const fadeTimer = setTimeout(() => {
+      setSplashFading(true);
+    }, 5500); // Start fade at 5.5s
+
+    const hideTimer = setTimeout(() => {
+      setShowSplash(false);
+    }, 6000); // Hide at 6s
+
+    return () => {
+      clearTimeout(fadeTimer);
+      clearTimeout(hideTimer);
+    };
   }, []);
 
   // Check for existing session on mount - remember login
@@ -149,19 +158,19 @@ const Auth = () => {
   // Show splash screen first
   if (showSplash) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-primary via-accent to-fun-yellow overflow-hidden">
+      <div className={`flex min-h-screen items-center justify-center bg-gradient-to-br from-primary via-accent to-fun-yellow overflow-hidden transition-opacity duration-500 ${splashFading ? 'opacity-0' : 'opacity-100'}`}>
         <div className="text-center animate-in fade-in zoom-in duration-500">
           <div className="mb-6 inline-flex items-center justify-center">
             <img 
               src={toonreelsLogo} 
               alt="ToonReels Logo" 
-              className="h-32 w-32 rounded-3xl shadow-elevated animate-[pulse_1s_ease-in-out_infinite]" 
+              className="h-32 w-32 rounded-3xl shadow-elevated animate-[bounce_1s_ease-in-out_infinite]" 
             />
           </div>
-          <h1 className="text-4xl font-black text-background mb-2 drop-shadow-lg">
+          <h1 className="text-4xl font-black text-background mb-2 drop-shadow-lg animate-in slide-in-from-bottom-4 duration-700 delay-300">
             ToonReels
           </h1>
-          <p className="text-lg text-background/90 font-semibold">
+          <p className="text-lg text-background/90 font-semibold animate-in slide-in-from-bottom-4 duration-700 delay-500">
             Animated Fun for Kids!
           </p>
         </div>
