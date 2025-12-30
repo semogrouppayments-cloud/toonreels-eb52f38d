@@ -40,6 +40,7 @@ interface CreatorResult {
   username: string;
   avatar_url: string | null;
   user_type: 'viewer' | 'creative';
+  is_verified: boolean;
   follower_count: number;
 }
 
@@ -95,7 +96,7 @@ const Search = () => {
       // Both Creatives and Viewers can only search Creatives
       const { data: profiles } = await supabase
         .from('profiles')
-        .select('id, username, avatar_url, user_type')
+        .select('id, username, avatar_url, user_type, is_verified')
         .eq('user_type', 'creative')
         .ilike('username', `%${term}%`)
         .limit(6);
@@ -122,8 +123,12 @@ const Search = () => {
       const resultsWithCounts: CreatorResult[] = profiles.map(p => ({
         ...p,
         user_type: p.user_type as 'viewer' | 'creative',
+        is_verified: p.is_verified || false,
         follower_count: followerMap[p.id] || 0
       }));
+
+      // Sort by follower count (most popular first)
+      resultsWithCounts.sort((a, b) => b.follower_count - a.follower_count);
 
       setCreatorResults(resultsWithCounts);
       setShowCreatorResults(true);
@@ -267,9 +272,15 @@ const Search = () => {
                           {c.follower_count} {c.follower_count === 1 ? 'follower' : 'followers'}
                         </p>
                       </div>
-                      <span className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full font-medium shrink-0">
-                        Creative
-                      </span>
+                      {c.is_verified ? (
+                        <span className="text-[10px] bg-yellow-400 text-black px-2 py-0.5 rounded-full font-medium shrink-0 flex items-center gap-1">
+                          <span>✓</span> Verified
+                        </span>
+                      ) : (
+                        <span className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full font-medium shrink-0">
+                          Creative
+                        </span>
+                      )}
                     </button>
                   ))}
                 </div>
