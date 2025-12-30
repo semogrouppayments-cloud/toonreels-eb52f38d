@@ -265,18 +265,8 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
 
   const incrementViewCount = async () => {
     try {
-      const { data: currentVideo } = await supabase
-        .from('videos')
-        .select('views_count')
-        .eq('id', video.id)
-        .single();
-      
-      if (currentVideo) {
-        await supabase
-          .from('videos')
-          .update({ views_count: currentVideo.views_count + 1 })
-          .eq('id', video.id);
-      }
+      // Use atomic RPC function to prevent race conditions
+      await supabase.rpc('increment_video_views', { _video_id: video.id });
     } catch (error) {
       console.error('Failed to increment view count:', error);
     }
@@ -343,17 +333,13 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
     setLikesCount(nextCount);
 
     try {
+      // Just insert/delete the like - database trigger handles counter atomically
       if (nextLiked) {
         await supabase.from('likes').insert({ video_id: video.id, user_id: currentUserId });
       } else {
         await supabase.from('likes').delete().match({ video_id: video.id, user_id: currentUserId });
       }
-
-      // Best-effort aggregate update (keeps lists / dashboards in sync)
-      await supabase
-        .from('videos')
-        .update({ likes_count: nextCount })
-        .eq('id', video.id);
+      // Counter is now updated atomically via database trigger (update_video_likes_count)
     } catch (error) {
       // Rollback
       setLiked(liked);
