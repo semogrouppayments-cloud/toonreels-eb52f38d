@@ -9,6 +9,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Play, Sparkles, Eye, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { z } from 'zod';
+import toonreelsLogo from '@/assets/toonreels-logo.png';
 
 // Validation schemas
 const emailSchema = z.string().email('Please enter a valid email address').max(255, 'Email is too long');
@@ -31,6 +32,7 @@ const signInSchema = z.object({
 
 const Auth = () => {
   const navigate = useNavigate();
+  const [showSplash, setShowSplash] = useState(true);
   const [isSignUp, setIsSignUp] = useState(false);
   const [loading, setLoading] = useState(false);
   const [checkingSession, setCheckingSession] = useState(true);
@@ -39,6 +41,15 @@ const Auth = () => {
   const [username, setUsername] = useState('');
   const [userType, setUserType] = useState<'viewer' | 'creative'>('viewer');
   const [errors, setErrors] = useState<{ email?: string; password?: string; username?: string }>({});
+
+  // Splash screen timer
+  useEffect(() => {
+    const splashTimer = setTimeout(() => {
+      setShowSplash(false);
+    }, 1000);
+
+    return () => clearTimeout(splashTimer);
+  }, []);
 
   // Check for existing session on mount - remember login
   useEffect(() => {
@@ -134,6 +145,29 @@ const Auth = () => {
       setLoading(false);
     }
   };
+
+  // Show splash screen first
+  if (showSplash) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-primary via-accent to-fun-yellow overflow-hidden">
+        <div className="text-center animate-in fade-in zoom-in duration-500">
+          <div className="mb-6 inline-flex items-center justify-center">
+            <img 
+              src={toonreelsLogo} 
+              alt="ToonReels Logo" 
+              className="h-32 w-32 rounded-3xl shadow-elevated animate-[pulse_1s_ease-in-out_infinite]" 
+            />
+          </div>
+          <h1 className="text-4xl font-black text-background mb-2 drop-shadow-lg">
+            ToonReels
+          </h1>
+          <p className="text-lg text-background/90 font-semibold">
+            Animated Fun for Kids!
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   // Show loading while checking session
   if (checkingSession) {
