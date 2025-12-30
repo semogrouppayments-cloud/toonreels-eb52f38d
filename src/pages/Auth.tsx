@@ -159,17 +159,17 @@ const Auth = () => {
   if (showSplash) {
     return (
       <div 
-        className={`flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-primary via-accent to-fun-purple transition-opacity duration-500 ${splashFading ? 'opacity-0' : 'opacity-100'}`}
+        className={`flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-fun-yellow via-fun-green to-fun-blue transition-opacity duration-500 ${splashFading ? 'opacity-0' : 'opacity-100'}`}
       >
         <img 
           src={toonreelsLogo} 
           alt="ToonReels" 
-          className="w-32 h-32 mb-6 animate-bounce"
+          className="w-32 h-32 mb-6 animate-bounce drop-shadow-2xl"
         />
-        <h1 className="text-4xl font-black text-primary-foreground mb-2 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-300">
+        <h1 className="text-4xl font-black text-white mb-2 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-300 drop-shadow-lg">
           ToonReels
         </h1>
-        <p className="text-primary-foreground/80 text-lg animate-in fade-in slide-in-from-bottom-4 duration-700 delay-500">
+        <p className="text-white/90 text-lg animate-in fade-in slide-in-from-bottom-4 duration-700 delay-500 drop-shadow-md">
           Watch. Create. Share.
         </p>
       </div>
