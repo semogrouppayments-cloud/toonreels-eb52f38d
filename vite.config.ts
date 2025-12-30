@@ -21,7 +21,7 @@ export default defineConfig(({ mode }) => ({
         short_name: 'ToonReels',
         description: 'Watch and share amazing animated cartoons for kids',
         theme_color: '#FF6B6B',
-        background_color: '#FF6B6B',
+        background_color: '#FFFFFF',
         display: 'standalone',
         orientation: 'portrait',
         icons: [
