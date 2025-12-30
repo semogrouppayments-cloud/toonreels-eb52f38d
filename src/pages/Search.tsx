@@ -39,6 +39,7 @@ interface CreatorResult {
   id: string;
   username: string;
   avatar_url: string | null;
+  user_type: 'viewer' | 'creative';
 }
 
 const normalizeSearch = (raw: string) => raw.trim().replace(/^@/, '');
@@ -54,6 +55,25 @@ const Search = () => {
 
   const [creatorResults, setCreatorResults] = useState<CreatorResult[]>([]);
   const [showCreatorResults, setShowCreatorResults] = useState(false);
+  const [currentUserType, setCurrentUserType] = useState<'viewer' | 'creative' | null>(null);
+
+  // Fetch current user type
+  useEffect(() => {
+    const fetchCurrentUserType = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('user_type')
+          .eq('id', user.id)
+          .maybeSingle();
+        if (profile) {
+          setCurrentUserType(profile.user_type as 'viewer' | 'creative');
+        }
+      }
+    };
+    fetchCurrentUserType();
+  }, []);
 
   useEffect(() => {
     fetchVideos();
@@ -71,9 +91,11 @@ const Search = () => {
     }
 
     const t = window.setTimeout(async () => {
+      // Both Creatives and Viewers can only search Creatives
       const { data } = await supabase
         .from('profiles')
-        .select('id, username, avatar_url')
+        .select('id, username, avatar_url, user_type')
+        .eq('user_type', 'creative')
         .ilike('username', `%${term}%`)
         .limit(6);
 
@@ -213,10 +235,13 @@ const Search = () => {
                           {c.username?.[0]?.toUpperCase() || 'U'}
                         </AvatarFallback>
                       </Avatar>
-                      <div className="min-w-0">
+                      <div className="min-w-0 flex-1">
                         <p className="text-sm font-semibold text-foreground truncate">{c.username}</p>
-                        <p className="text-[11px] text-muted-foreground truncate">Creator</p>
+                        <p className="text-[11px] text-muted-foreground truncate">Creative</p>
                       </div>
+                      <span className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full font-medium">
+                        Creative
+                      </span>
                     </button>
                   ))}
                 </div>
