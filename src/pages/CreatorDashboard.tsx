@@ -220,7 +220,7 @@ const CreatorDashboard = () => {
             <h3 className="text-lg font-black mb-4">Top 5 Videos by Views</h3>
             {videoPerformance.length > 0 ? (
               <ResponsiveContainer width="100%" height={250}>
-                <BarChart data={videoPerformance} layout="horizontal">
+                <BarChart data={videoPerformance} layout="vertical">
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                   <XAxis 
                     type="number"

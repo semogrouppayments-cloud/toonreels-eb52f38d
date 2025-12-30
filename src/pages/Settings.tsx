@@ -297,10 +297,10 @@ const Settings = () => {
                 <AccordionItem value="profile">
                   <AccordionTrigger className="text-xs">Profile Name & Avatar</AccordionTrigger>
                   <AccordionContent className="space-y-3">
-                    <div className="space-y-2"><Label className="text-xs">Username</Label><Input value={username} onChange={(e) => setUsername(e.target.value)} className="text-sm h-8" /></div>
+                    <div className="space-y-2"><Label className="text-xs">Username</Label><Input value={username} onChange={(e) => setUsername(e.target.value)} className="text-xs h-7" /></div>
                     <div className="space-y-2"><Label className="text-xs">Avatar</Label>
                       <Select value={selectedAvatar} onValueChange={setSelectedAvatar}>
-                        <SelectTrigger className="h-8 text-sm"><SelectValue /></SelectTrigger>
+                        <SelectTrigger className="h-7 text-xs"><SelectValue /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="🦊">🦊 Fox</SelectItem>
                           <SelectItem value="🐱">🐱 Cat</SelectItem>
