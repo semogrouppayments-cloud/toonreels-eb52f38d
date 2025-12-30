@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Search as SearchIcon, Play, Heart, Eye } from 'lucide-react';
 import BottomNav from '@/components/BottomNav';
 
@@ -34,6 +35,14 @@ interface Video {
   };
 }
 
+interface CreatorResult {
+  id: string;
+  username: string;
+  avatar_url: string | null;
+}
+
+const normalizeSearch = (raw: string) => raw.trim().replace(/^@/, '');
+
 const Search = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
@@ -43,10 +52,37 @@ const Search = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
 
+  const [creatorResults, setCreatorResults] = useState<CreatorResult[]>([]);
+  const [showCreatorResults, setShowCreatorResults] = useState(false);
+
   useEffect(() => {
     fetchVideos();
     fetchTrendingVideos();
   }, [selectedCategory]);
+
+  useEffect(() => {
+    const term = normalizeSearch(searchQuery);
+
+    // Only show creator suggestions for normal text searches (not hashtags)
+    if (!term || term.startsWith('#')) {
+      setCreatorResults([]);
+      setShowCreatorResults(false);
+      return;
+    }
+
+    const t = window.setTimeout(async () => {
+      const { data } = await supabase
+        .from('profiles')
+        .select('id, username, avatar_url')
+        .ilike('username', `%${term}%`)
+        .limit(6);
+
+      setCreatorResults((data as CreatorResult[]) || []);
+      setShowCreatorResults(true);
+    }, 200);
+
+    return () => window.clearTimeout(t);
+  }, [searchQuery]);
 
   const fetchTrendingVideos = async () => {
     const { data } = await supabase
@@ -89,16 +125,18 @@ const Search = () => {
     setIsLoading(true);
     setHasSearched(true);
 
-    // Search by title, description, or tags (including hashtags)
-    const searchTerm = searchQuery.toLowerCase().replace('#', '');
-    
+    // Search by title, description, creator username, or tags (including hashtags)
+    const searchTerm = normalizeSearch(searchQuery).toLowerCase().replace('#', '');
+
     const { data } = await supabase
       .from('videos')
       .select(`
         *,
         profiles(username, avatar_url)
       `)
-      .or(`title.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%`)
+      .or(
+        `title.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%,profiles.username.ilike.%${searchTerm}%`
+      )
       .order('created_at', { ascending: false });
 
     // Also filter by tags if search includes hashtag
@@ -146,12 +184,43 @@ const Search = () => {
               <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 type="text"
-                placeholder="Search videos, #hashtags..."
+                placeholder="Search creators, videos, #hashtags..."
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setHasSearched(false);
+                }}
+                onFocus={() => setShowCreatorResults(true)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
                 className="pl-10 bg-muted border-0 rounded-full"
               />
+
+              {showCreatorResults && creatorResults.length > 0 && !searchQuery.trim().startsWith('#') && (
+                <div className="absolute left-0 right-0 mt-2 rounded-xl border border-border bg-card shadow-lg overflow-hidden z-50">
+                  {creatorResults.map((c) => (
+                    <button
+                      key={c.id}
+                      type="button"
+                      onClick={() => {
+                        navigate(`/profile?userId=${c.id}`);
+                        setShowCreatorResults(false);
+                      }}
+                      className="w-full flex items-center gap-3 px-3 py-2 text-left hover:bg-accent/50 transition-colors"
+                    >
+                      <Avatar className="h-7 w-7">
+                        <AvatarImage src={c.avatar_url || undefined} alt={`${c.username} profile picture`} />
+                        <AvatarFallback className="text-[10px] font-bold">
+                          {c.username?.[0]?.toUpperCase() || 'U'}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold text-foreground truncate">{c.username}</p>
+                        <p className="text-[11px] text-muted-foreground truncate">Creator</p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
             <Button 
               onClick={handleSearch}

@@ -419,8 +419,8 @@ const Profile = () => {
   };
 
   const handleBioUpdate = async () => {
-    if (newBio.length > 200) {
-      toast.error('Bio must be 200 characters or less');
+    if (newBio.length > 50) {
+      toast.error('Bio must be 50 characters or less');
       return;
     }
 
@@ -752,13 +752,13 @@ const Profile = () => {
                       <textarea
                         value={newBio}
                         onChange={(e) => setNewBio(e.target.value)}
-                        maxLength={200}
+                        maxLength={50}
                         placeholder="Add a bio..."
                         className="w-full max-w-xs text-white bg-black/30 backdrop-blur-sm rounded-lg p-2 text-xs resize-none border border-white/20 focus:border-white/40 outline-none"
                         rows={3}
                       />
                       <span className="text-[10px] text-white/60 absolute bottom-1 right-2">
-                        {newBio.length}/200
+                        {newBio.length}/50
                       </span>
                     </div>
                     <div className="flex gap-1">
