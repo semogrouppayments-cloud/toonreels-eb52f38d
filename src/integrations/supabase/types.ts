@@ -719,6 +719,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      increment_video_views: { Args: { _video_id: string }; Returns: undefined }
       set_parental_pin: {
         Args: { _raw_pin: string; _user_id: string }
         Returns: undefined
