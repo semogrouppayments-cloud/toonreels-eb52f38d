@@ -134,6 +134,20 @@ All colors MUST be HSL.
   }
 }
 
+@keyframes floatUp {
+  0% {
+    transform: translateY(0) scale(0.5);
+    opacity: 0;
+  }
+  20% {
+    opacity: 0.8;
+  }
+  100% {
+    transform: translateY(-100vh) scale(1.2);
+    opacity: 0;
+  }
+}
+
 /* Hide scrollbar for cleaner swipe experience */
 .scrollbar-hide {
   -ms-overflow-style: none;
