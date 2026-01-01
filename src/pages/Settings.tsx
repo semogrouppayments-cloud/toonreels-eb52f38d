@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Moon, Sun, RefreshCw, ChevronDown } from "lucide-react";
+import { ArrowLeft, Moon, Sun, RefreshCw, ChevronDown, Trash2 } from "lucide-react";
 import { usePWAUpdate } from "@/hooks/usePWAUpdate";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -28,7 +28,7 @@ import { toast } from "sonner";
 const Settings = () => {
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
-  const { updateAvailable, checking, checkForUpdates, applyUpdate } = usePWAUpdate();
+  const { updateAvailable, checking, clearing, checkForUpdates, applyUpdate, clearCacheAndReload } = usePWAUpdate();
   
   const [username, setUsername] = useState("");
   const [selectedAvatar, setSelectedAvatar] = useState("🦊");
@@ -520,6 +520,23 @@ const Settings = () => {
                     {checking ? 'Checking...' : 'Check for Updates'}
                   </Button>
                 )}
+                
+                {/* Clear Cache Button */}
+                <div className="pt-2 border-t border-border">
+                  <p className="text-xs text-muted-foreground mb-2">
+                    Having issues? Clear the cache to get a fresh start.
+                  </p>
+                  <Button 
+                    onClick={clearCacheAndReload} 
+                    disabled={clearing}
+                    variant="destructive" 
+                    size="sm"
+                    className="w-full h-7 text-xs"
+                  >
+                    <Trash2 className={`h-3 w-3 mr-1 ${clearing ? 'animate-pulse' : ''}`} />
+                    {clearing ? 'Clearing...' : 'Clear Cache & Reload'}
+                  </Button>
+                </div>
               </div>
             </CollapsibleContent>
           </Collapsible>
