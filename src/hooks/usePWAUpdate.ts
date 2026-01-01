@@ -4,6 +4,7 @@ import { toast } from 'sonner';
 interface PWAUpdateState {
   updateAvailable: boolean;
   checking: boolean;
+  clearing: boolean;
   registration: ServiceWorkerRegistration | null;
 }
 
@@ -11,6 +12,7 @@ export const usePWAUpdate = () => {
   const [state, setState] = useState<PWAUpdateState>({
     updateAvailable: false,
     checking: false,
+    clearing: false,
     registration: null,
   });
 
@@ -103,10 +105,52 @@ export const usePWAUpdate = () => {
     }
   }, [applyUpdate]);
 
+  const clearCacheAndReload = useCallback(async () => {
+    setState(prev => ({ ...prev, clearing: true }));
+    
+    try {
+      // Clear all caches
+      if ('caches' in window) {
+        const cacheNames = await caches.keys();
+        await Promise.all(
+          cacheNames.map(cacheName => caches.delete(cacheName))
+        );
+        console.log('All caches cleared:', cacheNames);
+      }
+
+      // Unregister all service workers
+      if ('serviceWorker' in navigator) {
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(
+          registrations.map(registration => registration.unregister())
+        );
+        console.log('All service workers unregistered');
+      }
+
+      // Clear localStorage and sessionStorage
+      localStorage.clear();
+      sessionStorage.clear();
+
+      toast.success('Cache cleared! Reloading...', { duration: 1500 });
+      
+      // Force reload from server (bypass cache)
+      setTimeout(() => {
+        window.location.href = window.location.href.split('?')[0] + '?cacheBust=' + Date.now();
+      }, 1500);
+      
+    } catch (error) {
+      console.error('Clear cache failed:', error);
+      setState(prev => ({ ...prev, clearing: false }));
+      toast.error('Failed to clear cache');
+    }
+  }, []);
+
   return {
     updateAvailable: state.updateAvailable,
     checking: state.checking,
+    clearing: state.clearing,
     checkForUpdates,
     applyUpdate,
+    clearCacheAndReload,
   };
 };
