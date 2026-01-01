@@ -24,6 +24,7 @@ import { useTheme } from "@/contexts/ThemeContext";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { APP_VERSION } from "@/lib/version";
 
 const Settings = () => {
   const navigate = useNavigate();
@@ -536,6 +537,13 @@ const Settings = () => {
                     <Trash2 className={`h-3 w-3 mr-1 ${clearing ? 'animate-pulse' : ''}`} />
                     {clearing ? 'Clearing...' : 'Clear Cache & Reload'}
                   </Button>
+                </div>
+                
+                {/* Version Label */}
+                <div className="pt-2 border-t border-border text-center">
+                  <span className="text-[10px] text-muted-foreground/50 font-mono">
+                    Build: v{APP_VERSION}
+                  </span>
                 </div>
               </div>
             </CollapsibleContent>
