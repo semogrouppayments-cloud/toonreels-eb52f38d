@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Moon, Sun, RefreshCw, ChevronDown, Trash2 } from "lucide-react";
+import { ArrowLeft, Moon, Sun, RefreshCw, ChevronDown, Trash2, Zap } from "lucide-react";
 import { usePWAUpdate } from "@/hooks/usePWAUpdate";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -29,7 +29,7 @@ import { APP_VERSION } from "@/lib/version";
 const Settings = () => {
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
-  const { updateAvailable, checking, clearing, checkForUpdates, applyUpdate, clearCacheAndReload } = usePWAUpdate();
+  const { updateAvailable, checking, clearing, forceUpdateStep, checkForUpdates, applyUpdate, clearCacheAndReload, forceUpdate } = usePWAUpdate();
   
   const [username, setUsername] = useState("");
   const [selectedAvatar, setSelectedAvatar] = useState("🦊");
@@ -521,6 +521,27 @@ const Settings = () => {
                     {checking ? 'Checking...' : 'Check for Updates'}
                   </Button>
                 )}
+                
+                {/* Force Update Button */}
+                <div className="pt-2 border-t border-border">
+                  <p className="text-xs text-muted-foreground mb-2">
+                    One-tap update: check, clear cache, and reload.
+                  </p>
+                  <Button 
+                    onClick={forceUpdate} 
+                    disabled={forceUpdateStep !== 'idle'}
+                    variant="default" 
+                    size="sm"
+                    className="w-full h-8 text-xs bg-gradient-to-r from-primary to-accent"
+                  >
+                    <Zap className={`h-3 w-3 mr-1 ${forceUpdateStep !== 'idle' ? 'animate-pulse' : ''}`} />
+                    {forceUpdateStep === 'idle' && 'Force Update Now'}
+                    {forceUpdateStep === 'checking' && 'Checking...'}
+                    {forceUpdateStep === 'updating' && 'Applying...'}
+                    {forceUpdateStep === 'clearing' && 'Clearing...'}
+                    {forceUpdateStep === 'reloading' && 'Reloading...'}
+                  </Button>
+                </div>
                 
                 {/* Clear Cache Button */}
                 <div className="pt-2 border-t border-border">
