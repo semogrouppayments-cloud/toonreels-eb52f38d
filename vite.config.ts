@@ -44,20 +44,33 @@ export default defineConfig(({ mode }) => ({
         clientsClaim: true,
         cleanupOutdatedCaches: true,
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
+        // Force cache invalidation on every build
+        cacheId: 'toonreels-v202601B',
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/.*\.supabase\.co\/.*/i,
             handler: 'NetworkFirst',
             options: {
               cacheName: 'supabase-cache',
-              networkTimeoutSeconds: 5,
+              networkTimeoutSeconds: 3,
               expiration: {
                 maxEntries: 10,
-                maxAgeSeconds: 60 * 60 // 1 hour
+                maxAgeSeconds: 60 * 5 // 5 minutes
+              },
+              cacheableResponse: {
+                statuses: [0, 200]
               }
             }
+          },
+          {
+            // Don't cache API calls - always fetch fresh
+            urlPattern: /\/api\//,
+            handler: 'NetworkOnly'
           }
-        ]
+        ],
+        // Clear all old caches on activate
+        navigateFallback: '/index.html',
+        navigateFallbackDenylist: [/^\/_/, /\/[^/?]+\.[^/]+$/]
       }
     })
   ].filter(Boolean),
