@@ -1,13 +1,23 @@
 /**
  * Adds ToonReels watermark and creator outro to a video using Canvas API
  */
-export async function addWatermarkToVideo(
+
+export interface WatermarkController {
+  cancel: () => void;
+  promise: Promise<Blob>;
+}
+
+export function addWatermarkToVideo(
   videoBlob: Blob,
   creatorUsername: string,
   onProgress?: (progress: number) => void
-): Promise<Blob> {
-  return new Promise((resolve, reject) => {
-    const video = document.createElement('video');
+): WatermarkController {
+  let cancelled = false;
+  let mediaRecorder: MediaRecorder | null = null;
+  let video: HTMLVideoElement | null = null;
+
+  const promise = new Promise<Blob>((resolve, reject) => {
+    video = document.createElement('video');
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
     
@@ -20,11 +30,16 @@ export async function addWatermarkToVideo(
     video.muted = true;
     
     video.onloadedmetadata = () => {
+      if (cancelled || !video) {
+        reject(new Error('Download cancelled'));
+        return;
+      }
+
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
       
       const stream = canvas.captureStream(30); // 30 FPS
-      const mediaRecorder = new MediaRecorder(stream, {
+      mediaRecorder = new MediaRecorder(stream, {
         mimeType: 'video/webm;codecs=vp9',
         videoBitsPerSecond: 5000000
       });
@@ -38,8 +53,12 @@ export async function addWatermarkToVideo(
       };
       
       mediaRecorder.onstop = () => {
+        if (cancelled) {
+          reject(new Error('Download cancelled'));
+          return;
+        }
         const watermarkedBlob = new Blob(chunks, { type: 'video/webm' });
-        URL.revokeObjectURL(video.src);
+        if (video) URL.revokeObjectURL(video.src);
         resolve(watermarkedBlob);
       };
       
@@ -47,8 +66,13 @@ export async function addWatermarkToVideo(
       video.play();
       
       const drawFrame = () => {
+        if (cancelled || !video) {
+          mediaRecorder?.stop();
+          return;
+        }
+
         if (video.paused || video.ended) {
-          mediaRecorder.stop();
+          mediaRecorder?.stop();
           return;
         }
         
@@ -109,4 +133,18 @@ export async function addWatermarkToVideo(
       reject(new Error('Failed to load video'));
     };
   });
+
+  return {
+    cancel: () => {
+      cancelled = true;
+      if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+        mediaRecorder.stop();
+      }
+      if (video) {
+        video.pause();
+        URL.revokeObjectURL(video.src);
+      }
+    },
+    promise
+  };
 }
