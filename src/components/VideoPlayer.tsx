@@ -537,7 +537,7 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
     const downloadToast = toast.loading('Preparing watermarked download...');
     
     try {
-      // Use the secure Edge Function for downloads - it handles watermarking and logging
+      // Use the secure Edge Function to get signed URL and log download
       const { data, error: functionError } = await supabase.functions.invoke('download-video', {
         body: { video_id: video.id }
       });
@@ -550,16 +550,33 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
         throw new Error('No download URL received');
       }
       
-      // Download from the signed URL provided by Edge Function
+      toast.loading('Downloading video...', { id: downloadToast });
+      
+      // Download the video
       const response = await fetch(data.download_url);
       if (!response.ok) throw new Error('Failed to fetch video');
       
       const videoBlob = await response.blob();
       
-      const url = URL.createObjectURL(videoBlob);
+      toast.loading('Adding ToonReels watermark...', { id: downloadToast });
+      
+      // Apply watermark client-side using Canvas API
+      const { addWatermarkToVideo } = await import('@/lib/videoWatermark');
+      const watermarkedBlob = await addWatermarkToVideo(
+        videoBlob, 
+        data.creator_username || 'ToonReels',
+        (progress) => {
+          if (progress < 100) {
+            toast.loading(`Adding watermark... ${progress}%`, { id: downloadToast });
+          }
+        }
+      );
+      
+      // Create download link
+      const url = URL.createObjectURL(watermarkedBlob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `${data.title || video.title}_ToonReels.mp4`;
+      link.download = `${data.title || video.title}_ToonReels.webm`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
