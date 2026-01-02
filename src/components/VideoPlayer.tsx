@@ -8,10 +8,12 @@ import LikeAnimation from '@/components/LikeAnimation';
 import { useNavigate } from 'react-router-dom';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import DownloadQualityDialog from '@/components/DownloadQualityDialog';
+import DownloadProgressOverlay from '@/components/DownloadProgressOverlay';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { useFullscreen } from '@/hooks/useFullscreen';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useSoundEffects } from '@/hooks/useSoundEffects';
+import { addWatermarkToVideo, WatermarkController } from '@/lib/videoWatermark';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -80,6 +82,10 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
   const [showSettingsMenu, setShowSettingsMenu] = useState(false);
   const [isLooping, setIsLooping] = useState(true);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [downloadProgress, setDownloadProgress] = useState(0);
+  const [downloadStage, setDownloadStage] = useState('');
+  const [isDownloading, setIsDownloading] = useState(false);
+  const downloadControllerRef = useRef<WatermarkController | null>(null);
   
   const { signedUrl, loading, error } = useSignedVideoUrl(video.video_url);
   const lastTapRef = useRef<number>(0);
@@ -533,8 +539,10 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
     setShowDownloadDialog(true);
   };
 
-  const handleDownloadWithQuality = async (quality: string) => {
-    const downloadToast = toast.loading('Preparing watermarked download...');
+  const handleDownloadWithQuality = async (quality: string, skipWatermark: boolean) => {
+    setIsDownloading(true);
+    setDownloadProgress(0);
+    setDownloadStage('Preparing download...');
     
     try {
       // Use the secure Edge Function to get signed URL and log download
@@ -550,43 +558,77 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
         throw new Error('No download URL received');
       }
       
-      toast.loading('Downloading video...', { id: downloadToast });
+      setDownloadStage('Downloading video...');
+      setDownloadProgress(10);
       
       // Download the video
       const response = await fetch(data.download_url);
       if (!response.ok) throw new Error('Failed to fetch video');
       
+      setDownloadProgress(30);
       const videoBlob = await response.blob();
+      setDownloadProgress(50);
       
-      toast.loading('Adding ToonReels watermark...', { id: downloadToast });
+      let finalBlob: Blob;
+      let fileExtension: string;
       
-      // Apply watermark client-side using Canvas API
-      const { addWatermarkToVideo } = await import('@/lib/videoWatermark');
-      const watermarkedBlob = await addWatermarkToVideo(
-        videoBlob, 
-        data.creator_username || 'ToonReels',
-        (progress) => {
-          if (progress < 100) {
-            toast.loading(`Adding watermark... ${progress}%`, { id: downloadToast });
+      // Skip watermark for premium users who selected the option
+      if (skipWatermark && isPremium) {
+        setDownloadStage('Preparing file...');
+        setDownloadProgress(90);
+        finalBlob = videoBlob;
+        fileExtension = 'mp4';
+      } else {
+        setDownloadStage('Adding ToonReels watermark...');
+        
+        // Apply watermark client-side using Canvas API with cancellation support
+        const controller = addWatermarkToVideo(
+          videoBlob, 
+          data.creator_username || 'ToonReels',
+          (progress) => {
+            setDownloadProgress(50 + Math.floor(progress * 0.45)); // 50-95%
           }
-        }
-      );
+        );
+        
+        downloadControllerRef.current = controller;
+        finalBlob = await controller.promise;
+        fileExtension = 'webm';
+      }
+      
+      setDownloadProgress(100);
+      setDownloadStage('Complete!');
       
       // Create download link
-      const url = URL.createObjectURL(watermarkedBlob);
+      const url = URL.createObjectURL(finalBlob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `${data.title || video.title}_ToonReels.webm`;
+      link.download = `${data.title || video.title}_ToonReels.${fileExtension}`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
       
-      toast.success('Downloaded with ToonReels watermark!', { id: downloadToast });
+      toast.success(skipWatermark ? 'Downloaded successfully!' : 'Downloaded with ToonReels watermark!');
     } catch (error) {
-      console.error('Download error:', error);
-      toast.error('Failed to download video', { id: downloadToast });
+      if ((error as Error).message === 'Download cancelled') {
+        toast.info('Download cancelled');
+      } else {
+        console.error('Download error:', error);
+        toast.error('Failed to download video');
+      }
+    } finally {
+      setIsDownloading(false);
+      setDownloadProgress(0);
+      downloadControllerRef.current = null;
     }
+  };
+
+  const handleCancelDownload = () => {
+    if (downloadControllerRef.current) {
+      downloadControllerRef.current.cancel();
+    }
+    setIsDownloading(false);
+    setDownloadProgress(0);
   };
 
   const handleReport = async (reason: string) => {
@@ -634,10 +676,27 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
   };
 
   return (
-    <div 
-      className="relative w-full bg-black snap-start snap-always"
-      style={{ height: '100vh', scrollSnapAlign: 'start' }}
-    >
+    <>
+      {/* Fullscreen backdrop for desktop/tablet */}
+      {isFullscreen && !isMobile && (
+        <div 
+          className="fixed inset-0 z-40 fullscreen-backdrop"
+          onClick={() => toggleFullscreen()}
+        />
+      )}
+      
+      <div 
+        className={`relative w-full bg-black snap-start snap-always ${
+          isFullscreen && !isMobile 
+            ? 'fixed inset-4 z-50 rounded-3xl overflow-hidden shadow-2xl border border-white/10' 
+            : ''
+        }`}
+        style={{ 
+          height: isFullscreen && !isMobile ? 'calc(100vh - 32px)' : '100vh', 
+          scrollSnapAlign: 'start',
+          width: isFullscreen && !isMobile ? 'calc(100vw - 32px)' : '100%',
+        }}
+      >
       {/* Like animations */}
       {likeAnimations.map(anim => (
         <LikeAnimation
@@ -650,7 +709,9 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
       
       {/* Video container with tap handler and swipe gestures */}
       <div 
-        className="absolute inset-0 flex items-center justify-center"
+        className={`absolute inset-0 flex items-center justify-center ${
+          isFullscreen && !isMobile ? 'rounded-3xl overflow-hidden' : ''
+        }`}
         onClick={handleTap}
         onTouchStart={handleSwipeStart}
         onTouchEnd={handleSwipeEnd}
@@ -667,7 +728,9 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
           <video
             ref={videoRef}
             src={signedUrl || ''}
-            className="w-full h-full object-contain"
+            className={`w-full h-full object-contain ${
+              isFullscreen && !isMobile ? 'rounded-3xl' : ''
+            }`}
             loop={isLooping}
             muted={isMuted}
             playsInline
@@ -676,8 +739,8 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
             preload="metadata"
             crossOrigin="anonymous"
             style={{ 
-              maxHeight: 'calc(100vh - 80px)',
-              marginBottom: '80px'
+              maxHeight: isFullscreen && !isMobile ? '100%' : 'calc(100vh - 80px)',
+              marginBottom: isFullscreen && !isMobile ? '0' : '80px'
             }}
           />
         )}
@@ -1018,8 +1081,19 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
         onOpenChange={setShowDownloadDialog}
         onSelectQuality={handleDownloadWithQuality}
         videoTitle={video.title}
+        isPremium={isPremium}
       />
+
+      {/* Download Progress Overlay */}
+      {isDownloading && (
+        <DownloadProgressOverlay
+          progress={downloadProgress}
+          stage={downloadStage}
+          onCancel={handleCancelDownload}
+        />
+      )}
     </div>
+    </>
   );
 };
 

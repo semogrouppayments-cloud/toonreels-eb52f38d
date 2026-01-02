@@ -157,3 +157,9 @@ All colors MUST be HSL.
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
+
+/* Fullscreen video overlay backdrop */
+.fullscreen-backdrop {
+  background: rgba(0, 0, 0, 0.9);
+  backdrop-filter: blur(8px);
+}

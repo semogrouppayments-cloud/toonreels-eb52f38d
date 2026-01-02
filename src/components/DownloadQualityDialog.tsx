@@ -7,14 +7,15 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Download, Smartphone, Monitor, Wifi } from 'lucide-react';
+import { Download, Smartphone, Monitor, Wifi, Zap, Crown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface DownloadQualityDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSelectQuality: (quality: string) => void;
+  onSelectQuality: (quality: string, skipWatermark: boolean) => void;
   videoTitle: string;
+  isPremium: boolean;
 }
 
 const qualityOptions = [
@@ -57,11 +58,13 @@ const DownloadQualityDialog = ({
   onOpenChange,
   onSelectQuality,
   videoTitle,
+  isPremium,
 }: DownloadQualityDialogProps) => {
   const [selectedQuality, setSelectedQuality] = useState('original');
+  const [skipWatermark, setSkipWatermark] = useState(false);
 
   const handleDownload = () => {
-    onSelectQuality(selectedQuality);
+    onSelectQuality(selectedQuality, skipWatermark);
     onOpenChange(false);
   };
 
@@ -121,7 +124,48 @@ const DownloadQualityDialog = ({
           })}
         </div>
 
-        <div className="flex gap-2 justify-end">
+        {/* Premium: Skip Watermark Option */}
+        <div className="border-t pt-4">
+          <button
+            onClick={() => isPremium && setSkipWatermark(!skipWatermark)}
+            disabled={!isPremium}
+            className={cn(
+              'w-full flex items-center gap-3 p-4 rounded-lg border-2 transition-all',
+              !isPremium && 'opacity-60 cursor-not-allowed',
+              isPremium && skipWatermark
+                ? 'border-fun-yellow bg-fun-yellow/10'
+                : 'border-border bg-background hover:border-fun-yellow/50'
+            )}
+          >
+            <div className={cn(
+              'rounded-full p-2',
+              isPremium && skipWatermark
+                ? 'bg-gradient-to-r from-yellow-400 to-orange-500 text-white'
+                : 'bg-muted text-muted-foreground'
+            )}>
+              {isPremium ? <Zap className="h-4 w-4" /> : <Crown className="h-4 w-4" />}
+            </div>
+            <div className="flex-1 text-left">
+              <div className="flex items-center gap-2">
+                <span className="font-semibold text-sm">
+                  {isPremium ? 'Download without watermark' : 'No watermark (Premium)'}
+                </span>
+                {isPremium && skipWatermark && (
+                  <span className="text-xs bg-fun-yellow/20 text-fun-yellow px-2 py-0.5 rounded-full font-medium">
+                    Selected
+                  </span>
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {isPremium 
+                  ? 'Download faster without ToonReels watermark' 
+                  : 'Upgrade to Premium for watermark-free downloads'}
+              </p>
+            </div>
+          </button>
+        </div>
+
+        <div className="flex gap-2 justify-end mt-2">
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
