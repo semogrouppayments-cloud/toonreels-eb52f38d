@@ -703,8 +703,13 @@ const Profile = () => {
                     <h1 className="text-xl md:text-2xl font-black text-white drop-shadow-lg">
                       {profile.username}
                     </h1>
-                    {/* Verification Badge - only for verified creators */}
-                    {profile.user_type === 'creative' && profile.is_verified && (
+                    {/* Verification Badge - special for ToonReelsOff */}
+                    {profile.user_type === 'creative' && profile.is_verified && profile.username === 'ToonReelsOff' && (
+                      <span className="bg-gradient-to-r from-yellow-400 to-blue-500 text-white text-xs px-2 py-0.5 rounded-full font-bold flex items-center gap-1 shadow-lg">
+                        ⭐ Official
+                      </span>
+                    )}
+                    {profile.user_type === 'creative' && profile.is_verified && profile.username !== 'ToonReelsOff' && (
                       <BadgeCheck className="h-5 w-5 text-blue-500 drop-shadow-lg" fill="white" />
                     )}
                     {isOwnProfile && (
