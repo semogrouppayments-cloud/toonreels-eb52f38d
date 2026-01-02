@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { Heart, MessageCircle, Download, Flag, Trash2, Volume2, VolumeX, Bookmark, BookmarkCheck, Play, Settings, Repeat } from 'lucide-react';
+import { Heart, MessageCircle, Download, Flag, Trash2, Volume2, VolumeX, Bookmark, BookmarkCheck, Play, Settings, Repeat, Maximize, Minimize } from 'lucide-react';
 import { toast } from 'sonner';
 import { useSignedVideoUrl } from '@/hooks/useSignedVideoUrl';
 import LikeAnimation from '@/components/LikeAnimation';
@@ -9,6 +9,8 @@ import { useNavigate } from 'react-router-dom';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import DownloadQualityDialog from '@/components/DownloadQualityDialog';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
+import { useFullscreen } from '@/hooks/useFullscreen';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { useSoundEffects } from '@/hooks/useSoundEffects';
 import {
   DropdownMenu,
@@ -48,12 +50,15 @@ interface VideoPlayerProps {
   isActive: boolean;
   onCommentsClick: () => void;
   onDelete?: () => void;
+  onPositiveAction?: () => void;
 }
 
-const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClick, onDelete }: VideoPlayerProps) => {
+const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClick, onDelete, onPositiveAction }: VideoPlayerProps) => {
   const navigate = useNavigate();
   const { triggerLikeHaptic, triggerHaptic } = useHapticFeedback();
   const { playLikeSound, playTapSound } = useSoundEffects();
+  const { isFullscreen, toggleFullscreen } = useFullscreen();
+  const isMobile = useIsMobile();
   const [isExpanded, setIsExpanded] = useState(false);
   const [liked, setLiked] = useState(false);
   const [likesCount, setLikesCount] = useState(video.likes_count);
@@ -336,6 +341,8 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
       // Just insert/delete the like - database trigger handles counter atomically
       if (nextLiked) {
         await supabase.from('likes').insert({ video_id: video.id, user_id: currentUserId });
+        // Track positive action for rating prompt
+        onPositiveAction?.();
       } else {
         await supabase.from('likes').delete().match({ video_id: video.id, user_id: currentUserId });
       }
@@ -777,6 +784,22 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
           <span className="text-[10px] text-white/80 font-medium min-w-[32px] text-right">
             {formatTime(duration)}
           </span>
+          {/* Fullscreen button for PC/Tablet */}
+          {!isMobile && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                toggleFullscreen();
+              }}
+              className="ml-2 p-1 rounded-full bg-black/40 hover:bg-black/60 transition-colors"
+            >
+              {isFullscreen ? (
+                <Minimize className="h-4 w-4 text-white" />
+              ) : (
+                <Maximize className="h-4 w-4 text-white" />
+              )}
+            </button>
+          )}
         </div>
       </div>
       
@@ -797,7 +820,11 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
               </AvatarFallback>
             </Avatar>
             <span className="font-medium text-xs">{video.profiles.username}</span>
-            {video.profiles.is_verified && (
+            {video.profiles.is_verified && video.profiles.username === 'ToonReelsOff' ? (
+              <span className="bg-gradient-to-r from-yellow-400 to-blue-500 text-white text-[8px] px-1.5 py-0.5 rounded-full font-bold flex items-center gap-0.5 shadow-lg">
+                ⭐
+              </span>
+            ) : video.profiles.is_verified && (
               <span className="bg-yellow-400 text-black text-[8px] px-1.5 py-0.5 rounded-full font-bold flex items-center gap-0.5">
                 ✓
               </span>

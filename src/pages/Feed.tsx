@@ -5,11 +5,15 @@ import VideoPlayer from '@/components/VideoPlayer';
 import VideoSkeleton from '@/components/VideoSkeleton';
 import CommentsSheet from '@/components/CommentsSheet';
 import BottomNav from '@/components/BottomNav';
+import RatingPrompt from '@/components/RatingPrompt';
+import ChangelogModal from '@/components/ChangelogModal';
 import { toast } from 'sonner';
 import { RefreshCw, Loader2 } from 'lucide-react';
 
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { useSoundEffects } from '@/hooks/useSoundEffects';
+import { useAppRating } from '@/hooks/useAppRating';
+import { useChangelog } from '@/hooks/useChangelog';
 
 interface Video {
   id: string;
@@ -43,6 +47,8 @@ const Feed = () => {
   const navigate = useNavigate();
   const { triggerScrollHaptic } = useHapticFeedback();
   const { playSwipeSound, initAudio } = useSoundEffects();
+  const { showRatingPrompt, trackPositiveAction, handleRateNow, handleRemindLater, handleNoThanks } = useAppRating();
+  const { showChangelog, isNewVersion, currentVersion, changelog, markAsSeen } = useChangelog();
   const [videos, setVideos] = useState<Video[]>([]);
   const [currentUserId, setCurrentUserId] = useState('');
   const [isPremium, setIsPremium] = useState(false);
@@ -362,6 +368,7 @@ const Feed = () => {
             isActive={index === activeIndex}
             onCommentsClick={() => setSelectedVideoId(video.id)}
             onDelete={video.creator_id === currentUserId ? () => handleDeleteVideo(video.id) : undefined}
+            onPositiveAction={trackPositiveAction}
           />
         </div>
       ))}
@@ -376,8 +383,28 @@ const Feed = () => {
       <CommentsSheet
         videoId={selectedVideoId || ''}
         isOpen={!!selectedVideoId}
-        onClose={() => setSelectedVideoId(null)}
+        onClose={() => {
+          setSelectedVideoId(null);
+          trackPositiveAction(); // Track commenting as positive action
+        }}
         currentUserId={currentUserId}
+      />
+      
+      {/* Rating Prompt */}
+      <RatingPrompt
+        open={showRatingPrompt}
+        onRateNow={handleRateNow}
+        onRemindLater={handleRemindLater}
+        onNoThanks={handleNoThanks}
+      />
+      
+      {/* Changelog Modal */}
+      <ChangelogModal
+        open={showChangelog}
+        onClose={markAsSeen}
+        isNewVersion={isNewVersion}
+        currentVersion={currentVersion}
+        changelog={changelog}
       />
       
       <BottomNav />
