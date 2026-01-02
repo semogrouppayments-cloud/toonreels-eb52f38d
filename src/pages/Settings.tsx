@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Moon, Sun, RefreshCw, ChevronDown, Trash2, Zap } from "lucide-react";
+import { ArrowLeft, Moon, Sun, RefreshCw, ChevronDown, Trash2 } from "lucide-react";
 import { usePWAUpdate } from "@/hooks/usePWAUpdate";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -24,12 +24,11 @@ import { useTheme } from "@/contexts/ThemeContext";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { APP_VERSION } from "@/lib/version";
 
 const Settings = () => {
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
-  const { updateAvailable, checking, clearing, forceUpdateStep, checkForUpdates, applyUpdate, clearCacheAndReload, forceUpdate } = usePWAUpdate();
+  const { updateAvailable, checking, clearing, checkForUpdates, applyUpdate, clearCacheAndReload } = usePWAUpdate();
   
   const [username, setUsername] = useState("");
   const [selectedAvatar, setSelectedAvatar] = useState("🦊");
@@ -522,27 +521,6 @@ const Settings = () => {
                   </Button>
                 )}
                 
-                {/* Force Update Button */}
-                <div className="pt-2 border-t border-border">
-                  <p className="text-xs text-muted-foreground mb-2">
-                    One-tap update: check, clear cache, and reload.
-                  </p>
-                  <Button 
-                    onClick={forceUpdate} 
-                    disabled={forceUpdateStep !== 'idle'}
-                    variant="default" 
-                    size="sm"
-                    className="w-full h-8 text-xs bg-gradient-to-r from-primary to-accent"
-                  >
-                    <Zap className={`h-3 w-3 mr-1 ${forceUpdateStep !== 'idle' ? 'animate-pulse' : ''}`} />
-                    {forceUpdateStep === 'idle' && 'Force Update Now'}
-                    {forceUpdateStep === 'checking' && 'Checking...'}
-                    {forceUpdateStep === 'updating' && 'Applying...'}
-                    {forceUpdateStep === 'clearing' && 'Clearing...'}
-                    {forceUpdateStep === 'reloading' && 'Reloading...'}
-                  </Button>
-                </div>
-                
                 {/* Clear Cache Button */}
                 <div className="pt-2 border-t border-border">
                   <p className="text-xs text-muted-foreground mb-2">
@@ -558,13 +536,6 @@ const Settings = () => {
                     <Trash2 className={`h-3 w-3 mr-1 ${clearing ? 'animate-pulse' : ''}`} />
                     {clearing ? 'Clearing...' : 'Clear Cache & Reload'}
                   </Button>
-                </div>
-                
-                {/* Version Label */}
-                <div className="pt-2 border-t border-border text-center">
-                  <span className="text-[10px] text-muted-foreground/50 font-mono">
-                    Build: v{APP_VERSION}
-                  </span>
                 </div>
               </div>
             </CollapsibleContent>

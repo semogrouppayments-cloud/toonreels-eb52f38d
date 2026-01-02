@@ -10,7 +10,6 @@ import { Play, Sparkles, Eye, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { z } from 'zod';
 import toonreelsLogo from '@/assets/toonreels-logo.png';
-import { APP_VERSION } from '@/lib/version';
 
 
 // Validation schemas
@@ -214,11 +213,7 @@ const Auth = () => {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background p-4 relative">
-      {/* Version label */}
-      <span className="absolute bottom-4 left-4 text-[10px] text-muted-foreground/50 font-mono">
-        v{APP_VERSION}
-      </span>
+    <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md shadow-elevated animate-in fade-in zoom-in-95 slide-in-from-bottom-4 duration-500">
         <CardHeader className="text-center">
           <div className="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-accent mx-auto">

@@ -1,13 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
 
-type ForceUpdateStep = 'idle' | 'checking' | 'updating' | 'clearing' | 'reloading';
-
 interface PWAUpdateState {
   updateAvailable: boolean;
   checking: boolean;
   clearing: boolean;
-  forceUpdateStep: ForceUpdateStep;
   registration: ServiceWorkerRegistration | null;
 }
 
@@ -16,7 +13,6 @@ export const usePWAUpdate = () => {
     updateAvailable: false,
     checking: false,
     clearing: false,
-    forceUpdateStep: 'idle',
     registration: null,
   });
 
@@ -149,70 +145,12 @@ export const usePWAUpdate = () => {
     }
   }, []);
 
-  // One-tap Force Update: check → skip waiting → clear caches → reload
-  const forceUpdate = useCallback(async () => {
-    const toastId = toast.loading('Step 1/4: Checking for updates...', { duration: Infinity });
-    
-    try {
-      // Step 1: Check for updates
-      setState(prev => ({ ...prev, forceUpdateStep: 'checking' }));
-      
-      if ('serviceWorker' in navigator) {
-        const registration = await navigator.serviceWorker.ready;
-        await registration.update();
-        
-        // Step 2: Skip waiting if there's a waiting worker
-        toast.loading('Step 2/4: Applying update...', { id: toastId });
-        setState(prev => ({ ...prev, forceUpdateStep: 'updating' }));
-        
-        if (registration.waiting) {
-          registration.waiting.postMessage({ type: 'SKIP_WAITING' });
-          await new Promise(resolve => setTimeout(resolve, 500));
-        }
-      }
-      
-      // Step 3: Clear all caches
-      toast.loading('Step 3/4: Clearing cache...', { id: toastId });
-      setState(prev => ({ ...prev, forceUpdateStep: 'clearing' }));
-      
-      if ('caches' in window) {
-        const cacheNames = await caches.keys();
-        await Promise.all(cacheNames.map(name => caches.delete(name)));
-      }
-      
-      // Unregister service workers
-      if ('serviceWorker' in navigator) {
-        const registrations = await navigator.serviceWorker.getRegistrations();
-        await Promise.all(registrations.map(reg => reg.unregister()));
-      }
-      
-      // Clear storage
-      localStorage.clear();
-      sessionStorage.clear();
-      
-      // Step 4: Reload
-      toast.loading('Step 4/4: Reloading...', { id: toastId });
-      setState(prev => ({ ...prev, forceUpdateStep: 'reloading' }));
-      
-      await new Promise(resolve => setTimeout(resolve, 800));
-      
-      window.location.href = window.location.href.split('?')[0] + '?forceUpdate=' + Date.now();
-      
-    } catch (error) {
-      console.error('Force update failed:', error);
-      toast.error('Force update failed', { id: toastId });
-      setState(prev => ({ ...prev, forceUpdateStep: 'idle' }));
-    }
-  }, []);
-
   return {
     updateAvailable: state.updateAvailable,
     checking: state.checking,
     clearing: state.clearing,
-    forceUpdateStep: state.forceUpdateStep,
     checkForUpdates,
     applyUpdate,
     clearCacheAndReload,
-    forceUpdate,
   };
 };
