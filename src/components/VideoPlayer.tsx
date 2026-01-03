@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { Heart, MessageCircle, Download, Flag, Trash2, Volume2, VolumeX, Bookmark, BookmarkCheck, Play, Settings, Repeat, Maximize, Minimize } from 'lucide-react';
+import { Heart, MessageCircle, Download, Flag, Trash2, Volume2, VolumeX, Bookmark, BookmarkCheck, Play, Settings, Repeat } from 'lucide-react';
 import { toast } from 'sonner';
 import { useSignedVideoUrl } from '@/hooks/useSignedVideoUrl';
 import LikeAnimation from '@/components/LikeAnimation';
@@ -10,7 +10,7 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import DownloadQualityDialog from '@/components/DownloadQualityDialog';
 import DownloadProgressOverlay from '@/components/DownloadProgressOverlay';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
-import { useFullscreen } from '@/hooks/useFullscreen';
+
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useSoundEffects } from '@/hooks/useSoundEffects';
 import { addWatermarkToVideo, WatermarkController } from '@/lib/videoWatermark';
@@ -59,7 +59,6 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
   const navigate = useNavigate();
   const { triggerLikeHaptic, triggerHaptic } = useHapticFeedback();
   const { playLikeSound, playTapSound, playSuccessSound } = useSoundEffects();
-  const { isFullscreen, toggleFullscreen } = useFullscreen();
   const isMobile = useIsMobile();
   const [isExpanded, setIsExpanded] = useState(false);
   const [liked, setLiked] = useState(false);
@@ -681,25 +680,9 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
 
   return (
     <>
-      {/* Fullscreen backdrop for desktop/tablet */}
-      {isFullscreen && !isMobile && (
-        <div 
-          className="fixed inset-0 z-40 fullscreen-backdrop"
-          onClick={() => toggleFullscreen()}
-        />
-      )}
-      
       <div 
-        className={`relative w-full bg-black snap-start snap-always ${
-          isFullscreen && !isMobile 
-            ? 'fixed inset-4 z-50 rounded-3xl overflow-hidden shadow-2xl border border-white/10' 
-            : ''
-        }`}
-        style={{ 
-          height: isFullscreen && !isMobile ? 'calc(100vh - 32px)' : '100vh', 
-          scrollSnapAlign: 'start',
-          width: isFullscreen && !isMobile ? 'calc(100vw - 32px)' : '100%',
-        }}
+        className="relative w-full bg-black snap-start snap-always h-[calc(100vh-80px)]"
+        style={{ scrollSnapAlign: 'start' }}
       >
       {/* Like animations */}
       {likeAnimations.map(anim => (
@@ -713,9 +696,7 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
       
       {/* Video container with tap handler and swipe gestures */}
       <div 
-        className={`absolute inset-0 flex items-center justify-center ${
-          isFullscreen && !isMobile ? 'rounded-3xl overflow-hidden' : ''
-        }`}
+        className="absolute inset-0 flex items-center justify-center"
         onClick={handleTap}
         onTouchStart={handleSwipeStart}
         onTouchEnd={handleSwipeEnd}
@@ -732,9 +713,7 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
           <video
             ref={videoRef}
             src={signedUrl || ''}
-            className={`w-full h-full object-contain ${
-              isFullscreen && !isMobile ? 'rounded-3xl' : ''
-            }`}
+            className="w-full h-full object-contain"
             loop={isLooping}
             muted={isMuted}
             playsInline
@@ -743,8 +722,8 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
             preload="metadata"
             crossOrigin="anonymous"
             style={{ 
-              maxHeight: isFullscreen && !isMobile ? '100%' : 'calc(100vh - 80px)',
-              marginBottom: isFullscreen && !isMobile ? '0' : '80px'
+              maxHeight: 'calc(100vh - 80px)',
+              marginBottom: '80px'
             }}
           />
         )}
@@ -868,22 +847,6 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
           <span className="text-[10px] text-white/80 font-medium min-w-[32px] text-right">
             {formatTime(duration)}
           </span>
-          {/* Fullscreen button for PC/Tablet */}
-          {!isMobile && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                toggleFullscreen();
-              }}
-              className="ml-2 p-1 rounded-full bg-black/40 hover:bg-black/60 transition-colors"
-            >
-              {isFullscreen ? (
-                <Minimize className="h-4 w-4 text-white" />
-              ) : (
-                <Maximize className="h-4 w-4 text-white" />
-              )}
-            </button>
-          )}
         </div>
       </div>
       
