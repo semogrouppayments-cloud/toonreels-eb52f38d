@@ -58,7 +58,7 @@ interface VideoPlayerProps {
 const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClick, onDelete, onPositiveAction }: VideoPlayerProps) => {
   const navigate = useNavigate();
   const { triggerLikeHaptic, triggerHaptic } = useHapticFeedback();
-  const { playLikeSound, playTapSound } = useSoundEffects();
+  const { playLikeSound, playTapSound, playSuccessSound } = useSoundEffects();
   const { isFullscreen, toggleFullscreen } = useFullscreen();
   const isMobile = useIsMobile();
   const [isExpanded, setIsExpanded] = useState(false);
@@ -607,6 +607,10 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
+      
+      // Haptic feedback and sound on successful download
+      triggerHaptic('heavy');
+      playSuccessSound();
       
       toast.success(skipWatermark ? 'Downloaded successfully!' : 'Downloaded with ToonReels watermark!');
     } catch (error) {
