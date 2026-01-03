@@ -59,8 +59,8 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
   const navigate = useNavigate();
   const { triggerLikeHaptic, triggerHaptic } = useHapticFeedback();
   const { playLikeSound, playTapSound, playSuccessSound } = useSoundEffects();
-  const isMobile = useIsMobile();
   const { isFullscreen, toggleFullscreen } = useFullscreen();
+  const isMobile = useIsMobile();
   const [isExpanded, setIsExpanded] = useState(false);
   const [liked, setLiked] = useState(false);
   const [likesCount, setLikesCount] = useState(video.likes_count);
@@ -98,8 +98,6 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
   const playAttemptRef = useRef<number>(0);
   const touchStartXRef = useRef<number>(0);
   const touchStartYRef = useRef<number>(0);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const lastClickTimeRef = useRef<number>(0);
 
   const isOwnVideo = currentUserId === video.creator_id;
 
@@ -367,17 +365,6 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
     const now = Date.now();
     const DOUBLE_TAP_DELAY = 300;
 
-    // For mouse events, check if it's a double-click for fullscreen (desktop only)
-    if (!('touches' in e) && !isMobile) {
-      if (now - lastClickTimeRef.current < DOUBLE_TAP_DELAY) {
-        // Double-click on desktop - toggle fullscreen
-        toggleFullscreen();
-        lastClickTimeRef.current = 0;
-        return;
-      }
-      lastClickTimeRef.current = now;
-    }
-
     if (now - lastTapRef.current < DOUBLE_TAP_DELAY) {
       // Double tap - like with haptic and sound feedback
       const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
@@ -406,45 +393,6 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
       }, DOUBLE_TAP_DELAY);
     }
   };
-
-  // Keyboard shortcuts for desktop
-  useEffect(() => {
-    if (!isActive) return;
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // Don't trigger if user is typing in an input
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
-        return;
-      }
-
-      switch (e.key.toLowerCase()) {
-        case ' ':
-        case 'spacebar':
-          e.preventDefault();
-          togglePlayPause();
-          break;
-        case 'f':
-          e.preventDefault();
-          toggleFullscreen();
-          break;
-        case 'm':
-          e.preventDefault();
-          if (videoRef.current) {
-            videoRef.current.muted = !isMuted;
-            setIsMuted(!isMuted);
-          }
-          break;
-        case 'escape':
-          if (isFullscreen) {
-            // Browser handles this automatically
-          }
-          break;
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isActive, isPlaying, isMuted, isFullscreen, toggleFullscreen]);
 
   // Swipe left to navigate to creator profile
   const handleSwipeStart = (e: React.TouchEvent) => {
@@ -733,12 +681,25 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
 
   return (
     <>
+      {/* Fullscreen backdrop for desktop/tablet */}
+      {isFullscreen && !isMobile && (
+        <div 
+          className="fixed inset-0 z-40 fullscreen-backdrop"
+          onClick={() => toggleFullscreen()}
+        />
+      )}
+      
       <div 
-        ref={containerRef}
         className={`relative w-full bg-black snap-start snap-always ${
-          isFullscreen ? 'fixed inset-0 z-50 h-screen' : 'h-[calc(100vh-80px)]'
+          isFullscreen && !isMobile 
+            ? 'fixed inset-4 z-50 rounded-3xl overflow-hidden shadow-2xl border border-white/10' 
+            : ''
         }`}
-        style={{ scrollSnapAlign: 'start' }}
+        style={{ 
+          height: isFullscreen && !isMobile ? 'calc(100vh - 32px)' : '100vh', 
+          scrollSnapAlign: 'start',
+          width: isFullscreen && !isMobile ? 'calc(100vw - 32px)' : '100%',
+        }}
       >
       {/* Like animations */}
       {likeAnimations.map(anim => (
@@ -752,7 +713,9 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
       
       {/* Video container with tap handler and swipe gestures */}
       <div 
-        className="absolute inset-0 flex items-center justify-center"
+        className={`absolute inset-0 flex items-center justify-center ${
+          isFullscreen && !isMobile ? 'rounded-3xl overflow-hidden' : ''
+        }`}
         onClick={handleTap}
         onTouchStart={handleSwipeStart}
         onTouchEnd={handleSwipeEnd}
@@ -769,7 +732,9 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
           <video
             ref={videoRef}
             src={signedUrl || ''}
-            className="w-full h-full object-contain"
+            className={`w-full h-full object-contain ${
+              isFullscreen && !isMobile ? 'rounded-3xl' : ''
+            }`}
             loop={isLooping}
             muted={isMuted}
             playsInline
@@ -778,8 +743,8 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
             preload="metadata"
             crossOrigin="anonymous"
             style={{ 
-              maxHeight: isFullscreen ? '100vh' : 'calc(100vh - 80px)',
-              marginBottom: isFullscreen ? '0' : '80px'
+              maxHeight: isFullscreen && !isMobile ? '100%' : 'calc(100vh - 80px)',
+              marginBottom: isFullscreen && !isMobile ? '0' : '80px'
             }}
           />
         )}
