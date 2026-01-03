@@ -905,7 +905,7 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
             </Avatar>
             <span className="font-medium text-xs">{video.profiles.username}</span>
             {video.profiles.is_verified && video.profiles.username === 'ToonReelsOff' ? (
-              <span className="bg-yellow-400 text-black text-[8px] px-1.5 py-0.5 rounded-full font-bold flex items-center gap-0.5 shadow-sm">
+              <span className="text-yellow-400 text-sm drop-shadow-[0_0_1px_rgba(0,0,0,1)] [text-shadow:_-1px_-1px_0_#000,_1px_-1px_0_#000,_-1px_1px_0_#000,_1px_1px_0_#000]">
                 ⭐
               </span>
             ) : video.profiles.is_verified && (
