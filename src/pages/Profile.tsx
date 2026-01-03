@@ -705,7 +705,7 @@ const Profile = () => {
                     </h1>
                     {/* Verification Badge - special for ToonReelsOff */}
                     {profile.user_type === 'creative' && profile.is_verified && profile.username === 'ToonReelsOff' && (
-                      <span className="bg-gradient-to-r from-yellow-400 to-blue-500 text-white text-xs px-2 py-0.5 rounded-full font-bold flex items-center gap-1 shadow-lg">
+                      <span className="bg-yellow-400 text-black text-xs px-2 py-0.5 rounded-full font-bold flex items-center gap-1 shadow-sm">
                         ⭐ Official
                       </span>
                     )}

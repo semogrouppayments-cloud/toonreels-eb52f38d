@@ -273,7 +273,7 @@ const Search = () => {
                         </p>
                       </div>
                       {c.is_verified && c.username === 'ToonReelsOff' ? (
-                        <span className="text-[10px] bg-gradient-to-r from-yellow-400 to-blue-500 text-white px-2 py-0.5 rounded-full font-medium shrink-0 flex items-center gap-1 shadow-lg">
+                        <span className="text-[10px] bg-yellow-400 text-black px-2 py-0.5 rounded-full font-medium shrink-0 flex items-center gap-1 shadow-sm">
                           <span>⭐</span> Official
                         </span>
                       ) : c.is_verified ? (
