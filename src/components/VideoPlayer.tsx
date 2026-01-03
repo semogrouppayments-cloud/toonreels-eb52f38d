@@ -98,6 +98,8 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
   const playAttemptRef = useRef<number>(0);
   const touchStartXRef = useRef<number>(0);
   const touchStartYRef = useRef<number>(0);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const lastClickTimeRef = useRef<number>(0);
 
   const isOwnVideo = currentUserId === video.creator_id;
 
@@ -365,6 +367,17 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
     const now = Date.now();
     const DOUBLE_TAP_DELAY = 300;
 
+    // For mouse events, check if it's a double-click for fullscreen (desktop only)
+    if (!('touches' in e) && !isMobile) {
+      if (now - lastClickTimeRef.current < DOUBLE_TAP_DELAY) {
+        // Double-click on desktop - toggle fullscreen
+        toggleFullscreen();
+        lastClickTimeRef.current = 0;
+        return;
+      }
+      lastClickTimeRef.current = now;
+    }
+
     if (now - lastTapRef.current < DOUBLE_TAP_DELAY) {
       // Double tap - like with haptic and sound feedback
       const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
@@ -393,6 +406,45 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
       }, DOUBLE_TAP_DELAY);
     }
   };
+
+  // Keyboard shortcuts for desktop
+  useEffect(() => {
+    if (!isActive) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't trigger if user is typing in an input
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+        return;
+      }
+
+      switch (e.key.toLowerCase()) {
+        case ' ':
+        case 'spacebar':
+          e.preventDefault();
+          togglePlayPause();
+          break;
+        case 'f':
+          e.preventDefault();
+          toggleFullscreen();
+          break;
+        case 'm':
+          e.preventDefault();
+          if (videoRef.current) {
+            videoRef.current.muted = !isMuted;
+            setIsMuted(!isMuted);
+          }
+          break;
+        case 'escape':
+          if (isFullscreen) {
+            // Browser handles this automatically
+          }
+          break;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isActive, isPlaying, isMuted, isFullscreen, toggleFullscreen]);
 
   // Swipe left to navigate to creator profile
   const handleSwipeStart = (e: React.TouchEvent) => {
@@ -682,7 +734,10 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
   return (
     <>
       <div 
-        className="relative w-full bg-black snap-start snap-always h-[calc(100vh-80px)]"
+        ref={containerRef}
+        className={`relative w-full bg-black snap-start snap-always ${
+          isFullscreen ? 'fixed inset-0 z-50 h-screen' : 'h-[calc(100vh-80px)]'
+        }`}
         style={{ scrollSnapAlign: 'start' }}
       >
       {/* Like animations */}
@@ -723,8 +778,8 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
             preload="metadata"
             crossOrigin="anonymous"
             style={{ 
-              maxHeight: 'calc(100vh - 80px)',
-              marginBottom: '80px'
+              maxHeight: isFullscreen ? '100vh' : 'calc(100vh - 80px)',
+              marginBottom: isFullscreen ? '0' : '80px'
             }}
           />
         )}
