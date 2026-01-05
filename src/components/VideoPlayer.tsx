@@ -942,7 +942,14 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
         {video.tags && video.tags.length > 0 && (
           <div className="flex flex-wrap gap-1">
             {video.tags.slice(0, 4).map((tag, i) => (
-              <span key={i} className="text-[10px] text-primary/90 font-medium">
+              <span 
+                key={i} 
+                className="text-[10px] text-primary/90 font-medium cursor-pointer hover:text-primary hover:underline"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigate(`/search?tag=${encodeURIComponent(tag)}`);
+                }}
+              >
                 #{tag.length > 15 ? tag.slice(0, 15) : tag}
               </span>
             ))}
