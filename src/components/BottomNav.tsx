@@ -1,49 +1,66 @@
 import { Home, Search, Upload, User } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
-// Cache creative status in memory to avoid re-fetching on every render
-let cachedCreativeStatus: boolean | null = null;
+// Cache creative status per user ID to handle multi-user scenarios
+const creativeStatusCache = new Map<string, boolean>();
 
 const BottomNav = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [isCreative, setIsCreative] = useState<boolean>(cachedCreativeStatus ?? false);
-  const [isLoaded, setIsLoaded] = useState(cachedCreativeStatus !== null);
+  const [isCreative, setIsCreative] = useState<boolean>(false);
+  const [isLoaded, setIsLoaded] = useState(false);
+  const currentUserId = useRef<string | null>(null);
 
   useEffect(() => {
-    // If already cached, skip fetching
-    if (cachedCreativeStatus !== null) {
-      setIsCreative(cachedCreativeStatus);
-      setIsLoaded(true);
-      return;
-    }
-    
     const checkUserType = async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (user) {
+          currentUserId.current = user.id;
+          
+          // Check cache first
+          if (creativeStatusCache.has(user.id)) {
+            setIsCreative(creativeStatusCache.get(user.id)!);
+            setIsLoaded(true);
+            return;
+          }
+          
           const { data: roles } = await supabase
             .from('user_roles')
             .select('role')
             .eq('user_id', user.id);
           
           const creative = roles?.some(r => r.role === 'creative') || false;
-          cachedCreativeStatus = creative;
+          creativeStatusCache.set(user.id, creative);
           setIsCreative(creative);
         } else {
-          cachedCreativeStatus = false;
+          currentUserId.current = null;
           setIsCreative(false);
         }
       } catch {
-        cachedCreativeStatus = false;
         setIsCreative(false);
       }
       setIsLoaded(true);
     };
 
     checkUserType();
+    
+    // Listen for auth changes to refresh creative status
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+        // Clear cache for fresh check on login
+        creativeStatusCache.clear();
+        checkUserType();
+      } else if (event === 'SIGNED_OUT') {
+        creativeStatusCache.clear();
+        setIsCreative(false);
+        setIsLoaded(true);
+      }
+    });
+    
+    return () => subscription.unsubscribe();
   }, []);
 
   const isActive = (path: string) => location.pathname === path;
