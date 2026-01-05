@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Search as SearchIcon, Play, Heart, Eye } from 'lucide-react';
+import { Search as SearchIcon, Play, Heart, Eye, TrendingUp, Hash } from 'lucide-react';
 import BottomNav from '@/components/BottomNav';
 
 
@@ -53,6 +53,7 @@ const Search = () => {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [videos, setVideos] = useState<Video[]>([]);
   const [trendingVideos, setTrendingVideos] = useState<Video[]>([]);
+  const [trendingHashtags, setTrendingHashtags] = useState<{ tag: string; count: number }[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
 
@@ -95,6 +96,7 @@ const Search = () => {
   useEffect(() => {
     fetchVideos();
     fetchTrendingVideos();
+    fetchTrendingHashtags();
   }, [selectedCategory]);
 
   useEffect(() => {
@@ -162,6 +164,41 @@ const Search = () => {
       .order('views_count', { ascending: false })
       .limit(6);
     setTrendingVideos(data || []);
+  };
+
+  const fetchTrendingHashtags = async () => {
+    // Fetch recent videos with tags to extract popular hashtags
+    const { data: recentVideos } = await supabase
+      .from('videos')
+      .select('tags, views_count')
+      .not('tags', 'is', null)
+      .order('created_at', { ascending: false })
+      .limit(100);
+
+    if (!recentVideos) {
+      setTrendingHashtags([]);
+      return;
+    }
+
+    // Count tag occurrences weighted by views
+    const tagCounts: Record<string, number> = {};
+    recentVideos.forEach((video) => {
+      if (video.tags) {
+        video.tags.forEach((tag: string) => {
+          const normalizedTag = tag.toLowerCase();
+          // Weight by views (minimum 1) to get truly popular tags
+          tagCounts[normalizedTag] = (tagCounts[normalizedTag] || 0) + 1 + Math.floor((video.views_count || 0) / 100);
+        });
+      }
+    });
+
+    // Sort by count and take top 10
+    const sortedTags = Object.entries(tagCounts)
+      .map(([tag, count]) => ({ tag, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 10);
+
+    setTrendingHashtags(sortedTags);
   };
 
   const fetchVideos = async () => {
@@ -398,6 +435,37 @@ const Search = () => {
                   </div>
                 </div>
               </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Trending Hashtags Section */}
+      {!hasSearched && selectedCategory === 'all' && trendingHashtags.length > 0 && (
+        <div className="px-4 py-3 border-b border-border">
+          <h2 className="text-lg font-bold mb-3 flex items-center gap-2">
+            <TrendingUp className="h-5 w-5 text-primary" />
+            Trending Hashtags
+          </h2>
+          <div className="flex flex-wrap gap-2">
+            {trendingHashtags.map((item, index) => (
+              <button
+                key={item.tag}
+                onClick={() => {
+                  setSearchQuery(`#${item.tag}`);
+                  handleSearchByTag(item.tag);
+                }}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-all text-sm font-medium cursor-pointer hover:scale-105 ${
+                  index === 0 
+                    ? 'bg-gradient-to-r from-primary to-primary/80 text-primary-foreground' 
+                    : index < 3 
+                      ? 'bg-primary/20 text-primary hover:bg-primary/30' 
+                      : 'bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground'
+                }`}
+              >
+                <Hash className="h-3 w-3" />
+                <span>{item.tag}</span>
+              </button>
             ))}
           </div>
         </div>
