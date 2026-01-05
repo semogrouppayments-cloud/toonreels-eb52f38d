@@ -1,67 +1,101 @@
 import { Home, Search, Upload, User } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
-// Cache creative status per user ID to handle multi-user scenarios
+// Persistent cache that survives component re-mounts
 const creativeStatusCache = new Map<string, boolean>();
+let cachedUserId: string | null = null;
 
 const BottomNav = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [isCreative, setIsCreative] = useState<boolean>(false);
-  const [isLoaded, setIsLoaded] = useState(false);
-  const currentUserId = useRef<string | null>(null);
+  
+  // Initialize with cached value if available to prevent flicker
+  const [isCreative, setIsCreative] = useState<boolean>(() => {
+    if (cachedUserId && creativeStatusCache.has(cachedUserId)) {
+      return creativeStatusCache.get(cachedUserId)!;
+    }
+    return false;
+  });
+  const [isLoaded, setIsLoaded] = useState(() => {
+    // If we have a cached value, consider it loaded immediately
+    return cachedUserId !== null && creativeStatusCache.has(cachedUserId);
+  });
+  
+  const isMounted = useRef(true);
+  const hasChecked = useRef(false);
 
-  useEffect(() => {
-    const checkUserType = async () => {
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-          currentUserId.current = user.id;
-          
-          // Check cache first
-          if (creativeStatusCache.has(user.id)) {
-            setIsCreative(creativeStatusCache.get(user.id)!);
-            setIsLoaded(true);
-            return;
-          }
-          
-          const { data: roles } = await supabase
-            .from('user_roles')
-            .select('role')
-            .eq('user_id', user.id);
-          
-          const creative = roles?.some(r => r.role === 'creative') || false;
-          creativeStatusCache.set(user.id, creative);
-          setIsCreative(creative);
-        } else {
-          currentUserId.current = null;
-          setIsCreative(false);
+  const checkUserType = useCallback(async (forceRefresh = false) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!isMounted.current) return;
+      
+      if (user) {
+        cachedUserId = user.id;
+        
+        // Check cache first (unless forced refresh)
+        if (!forceRefresh && creativeStatusCache.has(user.id)) {
+          setIsCreative(creativeStatusCache.get(user.id)!);
+          setIsLoaded(true);
+          return;
         }
-      } catch {
+        
+        const { data: roles } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', user.id);
+        
+        if (!isMounted.current) return;
+        
+        const creative = roles?.some(r => r.role === 'creative') || false;
+        creativeStatusCache.set(user.id, creative);
+        setIsCreative(creative);
+      } else {
+        cachedUserId = null;
         setIsCreative(false);
       }
+    } catch {
+      if (isMounted.current) {
+        setIsCreative(false);
+      }
+    }
+    
+    if (isMounted.current) {
       setIsLoaded(true);
-    };
+    }
+  }, []);
 
-    checkUserType();
+  useEffect(() => {
+    isMounted.current = true;
+    
+    // Only check once per component lifecycle, or if no cached data
+    if (!hasChecked.current || !isLoaded) {
+      hasChecked.current = true;
+      checkUserType();
+    }
     
     // Listen for auth changes to refresh creative status
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
         // Clear cache for fresh check on login
         creativeStatusCache.clear();
-        checkUserType();
+        cachedUserId = null;
+        checkUserType(true);
       } else if (event === 'SIGNED_OUT') {
         creativeStatusCache.clear();
+        cachedUserId = null;
         setIsCreative(false);
         setIsLoaded(true);
       }
     });
     
-    return () => subscription.unsubscribe();
-  }, []);
+    return () => {
+      isMounted.current = false;
+      subscription.unsubscribe();
+    };
+  }, [checkUserType, isLoaded]);
 
   const isActive = (path: string) => location.pathname === path;
 
