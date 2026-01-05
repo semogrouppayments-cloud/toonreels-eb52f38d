@@ -573,7 +573,7 @@ const Settings = () => {
                 <AccordionItem value="messaging">
                   <AccordionTrigger className="text-xs">Can kids message each other?</AccordionTrigger>
                   <AccordionContent>
-                    <p className="text-xs text-muted-foreground">Messaging is off by default. Parents can enable limited messaging after setting a Parent PIN.</p>
+                    <p className="text-xs text-muted-foreground">Messaging is off and kids cannot message each other. ToonReels does not allow messaging between users to ensure maximum child safety.</p>
                   </AccordionContent>
                 </AccordionItem>
                 <AccordionItem value="uploads">
