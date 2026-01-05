@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect, useCallback } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -48,6 +48,7 @@ const normalizeSearch = (raw: string) => raw.trim().replace(/^@/, '');
 
 const Search = () => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [videos, setVideos] = useState<Video[]>([]);
@@ -76,6 +77,20 @@ const Search = () => {
     };
     fetchCurrentUserType();
   }, []);
+
+  // Track if we need to search after setting query from URL
+  const [pendingTagSearch, setPendingTagSearch] = useState<string | null>(null);
+
+  // Handle tag from URL parameter (when clicking hashtag from video player)
+  useEffect(() => {
+    const tagFromUrl = searchParams.get('tag');
+    if (tagFromUrl) {
+      setSearchQuery(`#${tagFromUrl}`);
+      setPendingTagSearch(tagFromUrl);
+      // Clear the URL param to avoid re-triggering
+      setSearchParams({}, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
 
   useEffect(() => {
     fetchVideos();
@@ -168,6 +183,35 @@ const Search = () => {
     setVideos(data || []);
     setIsLoading(false);
   };
+
+  // Search by hashtag (called when navigating from video player)
+  const handleSearchByTag = useCallback(async (tag: string) => {
+    const searchTerm = tag.toLowerCase().replace('#', '');
+    if (!searchTerm) return;
+
+    setIsLoading(true);
+    setHasSearched(true);
+
+    const { data: tagResults } = await supabase
+      .from('videos')
+      .select(`
+        *,
+        profiles(username, avatar_url)
+      `)
+      .contains('tags', [searchTerm])
+      .order('created_at', { ascending: false });
+
+    setVideos(tagResults || []);
+    setIsLoading(false);
+    setPendingTagSearch(null);
+  }, []);
+
+  // Trigger search when we have a pending tag from URL
+  useEffect(() => {
+    if (pendingTagSearch) {
+      handleSearchByTag(pendingTagSearch);
+    }
+  }, [pendingTagSearch, handleSearchByTag]);
 
   const handleSearch = async () => {
     if (!searchQuery.trim()) {
@@ -424,7 +468,12 @@ const Search = () => {
                     {video.tags.slice(0, 2).map((tag, i) => (
                       <span
                         key={i}
-                        className="bg-black/50 backdrop-blur-sm text-white text-[10px] px-1.5 py-0.5 rounded-full"
+                        className="bg-black/50 backdrop-blur-sm text-white text-[10px] px-1.5 py-0.5 rounded-full cursor-pointer hover:bg-primary/70 transition-colors"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSearchQuery(`#${tag}`);
+                          handleSearchByTag(tag);
+                        }}
                       >
                         #{tag}
                       </span>
