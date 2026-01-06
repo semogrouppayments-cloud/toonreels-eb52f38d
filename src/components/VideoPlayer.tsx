@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { Heart, MessageCircle, Download, Flag, Trash2, Volume2, VolumeX, Bookmark, BookmarkCheck, Play, Settings, Repeat, Maximize, Minimize } from 'lucide-react';
+import { Heart, MessageCircle, Download, Flag, Trash2, Volume2, VolumeX, Bookmark, BookmarkCheck, Play, Settings, Repeat, Maximize, Minimize, Ban } from 'lucide-react';
 import { toast } from 'sonner';
 import { useSignedVideoUrl } from '@/hooks/useSignedVideoUrl';
 import LikeAnimation from '@/components/LikeAnimation';
@@ -85,6 +85,7 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
   const [downloadProgress, setDownloadProgress] = useState(0);
   const [downloadStage, setDownloadStage] = useState('');
   const [isDownloading, setIsDownloading] = useState(false);
+  const [isBlocked, setIsBlocked] = useState(false);
   const downloadControllerRef = useRef<WatermarkController | null>(null);
   
   const { signedUrl, loading, error } = useSignedVideoUrl(video.video_url);
@@ -106,6 +107,7 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
     checkIfFollowing();
     checkIfLiked();
     checkIfSaved();
+    checkIfBlocked();
     fetchCommentsCount();
     fetchSavesCount();
   }, [video.id, currentUserId]);
@@ -327,6 +329,48 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
       .maybeSingle();
     
     setIsFollowing(!!data);
+  };
+
+  const checkIfBlocked = async () => {
+    if (!currentUserId || currentUserId === video.creator_id) return;
+    
+    const { data } = await supabase
+      .from('blocks')
+      .select('id')
+      .eq('blocker_id', currentUserId)
+      .eq('blocked_id', video.creator_id)
+      .maybeSingle();
+    
+    setIsBlocked(!!data);
+  };
+
+  const handleBlock = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    triggerHaptic('medium');
+    if (!currentUserId) {
+      toast.error('Please sign in to block users');
+      return;
+    }
+
+    try {
+      if (isBlocked) {
+        await supabase
+          .from('blocks')
+          .delete()
+          .eq('blocker_id', currentUserId)
+          .eq('blocked_id', video.creator_id);
+        setIsBlocked(false);
+        toast.success('User unblocked');
+      } else {
+        await supabase
+          .from('blocks')
+          .insert({ blocker_id: currentUserId, blocked_id: video.creator_id });
+        setIsBlocked(true);
+        toast.success('User blocked. Their content will be hidden.');
+      }
+    } catch (error) {
+      toast.error('Failed to update block status');
+    }
   };
 
   const handleLike = async () => {
@@ -1021,6 +1065,19 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
               <Flag className="h-5 w-5" />
             </div>
             <span className="text-[9px] text-white font-medium">Report</span>
+          </button>
+        )}
+
+        {/* Block - only for non-owners */}
+        {!isOwnVideo && (
+          <button
+            onClick={handleBlock}
+            className="flex flex-col items-center"
+          >
+            <div className={`rounded-full h-9 w-9 flex items-center justify-center ${isBlocked ? 'text-destructive' : 'text-white'}`}>
+              <Ban className="h-5 w-5" />
+            </div>
+            <span className="text-[9px] text-white font-medium">{isBlocked ? 'Unblock' : 'Block'}</span>
           </button>
         )}
 
