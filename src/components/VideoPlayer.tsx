@@ -953,7 +953,7 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
                 ⭐
               </span>
             ) : video.profiles.is_verified && (
-              <span className="bg-yellow-400 text-black text-[8px] px-1.5 py-0.5 rounded-full font-bold flex items-center gap-0.5">
+              <span className="bg-blue-500 text-white text-[8px] px-1.5 py-0.5 rounded-full font-bold flex items-center gap-0.5">
                 ✓
               </span>
             )}
