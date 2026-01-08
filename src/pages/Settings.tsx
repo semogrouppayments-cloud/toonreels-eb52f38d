@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Moon, Sun, RefreshCw, ChevronDown, Trash2 } from "lucide-react";
+import { ArrowLeft, Moon, Sun, RefreshCw, ChevronDown, Trash2, UserX } from "lucide-react";
 import { usePWAUpdate } from "@/hooks/usePWAUpdate";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -59,6 +59,7 @@ const Settings = () => {
   const [notifPush, setNotifPush] = useState(false);
   const [notifSound, setNotifSound] = useState(true);
   const [isCreative, setIsCreative] = useState(false);
+  const [blockedUsers, setBlockedUsers] = useState<{ id: string; blocked_id: string; username: string; avatar: string }[]>([]);
 
   // Collapsible section states
   const [openSections, setOpenSections] = useState<string[]>([]);
@@ -147,6 +148,31 @@ const Settings = () => {
 
       const { count: followers } = await supabase.from('follows').select('*', { count: 'exact', head: true }).eq('following_id', user.id);
       setFollowersCount(followers || 0);
+      
+      // Fetch blocked users
+      const { data: blocks } = await supabase
+        .from('blocks')
+        .select('id, blocked_id')
+        .eq('blocker_id', user.id);
+      
+      if (blocks && blocks.length > 0) {
+        const blockedIds = blocks.map(b => b.blocked_id);
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('id, username, selected_avatar')
+          .in('id', blockedIds);
+        
+        const blockedWithProfiles = blocks.map(b => {
+          const profile = profiles?.find(p => p.id === b.blocked_id);
+          return {
+            id: b.id,
+            blocked_id: b.blocked_id,
+            username: profile?.username || 'Unknown',
+            avatar: profile?.selected_avatar || '🦊'
+          };
+        });
+        setBlockedUsers(blockedWithProfiles);
+      }
       
       setLoading(false);
     } catch (error) {
@@ -263,6 +289,16 @@ const Settings = () => {
     }
   };
 
+  const handleUnblock = async (blockId: string) => {
+    try {
+      await supabase.from('blocks').delete().eq('id', blockId);
+      setBlockedUsers(prev => prev.filter(b => b.id !== blockId));
+      toast.success('User unblocked');
+    } catch (error) {
+      toast.error('Failed to unblock user');
+    }
+  };
+
   // Collapsible section header component
   const SectionHeader = ({ title, section }: { title: string; section: string }) => (
     <CollapsibleTrigger 
@@ -342,6 +378,36 @@ const Settings = () => {
                   </AccordionContent>
                 </AccordionItem>
               </Accordion>
+            </CollapsibleContent>
+          </Collapsible>
+
+          {/* Blocked Users */}
+          <Collapsible open={openSections.includes('blocked')}>
+            <SectionHeader title="Blocked Users" section="blocked" />
+            <CollapsibleContent className="mt-2 bg-card rounded-xl border border-border p-3">
+              {blockedUsers.length === 0 ? (
+                <p className="text-xs text-muted-foreground text-center py-4">No blocked users</p>
+              ) : (
+                <div className="space-y-2">
+                  {blockedUsers.map(user => (
+                    <div key={user.id} className="flex items-center justify-between p-2 bg-background/50 rounded-lg">
+                      <div className="flex items-center gap-2">
+                        <span className="text-lg">{user.avatar}</span>
+                        <span className="text-sm font-medium">{user.username}</span>
+                      </div>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => handleUnblock(user.id)}
+                        className="h-7 text-xs gap-1"
+                      >
+                        <UserX className="h-3 w-3" />
+                        Unblock
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </CollapsibleContent>
           </Collapsible>
 

@@ -60,6 +60,7 @@ const Feed = () => {
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [blockedUserIds, setBlockedUserIds] = useState<string[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
   const touchStartY = useRef(0);
   const touchStartX = useRef(0);
@@ -86,19 +87,34 @@ const Feed = () => {
     
     setCurrentUserId(session.user.id);
     
-    // Fetch user profile in parallel
+    // Fetch user profile and blocked users in parallel
     fetchUserProfile(session.user.id);
+    const blockedIds = await fetchBlockedUsers(session.user.id);
     
     // Fetch first page of videos
-    await fetchVideos(0, true);
+    await fetchVideos(0, true, blockedIds);
     setIsLoading(false);
   };
 
-  const fetchVideos = async (pageNum: number, reset: boolean = false) => {
+  const fetchBlockedUsers = async (userId: string): Promise<string[]> => {
+    const { data: blocks } = await supabase
+      .from('blocks')
+      .select('blocked_id')
+      .eq('blocker_id', userId);
+    
+    const ids = blocks?.map(b => b.blocked_id) || [];
+    setBlockedUserIds(ids);
+    return ids;
+  };
+
+  const fetchVideos = async (pageNum: number, reset: boolean = false, blockedIds?: string[]) => {
     const from = pageNum * PAGE_SIZE;
     const to = from + PAGE_SIZE - 1;
     
-    const { data, error } = await supabase
+    // Use provided blockedIds or fall back to state
+    const idsToFilter = blockedIds || blockedUserIds;
+    
+    let query = supabase
       .from('videos')
       .select(`
         *,
@@ -106,6 +122,13 @@ const Feed = () => {
       `)
       .order('created_at', { ascending: false })
       .range(from, to);
+    
+    // Filter out videos from blocked users
+    if (idsToFilter.length > 0) {
+      query = query.not('creator_id', 'in', `(${idsToFilter.join(',')})`);
+    }
+    
+    const { data, error } = await query;
 
     if (error) {
       console.error('Error fetching videos:', error);
