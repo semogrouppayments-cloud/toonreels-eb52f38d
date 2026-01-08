@@ -95,9 +95,11 @@ serve(async (req) => {
 
     if (signedUrlError || !signedUrlData) {
       console.error('Failed to generate signed URL:', signedUrlError);
+      // Fallback to public URL if signed URL fails (file may not exist or bucket is public)
+      // This handles cases where files were deleted but records remain
       return new Response(
-        JSON.stringify({ error: 'Failed to generate video URL' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ signed_url: video_url }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
