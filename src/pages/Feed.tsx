@@ -61,6 +61,8 @@ const Feed = () => {
   const [hasMore, setHasMore] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [blockedUserIds, setBlockedUserIds] = useState<string[]>([]);
+  const [followingIds, setFollowingIds] = useState<string[]>([]);
+  const [activeTab, setActiveTab] = useState<'forYou' | 'following'>('forYou');
   const containerRef = useRef<HTMLDivElement>(null);
   const touchStartY = useRef(0);
   const touchStartX = useRef(0);
@@ -87,13 +89,27 @@ const Feed = () => {
     
     setCurrentUserId(session.user.id);
     
-    // Fetch user profile and blocked users in parallel
+    // Fetch user profile, blocked users, and following in parallel
     fetchUserProfile(session.user.id);
-    const blockedIds = await fetchBlockedUsers(session.user.id);
+    const [blockedIds, followIds] = await Promise.all([
+      fetchBlockedUsers(session.user.id),
+      fetchFollowingUsers(session.user.id)
+    ]);
     
     // Fetch first page of videos
-    await fetchVideos(0, true, blockedIds);
+    await fetchVideos(0, true, blockedIds, 'forYou', followIds);
     setIsLoading(false);
+  };
+
+  const fetchFollowingUsers = async (userId: string): Promise<string[]> => {
+    const { data: follows } = await supabase
+      .from('follows')
+      .select('following_id')
+      .eq('follower_id', userId);
+    
+    const ids = follows?.map(f => f.following_id) || [];
+    setFollowingIds(ids);
+    return ids;
   };
 
   const fetchBlockedUsers = async (userId: string): Promise<string[]> => {
@@ -107,12 +123,20 @@ const Feed = () => {
     return ids;
   };
 
-  const fetchVideos = async (pageNum: number, reset: boolean = false, blockedIds?: string[]) => {
+  const fetchVideos = async (
+    pageNum: number, 
+    reset: boolean = false, 
+    blockedIds?: string[],
+    tab?: 'forYou' | 'following',
+    followIds?: string[]
+  ) => {
     const from = pageNum * PAGE_SIZE;
     const to = from + PAGE_SIZE - 1;
     
-    // Use provided blockedIds or fall back to state
+    // Use provided values or fall back to state
     const idsToFilter = blockedIds || blockedUserIds;
+    const currentTab = tab || activeTab;
+    const currentFollowIds = followIds || followingIds;
     
     let query = supabase
       .from('videos')
@@ -126,6 +150,19 @@ const Feed = () => {
     // Filter out videos from blocked users
     if (idsToFilter.length > 0) {
       query = query.not('creator_id', 'in', `(${idsToFilter.join(',')})`);
+    }
+    
+    // Filter to only following creators for "Following" tab
+    if (currentTab === 'following' && currentFollowIds.length > 0) {
+      query = query.in('creator_id', currentFollowIds);
+    } else if (currentTab === 'following' && currentFollowIds.length === 0) {
+      // No following, return empty
+      if (reset) {
+        setVideos([]);
+        setPage(0);
+        setHasMore(false);
+      }
+      return;
     }
     
     const { data, error } = await query;
@@ -337,12 +374,52 @@ const Feed = () => {
     );
   }
 
-  if (videos.length === 0) {
+  const handleTabChange = async (tab: 'forYou' | 'following') => {
+    if (tab === activeTab) return;
+    setActiveTab(tab);
+    setActiveIndex(0);
+    setPage(0);
+    setHasMore(true);
+    setVideos([]);
+    if (containerRef.current) {
+      containerRef.current.scrollTo({ top: 0 });
+    }
+    await fetchVideos(0, true, blockedUserIds, tab, followingIds);
+  };
+
+  if (videos.length === 0 && !isLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center pb-24">
-        <div className="text-center">
-          <h2 className="text-2xl font-black mb-2">No videos yet!</h2>
-          <p className="text-muted-foreground">Check back later for amazing animations</p>
+      <div className="min-h-screen bg-black flex flex-col">
+        {/* Tab header */}
+        <div className="fixed top-0 left-0 right-0 z-40 flex justify-center gap-6 py-4 bg-gradient-to-b from-black/80 to-transparent">
+          <button
+            onClick={() => handleTabChange('forYou')}
+            className={`text-sm font-semibold transition-colors ${
+              activeTab === 'forYou' ? 'text-white' : 'text-white/50'
+            }`}
+          >
+            For You
+          </button>
+          <button
+            onClick={() => handleTabChange('following')}
+            className={`text-sm font-semibold transition-colors ${
+              activeTab === 'following' ? 'text-white' : 'text-white/50'
+            }`}
+          >
+            Following
+          </button>
+        </div>
+        <div className="flex-1 flex items-center justify-center pb-24">
+          <div className="text-center">
+            <h2 className="text-2xl font-black mb-2 text-white">
+              {activeTab === 'following' ? 'No videos from followed creators' : 'No videos yet!'}
+            </h2>
+            <p className="text-white/60">
+              {activeTab === 'following' 
+                ? 'Follow some creators to see their content here' 
+                : 'Check back later for amazing animations'}
+            </p>
+          </div>
         </div>
         <BottomNav />
       </div>
@@ -363,6 +440,26 @@ const Feed = () => {
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
     >
+      {/* Tab header */}
+      <div className="fixed top-0 left-0 right-0 z-40 flex justify-center gap-6 py-4 bg-gradient-to-b from-black/80 to-transparent">
+        <button
+          onClick={() => handleTabChange('forYou')}
+          className={`text-sm font-semibold transition-colors ${
+            activeTab === 'forYou' ? 'text-white' : 'text-white/50'
+          }`}
+        >
+          For You
+        </button>
+        <button
+          onClick={() => handleTabChange('following')}
+          className={`text-sm font-semibold transition-colors ${
+            activeTab === 'following' ? 'text-white' : 'text-white/50'
+          }`}
+        >
+          Following
+        </button>
+      </div>
+
       {/* Pull to refresh indicator */}
       {pullDistance > 0 && (
         <div 
