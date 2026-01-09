@@ -443,17 +443,38 @@ const Settings = () => {
             <SectionHeader title="Parental Controls" section="parental" />
             <CollapsibleContent className="mt-2 bg-card rounded-xl border border-border p-3">
               <Accordion type="single" collapsible>
-                <AccordionItem value="screen">
-                  <AccordionTrigger className="text-xs">Screen Time</AccordionTrigger>
+                <AccordionItem value="pin">
+                  <AccordionTrigger className="text-xs">Parental PIN</AccordionTrigger>
                   <AccordionContent className="space-y-3">
-                    <Input type="number" value={screenTimeLimit} onChange={(e) => setScreenTimeLimit(parseInt(e.target.value) || 0)} className="h-8 text-sm" />
+                    <p className="text-xs text-muted-foreground">Set a 4-digit PIN to protect parental settings.</p>
+                    <Input type="password" maxLength={4} value={parentalPin} onChange={(e) => setParentalPin(e.target.value.replace(/\D/g, ''))} placeholder="••••" className="h-8 text-sm" />
+                    <Button onClick={saveParentalControls} size="sm" className="h-7 text-xs">Save PIN</Button>
+                  </AccordionContent>
+                </AccordionItem>
+                <AccordionItem value="screen">
+                  <AccordionTrigger className="text-xs">Screen Time Limit</AccordionTrigger>
+                  <AccordionContent className="space-y-3">
+                    <p className="text-xs text-muted-foreground">Set daily screen time limit in minutes (0 = unlimited).</p>
+                    <div className="flex items-center gap-2">
+                      <Input type="number" min={0} max={480} value={screenTimeLimit} onChange={(e) => setScreenTimeLimit(parseInt(e.target.value) || 0)} className="h-8 text-sm w-24" />
+                      <span className="text-xs text-muted-foreground">minutes/day</span>
+                    </div>
                     <Button onClick={saveParentalControls} size="sm" className="h-7 text-xs">Save</Button>
                   </AccordionContent>
                 </AccordionItem>
                 <AccordionItem value="school">
                   <AccordionTrigger className="text-xs">School Hours Lock</AccordionTrigger>
                   <AccordionContent className="space-y-3">
+                    <p className="text-xs text-muted-foreground">Block app usage during school hours (8 AM - 3 PM weekdays).</p>
                     <div className="flex justify-between"><Label className="text-xs">Enabled</Label><Switch checked={schoolHoursLock} onCheckedChange={setSchoolHoursLock} /></div>
+                    <Button onClick={saveParentalControls} size="sm" className="h-7 text-xs">Save</Button>
+                  </AccordionContent>
+                </AccordionItem>
+                <AccordionItem value="bedtime">
+                  <AccordionTrigger className="text-xs">Bedtime Lock</AccordionTrigger>
+                  <AccordionContent className="space-y-3">
+                    <p className="text-xs text-muted-foreground">Block app usage during bedtime hours (9 PM - 7 AM).</p>
+                    <div className="flex justify-between"><Label className="text-xs">Enabled</Label><Switch checked={bedtimeLock} onCheckedChange={setBedtimeLock} /></div>
                     <Button onClick={saveParentalControls} size="sm" className="h-7 text-xs">Save</Button>
                   </AccordionContent>
                 </AccordionItem>
