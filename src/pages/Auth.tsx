@@ -327,17 +327,23 @@ const Auth = () => {
             </Button>
           </form>
 
-          <div className="mt-4 text-center">
+          <div className="mt-4 text-center space-y-2">
             <button
               type="button"
               onClick={() => {
                 setIsSignUp(!isSignUp);
                 setErrors({});
               }}
-              className="text-sm text-primary hover:underline font-semibold"
+              className="text-sm text-primary hover:underline font-semibold block w-full"
             >
               {isSignUp ? 'Already have an account? Sign in' : "Don't have an account? Sign up"}
             </button>
+            <a
+              href="/terms-of-service"
+              className="text-xs text-muted-foreground hover:text-primary hover:underline block"
+            >
+              Terms of Use
+            </a>
           </div>
         </CardContent>
       </Card>

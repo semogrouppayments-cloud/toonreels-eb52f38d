@@ -19,6 +19,7 @@ import Milestones from "./pages/Milestones";
 import NotFound from "./pages/NotFound";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
+import ParentDashboard from "./pages/ParentDashboard";
 
 const queryClient = new QueryClient();
 
@@ -60,6 +61,7 @@ const AppContent = () => {
       <Route path="/milestones" element={<Milestones />} />
       <Route path="/privacy-policy" element={<PrivacyPolicy />} />
       <Route path="/terms-of-service" element={<TermsOfService />} />
+      <Route path="/parent-dashboard" element={<ParentDashboard />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
