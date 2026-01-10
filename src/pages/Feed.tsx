@@ -7,6 +7,7 @@ import CommentsSheet from '@/components/CommentsSheet';
 import BottomNav from '@/components/BottomNav';
 import RatingPrompt from '@/components/RatingPrompt';
 import ChangelogModal from '@/components/ChangelogModal';
+import ScreenTimeLock from '@/components/ScreenTimeLock';
 import { toast } from 'sonner';
 import { RefreshCw, Loader2 } from 'lucide-react';
 
@@ -14,6 +15,7 @@ import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { useSoundEffects } from '@/hooks/useSoundEffects';
 import { useAppRating } from '@/hooks/useAppRating';
 import { useChangelog } from '@/hooks/useChangelog';
+import { useScreenTime } from '@/hooks/useScreenTime';
 
 interface Video {
   id: string;
@@ -70,6 +72,9 @@ const Feed = () => {
   const isPulling = useRef(false);
   const isSwipingVertically = useRef(false);
   const preloadedVideosRef = useRef<Set<string>>(new Set());
+
+  // Screen time tracking
+  const { isLocked, unlock } = useScreenTime(currentUserId);
 
   const PULL_THRESHOLD = 80;
   const SWIPE_THRESHOLD = 50;
@@ -526,6 +531,11 @@ const Feed = () => {
         currentVersion={currentVersion}
         changelog={changelog}
       />
+      
+      {/* Screen Time Lock */}
+      {isLocked && currentUserId && (
+        <ScreenTimeLock userId={currentUserId} onUnlock={unlock} />
+      )}
       
       <BottomNav />
     </div>

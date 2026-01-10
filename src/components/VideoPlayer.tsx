@@ -146,14 +146,31 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
       return;
     }
 
-    // Video is active - attempt to play
+    // Video is active - attempt to play with debounce to prevent rapid fire
+    let playTimeout: NodeJS.Timeout;
+    
     const attemptPlay = async () => {
       playAttemptRef.current++;
       const currentAttempt = playAttemptRef.current;
       
       try {
-        // Reset video position for fresh start
-        videoEl.currentTime = 0;
+        // Wait for video to be ready
+        if (videoEl.readyState < 2) {
+          await new Promise<void>((resolve) => {
+            const onCanPlay = () => {
+              videoEl.removeEventListener('canplay', onCanPlay);
+              resolve();
+            };
+            videoEl.addEventListener('canplay', onCanPlay);
+            // Timeout fallback
+            setTimeout(resolve, 2000);
+          });
+        }
+        
+        // Reset video position for fresh start only if at the end
+        if (videoEl.currentTime >= videoEl.duration - 0.5) {
+          videoEl.currentTime = 0;
+        }
         
         // First try to play muted (always works on mobile)
         videoEl.muted = true;
@@ -170,14 +187,14 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
           analyticsTrackedRef.current = false;
         }
         
-        // After successful muted play, try to unmute
+        // After successful muted play, try to unmute with delay
         if (currentAttempt === playAttemptRef.current) {
           setTimeout(() => {
             if (videoEl && currentAttempt === playAttemptRef.current && isActive) {
               videoEl.muted = false;
               setIsMuted(false);
             }
-          }, 100);
+          }, 300);
         }
       } catch (err) {
         console.log('Autoplay failed, waiting for user interaction');
@@ -185,7 +202,12 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
       }
     };
 
-    attemptPlay();
+    // Small delay to prevent rapid play attempts during scrolling
+    playTimeout = setTimeout(attemptPlay, 100);
+    
+    return () => {
+      clearTimeout(playTimeout);
+    };
   }, [isActive, signedUrl]);
 
   // Handle video events for better mobile playback
@@ -784,8 +806,9 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
             playsInline
             webkit-playsinline="true"
             x5-playsinline="true"
-            preload="metadata"
+            preload="auto"
             crossOrigin="anonymous"
+            autoPlay={false}
             style={{ 
               maxHeight: isFullscreen && !isMobile ? '100%' : 'calc(100vh - 80px)',
               marginBottom: isFullscreen && !isMobile ? '0' : '80px'
