@@ -7,9 +7,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Slider } from '@/components/ui/slider';
-import { ArrowLeft, Clock, Eye, Heart, Shield, Lock, Unlock, Video, Calendar } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ArrowLeft, Clock, Eye, Heart, Shield, Lock, Video, Calendar, HardDrive, Activity } from 'lucide-react';
 import { toast } from 'sonner';
 import BottomNav from '@/components/BottomNav';
+import StorageAnalytics from '@/components/StorageAnalytics';
 
 interface ActivityStats {
   totalWatchTime: number;
@@ -243,47 +245,67 @@ const ParentDashboard = () => {
           </div>
         </div>
 
-        {/* Activity Stats */}
-        <div className="mb-6">
-          <h2 className="text-lg font-bold mb-3 flex items-center gap-2">
-            <Eye className="h-5 w-5 text-primary" />
-            Activity Overview
-          </h2>
-          <div className="grid grid-cols-2 gap-3">
-            <Card>
-              <CardContent className="p-4 text-center">
-                <Clock className="h-6 w-6 mx-auto mb-2 text-fun-blue" />
-                <p className="text-2xl font-black">{formatTime(activity.totalWatchTime)}</p>
-                <p className="text-xs text-muted-foreground">Total Watch Time</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-4 text-center">
-                <Video className="h-6 w-6 mx-auto mb-2 text-fun-green" />
-                <p className="text-2xl font-black">{activity.videosWatched}</p>
-                <p className="text-xs text-muted-foreground">Videos Watched</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-4 text-center">
-                <Heart className="h-6 w-6 mx-auto mb-2 text-fun-coral" />
-                <p className="text-2xl font-black">{activity.likesGiven}</p>
-                <p className="text-xs text-muted-foreground">Likes Given</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-4 text-center">
-                <Calendar className="h-6 w-6 mx-auto mb-2 text-fun-yellow" />
-                <p className="text-sm font-bold">
-                  {activity.lastActive
-                    ? new Date(activity.lastActive).toLocaleDateString()
-                    : 'Never'}
-                </p>
-                <p className="text-xs text-muted-foreground">Last Active</p>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
+        <Tabs defaultValue="activity" className="w-full">
+          <TabsList className="grid w-full grid-cols-3 mb-4">
+            <TabsTrigger value="activity" className="text-xs">
+              <Activity className="h-3 w-3 mr-1" />
+              Activity
+            </TabsTrigger>
+            <TabsTrigger value="controls" className="text-xs">
+              <Lock className="h-3 w-3 mr-1" />
+              Controls
+            </TabsTrigger>
+            <TabsTrigger value="storage" className="text-xs">
+              <HardDrive className="h-3 w-3 mr-1" />
+              Storage
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="activity" className="space-y-4">
+            {/* Activity Stats */}
+            <div>
+              <h2 className="text-lg font-bold mb-3 flex items-center gap-2">
+                <Eye className="h-5 w-5 text-primary" />
+                Activity Overview
+              </h2>
+              <div className="grid grid-cols-2 gap-3">
+                <Card>
+                  <CardContent className="p-4 text-center">
+                    <Clock className="h-6 w-6 mx-auto mb-2 text-fun-blue" />
+                    <p className="text-2xl font-black">{formatTime(activity.totalWatchTime)}</p>
+                    <p className="text-xs text-muted-foreground">Total Watch Time</p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="p-4 text-center">
+                    <Video className="h-6 w-6 mx-auto mb-2 text-fun-green" />
+                    <p className="text-2xl font-black">{activity.videosWatched}</p>
+                    <p className="text-xs text-muted-foreground">Videos Watched</p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="p-4 text-center">
+                    <Heart className="h-6 w-6 mx-auto mb-2 text-fun-coral" />
+                    <p className="text-2xl font-black">{activity.likesGiven}</p>
+                    <p className="text-xs text-muted-foreground">Likes Given</p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="p-4 text-center">
+                    <Calendar className="h-6 w-6 mx-auto mb-2 text-fun-yellow" />
+                    <p className="text-sm font-bold">
+                      {activity.lastActive
+                        ? new Date(activity.lastActive).toLocaleDateString()
+                        : 'Never'}
+                    </p>
+                    <p className="text-xs text-muted-foreground">Last Active</p>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="controls" className="space-y-4">
 
         {/* Screen Time Settings */}
         <Card className="mb-4">
@@ -407,9 +429,15 @@ const ParentDashboard = () => {
           )}
         </Card>
 
-        <Button onClick={saveSettings} className="w-full" size="lg">
-          Save All Settings
-        </Button>
+            <Button onClick={saveSettings} className="w-full" size="lg">
+              Save All Settings
+            </Button>
+          </TabsContent>
+
+          <TabsContent value="storage" className="space-y-4">
+            <StorageAnalytics />
+          </TabsContent>
+        </Tabs>
       </div>
       <BottomNav />
     </div>
