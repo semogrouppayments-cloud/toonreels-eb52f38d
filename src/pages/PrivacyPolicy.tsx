@@ -45,7 +45,7 @@ const PrivacyPolicy = () => {
             <section className="space-y-3">
               <h2 className="text-base font-semibold text-foreground">1. Introduction</h2>
               <p>
-                ToonlyReels ("App", "we", "us", or "our") is operated by SE-Motoons. This Privacy 
+                ToonlyReels ("App", "we", "us", or "our") is operated by SEMO Group. This Privacy 
                 Policy explains how we collect, use, disclose, and safeguard information when 
                 you use our mobile application.
               </p>
@@ -268,16 +268,14 @@ const PrivacyPolicy = () => {
                 exercise your parental rights, please contact us:
               </p>
               <div className="bg-muted/50 rounded-lg p-4 space-y-1">
-                <p className="font-medium text-foreground">ToonlyReels by SE-Motoons</p>
-                <p>General Inquiries: support@toonlyreels.app</p>
-                <p>Privacy Concerns: privacy@toonlyreels.app</p>
-                <p>Parental Inquiries: parents@toonlyreels.app</p>
+                <p className="font-medium text-foreground">ToonlyReels by SEMO Group</p>
+                <p>Email: info@semogroup.com</p>
               </div>
             </section>
 
             <div className="pt-4 border-t border-border">
               <p className="text-xs text-center text-muted-foreground/70">
-                © 2026 ToonlyReels by SE-Motoons. All rights reserved.
+                © 2026 ToonlyReels by SEMO Group. All rights reserved.
               </p>
             </div>
           </div>

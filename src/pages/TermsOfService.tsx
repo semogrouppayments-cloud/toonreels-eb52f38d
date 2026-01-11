@@ -139,7 +139,7 @@ const TermsOfService = () => {
               <h2 className="text-base font-semibold text-foreground">8. Intellectual Property</h2>
               <p>
                 ToonlyReels and its original content, features, and functionality are owned by 
-                SE-Motoons and are protected by international copyright, trademark, and other 
+                SEMO Group and are protected by international copyright, trademark, and other 
                 intellectual property laws.
               </p>
             </section>
@@ -176,7 +176,7 @@ const TermsOfService = () => {
             <section className="space-y-3">
               <h2 className="text-base font-semibold text-foreground">11. Limitation of Liability</h2>
               <p>
-                To the maximum extent permitted by law, ToonlyReels and SE-Motoons shall not be 
+                To the maximum extent permitted by law, ToonlyReels and SEMO Group shall not be 
                 liable for any indirect, incidental, special, consequential, or punitive damages 
                 arising from your use of the App.
               </p>
@@ -205,15 +205,14 @@ const TermsOfService = () => {
                 If you have any questions about these Terms, please contact us:
               </p>
               <div className="bg-muted/50 rounded-lg p-4 space-y-1">
-                <p className="font-medium text-foreground">ToonlyReels by SE-Motoons</p>
-                <p>Email: legal@toonlyreels.app</p>
-                <p>Support: support@toonlyreels.app</p>
+                <p className="font-medium text-foreground">ToonlyReels by SEMO Group</p>
+                <p>Email: info@semogroup.com</p>
               </div>
             </section>
 
             <div className="pt-4 border-t border-border">
               <p className="text-xs text-center text-muted-foreground/70">
-                © 2026 ToonlyReels by SE-Motoons. All rights reserved.
+                © 2026 ToonlyReels by SEMO Group. All rights reserved.
               </p>
             </div>
           </div>

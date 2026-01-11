@@ -585,7 +585,7 @@ const Settings = () => {
             <CollapsibleContent className="mt-2 bg-card rounded-xl border border-border p-3">
               <div className="space-y-3">
                 <p className="text-xs text-muted-foreground">
-                  Keep ToonReels up to date for the best experience.
+                  Keep ToonlyReels up to date for the best experience.
                 </p>
                 {updateAvailable ? (
                   <div className="bg-primary/10 border border-primary/20 rounded-lg p-3">
@@ -634,15 +634,15 @@ const Settings = () => {
             <CollapsibleContent className="mt-2 bg-card rounded-xl border border-border p-3">
               <Accordion type="single" collapsible>
                 <AccordionItem value="what">
-                  <AccordionTrigger className="text-xs">What is ToonReels?</AccordionTrigger>
+                  <AccordionTrigger className="text-xs">What is ToonlyReels?</AccordionTrigger>
                   <AccordionContent>
-                    <p className="text-xs text-muted-foreground">ToonReels is a kid-safe cartoon reels platform made by SE-Motoons. Kids can watch short animated clips, music toons, fun stories, and educational shorts — all age filtered.</p>
+                    <p className="text-xs text-muted-foreground">ToonlyReels is a kid-safe cartoon reels platform made by SEMO Group. Kids can watch short animated clips, music toons, fun stories, and educational shorts — all age filtered.</p>
                   </AccordionContent>
                 </AccordionItem>
                 <AccordionItem value="cartoon">
                   <AccordionTrigger className="text-xs">Why only cartoon content?</AccordionTrigger>
                   <AccordionContent>
-                    <p className="text-xs text-muted-foreground">ToonReels is designed strictly for kids. We automatically block adult themes, scary content, violence, political content, and anything unsafe.</p>
+                    <p className="text-xs text-muted-foreground">ToonlyReels is designed strictly for kids. We automatically block adult themes, scary content, violence, political content, and anything unsafe.</p>
                   </AccordionContent>
                 </AccordionItem>
                 <AccordionItem value="report">
@@ -660,7 +660,7 @@ const Settings = () => {
                 <AccordionItem value="messaging">
                   <AccordionTrigger className="text-xs">Can kids message each other?</AccordionTrigger>
                   <AccordionContent>
-                    <p className="text-xs text-muted-foreground">Messaging is off and kids cannot message each other. ToonReels does not allow messaging between users to ensure maximum child safety.</p>
+                    <p className="text-xs text-muted-foreground">Messaging is off and kids cannot message each other. ToonlyReels does not allow messaging between users to ensure maximum child safety.</p>
                   </AccordionContent>
                 </AccordionItem>
                 <AccordionItem value="uploads">
@@ -682,12 +682,12 @@ const Settings = () => {
                   </AccordionContent>
                 </AccordionItem>
                 <AccordionItem value="contact">
-                  <AccordionTrigger className="text-xs">How do I contact ToonReels?</AccordionTrigger>
+                  <AccordionTrigger className="text-xs">How do I contact ToonlyReels?</AccordionTrigger>
                   <AccordionContent>
                     <div className="text-xs text-muted-foreground space-y-1">
-                      <p>Email: info@se-motoons.com</p>
-                      <p>Website: www.semotoons.com</p>
-                      <p>App Icon: TR (ToonReels official avatar)</p>
+                      <p>Email: info@semogroup.com</p>
+                      <p>Website: www.semogroup.com</p>
+                      <p>App Icon: TR (ToonlyReels official avatar)</p>
                     </div>
                   </AccordionContent>
                 </AccordionItem>
@@ -704,11 +704,11 @@ const Settings = () => {
                   <AccordionTrigger className="text-xs">View Terms</AccordionTrigger>
                   <AccordionContent className="space-y-2 text-xs text-muted-foreground">
                     <p className="font-semibold">Last updated: 2025</p>
-                    <p>Welcome to ToonReels, a kid-friendly cartoon reels app created by SE-Motoons. By using ToonReels, you agree to these Terms of Use.</p>
+                    <p>Welcome to ToonlyReels, a kid-friendly cartoon reels app created by SEMO Group. By using ToonlyReels, you agree to these Terms of Use.</p>
                     
                     <div>
                       <p className="font-semibold text-foreground">1. Eligibility</p>
-                      <p>ToonReels is designed for users ages 4–15. Parents/guardians must supervise younger users.</p>
+                      <p>ToonlyReels is designed for users ages 4–15. Parents/guardians must supervise younger users.</p>
                     </div>
 
                     <div>
@@ -723,7 +723,7 @@ const Settings = () => {
 
                     <div>
                       <p className="font-semibold text-foreground">4. Content Ownership</p>
-                      <p>You keep ownership of your uploaded reels, but you give ToonReels permission to store, display, moderate, and distribute within the app. We NEVER sell user data or videos.</p>
+                      <p>You keep ownership of your uploaded reels, but you give ToonlyReels permission to store, display, moderate, and distribute within the app. We NEVER sell user data or videos.</p>
                     </div>
 
                     <div>
@@ -743,7 +743,7 @@ const Settings = () => {
 
                     <div>
                       <p className="font-semibold text-foreground">8. Contact</p>
-                      <p>Email: info@se-motoons.com | Website: www.semotoons.com | App icon/logo: TR</p>
+                      <p>Email: info@semogroup.com | Website: www.semogroup.com | App icon/logo: TR</p>
                     </div>
                   </AccordionContent>
                 </AccordionItem>
@@ -759,7 +759,7 @@ const Settings = () => {
                 <AccordionItem value="privacy">
                   <AccordionTrigger className="text-xs">View Privacy Policy</AccordionTrigger>
                   <AccordionContent className="space-y-2 text-xs text-muted-foreground">
-                    <p className="font-semibold">ToonReels is COPPA-compliant and designed for child safety.</p>
+                    <p className="font-semibold">ToonlyReels is COPPA-compliant and designed for child safety.</p>
                     
                     <div>
                       <p className="font-semibold text-foreground">1. What information we collect</p>
@@ -784,7 +784,7 @@ const Settings = () => {
 
                     <div>
                       <p className="font-semibold text-foreground">5. Deleting Your Data</p>
-                      <p>You may request deletion anytime by emailing: info@se-motoons.com</p>
+                      <p>You may request deletion anytime by emailing: info@semogroup.com</p>
                     </div>
 
                     <div>
@@ -829,7 +829,7 @@ const Settings = () => {
                 <AccordionItem value="safety">
                   <AccordionTrigger className="text-xs">View Safety Guide</AccordionTrigger>
                   <AccordionContent className="space-y-2 text-xs text-muted-foreground">
-                    <p className="font-semibold">ToonReels is built around kid safety first.</p>
+                    <p className="font-semibold">ToonlyReels is built around kid safety first.</p>
                     
                     <div>
                       <p className="font-semibold text-foreground">1. Safe Content System</p>
@@ -875,8 +875,8 @@ const Settings = () => {
                   <AccordionTrigger className="text-xs">General Support</AccordionTrigger>
                   <AccordionContent>
                     <div className="text-xs text-muted-foreground space-y-1">
-                      <p>Email: info@se-motoons.com</p>
-                      <p>Website: www.semotoons.com</p>
+                      <p>Email: info@semogroup.com</p>
+                      <p>Website: www.semogroup.com</p>
                     </div>
                   </AccordionContent>
                 </AccordionItem>
@@ -893,7 +893,7 @@ const Settings = () => {
                   </AccordionContent>
                 </AccordionItem>
                 <AccordionItem value="protection">
-                  <AccordionTrigger className="text-xs">How does ToonReels protect kids?</AccordionTrigger>
+                  <AccordionTrigger className="text-xs">How does ToonlyReels protect kids?</AccordionTrigger>
                   <AccordionContent>
                     <p className="text-xs text-muted-foreground">Filters violent/adult content, human moderators, parental PIN, and messaging locked by default.</p>
                   </AccordionContent>
@@ -907,7 +907,7 @@ const Settings = () => {
                 <AccordionItem value="icon">
                   <AccordionTrigger className="text-xs">App Icon / Avatar Info</AccordionTrigger>
                   <AccordionContent>
-                    <p className="text-xs text-muted-foreground">The official ToonReels app icon is: TR with a red-orange gradient background.</p>
+                    <p className="text-xs text-muted-foreground">The official ToonlyReels app icon is: TR with a red-orange gradient background.</p>
                   </AccordionContent>
                 </AccordionItem>
               </Accordion>
