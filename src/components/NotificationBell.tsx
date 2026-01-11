@@ -126,7 +126,7 @@ const NotificationBell = () => {
   const showPushNotification = async (notification: any) => {
     if (Notification.permission === 'granted') {
       const registration = await navigator.serviceWorker.ready;
-      registration.showNotification('ToonReels', {
+      registration.showNotification('ToonlyReels', {
         body: getNotificationText(notification),
         icon: '/toonreels-logo.png',
         badge: '/toonreels-logo.png',
