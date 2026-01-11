@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Moon, Sun, RefreshCw, ChevronDown, Trash2, UserX } from "lucide-react";
+import { ArrowLeft, Moon, Sun, RefreshCw, ChevronDown, Trash2, UserX, Eye, EyeOff, Mail } from "lucide-react";
 import { usePWAUpdate } from "@/hooks/usePWAUpdate";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -60,6 +60,10 @@ const Settings = () => {
   const [notifSound, setNotifSound] = useState(true);
   const [isCreative, setIsCreative] = useState(false);
   const [blockedUsers, setBlockedUsers] = useState<{ id: string; blocked_id: string; username: string; avatar: string }[]>([]);
+  const [showProfilePin, setShowProfilePin] = useState(false);
+  const [showParentalPin, setShowParentalPin] = useState(false);
+  const [resettingProfilePin, setResettingProfilePin] = useState(false);
+  const [resettingParentalPin, setResettingParentalPin] = useState(false);
 
   // Collapsible section states
   const [openSections, setOpenSections] = useState<string[]>([]);
@@ -299,6 +303,33 @@ const Settings = () => {
     }
   };
 
+  const handleResetPin = async (pinType: "profile" | "parental") => {
+    const setResetting = pinType === "profile" ? setResettingProfilePin : setResettingParentalPin;
+    setResetting(true);
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('reset-pin', {
+        body: { pinType }
+      });
+      
+      if (error) throw error;
+      
+      toast.success(`${pinType === "profile" ? "Profile" : "Parental"} PIN has been reset and sent to your email!`);
+      
+      // Clear the local PIN state
+      if (pinType === "profile") {
+        setProfilePin("");
+      } else {
+        setParentalPin("");
+      }
+    } catch (error: any) {
+      console.error('Reset PIN error:', error);
+      toast.error(`Failed to reset PIN: ${error.message || "Please try again"}`);
+    } finally {
+      setResetting(false);
+    }
+  };
+
   // Collapsible section header component
   const SectionHeader = ({ title, section }: { title: string; section: string }) => (
     <CollapsibleTrigger 
@@ -373,8 +404,39 @@ const Settings = () => {
                 <AccordionItem value="pin">
                   <AccordionTrigger className="text-xs">Profile PIN</AccordionTrigger>
                   <AccordionContent className="space-y-3">
-                    <Input type="password" maxLength={4} value={profilePin} onChange={(e) => setProfilePin(e.target.value.replace(/\D/g, ''))} placeholder="••••" className="h-8 text-sm" />
-                    <Button onClick={saveProfileSettings} size="sm" className="h-7 text-xs">Save PIN</Button>
+                    <p className="text-xs text-muted-foreground">Set a 4-digit PIN to protect your profile.</p>
+                    <div className="relative">
+                      <Input 
+                        type={showProfilePin ? "text" : "password"} 
+                        maxLength={4} 
+                        value={profilePin} 
+                        onChange={(e) => setProfilePin(e.target.value.replace(/\D/g, ''))} 
+                        placeholder="••••" 
+                        className="h-8 text-sm pr-10" 
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="absolute right-0 top-0 h-8 w-8"
+                        onClick={() => setShowProfilePin(!showProfilePin)}
+                      >
+                        {showProfilePin ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </Button>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button onClick={saveProfileSettings} size="sm" className="h-7 text-xs">Save PIN</Button>
+                      <Button 
+                        onClick={() => handleResetPin("profile")} 
+                        variant="outline" 
+                        size="sm" 
+                        className="h-7 text-xs gap-1"
+                        disabled={resettingProfilePin}
+                      >
+                        <Mail className="h-3 w-3" />
+                        {resettingProfilePin ? "Sending..." : "Reset via Email"}
+                      </Button>
+                    </div>
                   </AccordionContent>
                 </AccordionItem>
               </Accordion>
@@ -447,8 +509,38 @@ const Settings = () => {
                   <AccordionTrigger className="text-xs">Parental PIN</AccordionTrigger>
                   <AccordionContent className="space-y-3">
                     <p className="text-xs text-muted-foreground">Set a 4-digit PIN to protect parental settings.</p>
-                    <Input type="password" maxLength={4} value={parentalPin} onChange={(e) => setParentalPin(e.target.value.replace(/\D/g, ''))} placeholder="••••" className="h-8 text-sm" />
-                    <Button onClick={saveParentalControls} size="sm" className="h-7 text-xs">Save PIN</Button>
+                    <div className="relative">
+                      <Input 
+                        type={showParentalPin ? "text" : "password"} 
+                        maxLength={4} 
+                        value={parentalPin} 
+                        onChange={(e) => setParentalPin(e.target.value.replace(/\D/g, ''))} 
+                        placeholder="••••" 
+                        className="h-8 text-sm pr-10" 
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="absolute right-0 top-0 h-8 w-8"
+                        onClick={() => setShowParentalPin(!showParentalPin)}
+                      >
+                        {showParentalPin ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </Button>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button onClick={saveParentalControls} size="sm" className="h-7 text-xs">Save PIN</Button>
+                      <Button 
+                        onClick={() => handleResetPin("parental")} 
+                        variant="outline" 
+                        size="sm" 
+                        className="h-7 text-xs gap-1"
+                        disabled={resettingParentalPin}
+                      >
+                        <Mail className="h-3 w-3" />
+                        {resettingParentalPin ? "Sending..." : "Reset via Email"}
+                      </Button>
+                    </div>
                   </AccordionContent>
                 </AccordionItem>
                 <AccordionItem value="screen">

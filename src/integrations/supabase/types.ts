@@ -745,7 +745,15 @@ export type Database = {
         Args: { _raw_pin: string; _user_id: string }
         Returns: undefined
       }
+      set_parental_pin_admin: {
+        Args: { _raw_pin: string; _user_id: string }
+        Returns: undefined
+      }
       set_profile_pin: {
+        Args: { _raw_pin: string; _user_id: string }
+        Returns: undefined
+      }
+      set_profile_pin_admin: {
         Args: { _raw_pin: string; _user_id: string }
         Returns: undefined
       }
