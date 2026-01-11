@@ -33,13 +33,13 @@ const TermsOfService = () => {
             <section className="space-y-3">
               <h2 className="text-base font-semibold text-foreground">1. Acceptance of Terms</h2>
               <p>
-                Welcome to ToonReels ("App", "Service", "we", "us", or "our"). By downloading, 
-                installing, accessing, or using ToonReels, you agree to be bound by these 
+                Welcome to ToonlyReels ("App", "Service", "we", "us", or "our"). By downloading, 
+                installing, accessing, or using ToonlyReels, you agree to be bound by these 
                 Terms of Service ("Terms"). If you do not agree to these Terms, do not use 
                 the App.
               </p>
               <p>
-                ToonReels is designed for children ages 4-15 ("Children") under parental supervision. 
+                ToonlyReels is designed for children ages 4-15 ("Children") under parental supervision. 
                 Parents or legal guardians ("Parents") must review and accept these Terms on behalf 
                 of their Children before allowing use of the App.
               </p>
@@ -48,7 +48,7 @@ const TermsOfService = () => {
             <section className="space-y-3">
               <h2 className="text-base font-semibold text-foreground">2. Designed for Families</h2>
               <p>
-                ToonReels participates in the Google Play "Designed for Families" program and 
+                ToonlyReels participates in the Google Play "Designed for Families" program and 
                 complies with all applicable requirements, including:
               </p>
               <ul className="list-disc list-inside space-y-1 pl-2">
@@ -63,7 +63,7 @@ const TermsOfService = () => {
             <section className="space-y-3">
               <h2 className="text-base font-semibold text-foreground">3. Account Registration</h2>
               <p>
-                To use certain features of ToonReels, you must create an account. By creating 
+                To use certain features of ToonlyReels, you must create an account. By creating 
                 an account:
               </p>
               <ul className="list-disc list-inside space-y-1 pl-2">
@@ -78,13 +78,13 @@ const TermsOfService = () => {
             <section className="space-y-3">
               <h2 className="text-base font-semibold text-foreground">4. User Content</h2>
               <p>
-                ToonReels allows verified creators to upload animated content. By uploading content:
+                ToonlyReels allows verified creators to upload animated content. By uploading content:
               </p>
               <ul className="list-disc list-inside space-y-1 pl-2">
                 <li>You confirm you own or have rights to the content</li>
                 <li>Content must be appropriate for children ages 4-15</li>
                 <li>No violence, adult themes, or inappropriate material</li>
-                <li>You grant ToonReels a license to display and distribute your content</li>
+                <li>You grant ToonlyReels a license to display and distribute your content</li>
                 <li>Content may be reviewed and removed at our discretion</li>
               </ul>
             </section>
@@ -107,7 +107,7 @@ const TermsOfService = () => {
             <section className="space-y-3">
               <h2 className="text-base font-semibold text-foreground">6. Safety Features</h2>
               <p>
-                ToonReels includes safety features for child protection:
+                ToonlyReels includes safety features for child protection:
               </p>
               <ul className="list-disc list-inside space-y-1 pl-2">
                 <li>Content moderation and filtering</li>
@@ -138,7 +138,7 @@ const TermsOfService = () => {
             <section className="space-y-3">
               <h2 className="text-base font-semibold text-foreground">8. Intellectual Property</h2>
               <p>
-                ToonReels and its original content, features, and functionality are owned by 
+                ToonlyReels and its original content, features, and functionality are owned by 
                 SE-Motoons and are protected by international copyright, trademark, and other 
                 intellectual property laws.
               </p>
@@ -164,7 +164,7 @@ const TermsOfService = () => {
             <section className="space-y-3">
               <h2 className="text-base font-semibold text-foreground">10. Disclaimers</h2>
               <p>
-                ToonReels is provided "AS IS" without warranties of any kind. We do not guarantee:
+                ToonlyReels is provided "AS IS" without warranties of any kind. We do not guarantee:
               </p>
               <ul className="list-disc list-inside space-y-1 pl-2">
                 <li>Uninterrupted or error-free service</li>
@@ -176,7 +176,7 @@ const TermsOfService = () => {
             <section className="space-y-3">
               <h2 className="text-base font-semibold text-foreground">11. Limitation of Liability</h2>
               <p>
-                To the maximum extent permitted by law, ToonReels and SE-Motoons shall not be 
+                To the maximum extent permitted by law, ToonlyReels and SE-Motoons shall not be 
                 liable for any indirect, incidental, special, consequential, or punitive damages 
                 arising from your use of the App.
               </p>
@@ -205,15 +205,15 @@ const TermsOfService = () => {
                 If you have any questions about these Terms, please contact us:
               </p>
               <div className="bg-muted/50 rounded-lg p-4 space-y-1">
-                <p className="font-medium text-foreground">ToonReels by SE-Motoons</p>
-                <p>Email: legal@toonreels.app</p>
-                <p>Support: support@toonreels.app</p>
+                <p className="font-medium text-foreground">ToonlyReels by SE-Motoons</p>
+                <p>Email: legal@toonlyreels.app</p>
+                <p>Support: support@toonlyreels.app</p>
               </div>
             </section>
 
             <div className="pt-4 border-t border-border">
               <p className="text-xs text-center text-muted-foreground/70">
-                © 2026 ToonReels by SE-Motoons. All rights reserved.
+                © 2026 ToonlyReels by SE-Motoons. All rights reserved.
               </p>
             </div>
           </div>

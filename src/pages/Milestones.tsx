@@ -15,7 +15,7 @@ interface MilestoneBadge {
   color: string;
 }
 
-const STORAGE_KEY = 'toonreels_achieved_milestones';
+const STORAGE_KEY = 'toonlyreels_achieved_milestones';
 
 const getAchievedMilestones = (): Record<string, number[]> => {
   try {

@@ -45,12 +45,12 @@ const PrivacyPolicy = () => {
             <section className="space-y-3">
               <h2 className="text-base font-semibold text-foreground">1. Introduction</h2>
               <p>
-                ToonReels ("App", "we", "us", or "our") is operated by SE-Motoons. This Privacy 
+                ToonlyReels ("App", "we", "us", or "our") is operated by SE-Motoons. This Privacy 
                 Policy explains how we collect, use, disclose, and safeguard information when 
                 you use our mobile application.
               </p>
               <p className="font-semibold text-foreground">
-                ToonReels is designed for children ages 4-15 and participates in the Google Play 
+                ToonlyReels is designed for children ages 4-15 and participates in the Google Play 
                 "Designed for Families" program. We are fully COPPA compliant.
               </p>
             </section>
@@ -175,7 +175,7 @@ const PrivacyPolicy = () => {
                   🚫 No Behavioral Advertising
                 </p>
                 <p className="text-xs mt-1">
-                  ToonReels does NOT serve behavioral or targeted advertisements to children. 
+                  ToonlyReels does NOT serve behavioral or targeted advertisements to children. 
                   Any advertisements shown are contextual and age-appropriate, and do not track 
                   children across apps or websites.
                 </p>
@@ -211,7 +211,7 @@ const PrivacyPolicy = () => {
 
             <section className="space-y-3">
               <h2 className="text-base font-semibold text-foreground">10. Cookies & Local Storage</h2>
-              <p>ToonReels uses local storage only for:</p>
+              <p>ToonlyReels uses local storage only for:</p>
               <ul className="list-disc list-inside space-y-1 pl-2">
                 <li>Remembering your login session</li>
                 <li>Storing app preferences and settings</li>
@@ -226,7 +226,7 @@ const PrivacyPolicy = () => {
             <section className="space-y-3">
               <h2 className="text-base font-semibold text-foreground">11. Third-Party Services</h2>
               <p>
-                ToonReels may use the following third-party services:
+                ToonlyReels may use the following third-party services:
               </p>
               <ul className="list-disc list-inside space-y-1 pl-2">
                 <li>Cloud hosting for secure data storage</li>
@@ -268,16 +268,16 @@ const PrivacyPolicy = () => {
                 exercise your parental rights, please contact us:
               </p>
               <div className="bg-muted/50 rounded-lg p-4 space-y-1">
-                <p className="font-medium text-foreground">ToonReels by SE-Motoons</p>
-                <p>General Inquiries: support@toonreels.app</p>
-                <p>Privacy Concerns: privacy@toonreels.app</p>
-                <p>Parental Inquiries: parents@toonreels.app</p>
+                <p className="font-medium text-foreground">ToonlyReels by SE-Motoons</p>
+                <p>General Inquiries: support@toonlyreels.app</p>
+                <p>Privacy Concerns: privacy@toonlyreels.app</p>
+                <p>Parental Inquiries: parents@toonlyreels.app</p>
               </div>
             </section>
 
             <div className="pt-4 border-t border-border">
               <p className="text-xs text-center text-muted-foreground/70">
-                © 2026 ToonReels by SE-Motoons. All rights reserved.
+                © 2026 ToonlyReels by SE-Motoons. All rights reserved.
               </p>
             </div>
           </div>

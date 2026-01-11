@@ -5,19 +5,19 @@ export const useAgeVerification = () => {
 
   useEffect(() => {
     // Check if user has already verified
-    const verified = localStorage.getItem("toonreels_age_verified");
+    const verified = localStorage.getItem("toonlyreels_age_verified");
     setIsVerified(verified === "true");
   }, []);
 
   const verify = () => {
-    localStorage.setItem("toonreels_age_verified", "true");
-    localStorage.setItem("toonreels_verification_date", new Date().toISOString());
+    localStorage.setItem("toonlyreels_age_verified", "true");
+    localStorage.setItem("toonlyreels_verification_date", new Date().toISOString());
     setIsVerified(true);
   };
 
   const reset = () => {
-    localStorage.removeItem("toonreels_age_verified");
-    localStorage.removeItem("toonreels_verification_date");
+    localStorage.removeItem("toonlyreels_age_verified");
+    localStorage.removeItem("toonlyreels_verification_date");
     setIsVerified(false);
   };
 

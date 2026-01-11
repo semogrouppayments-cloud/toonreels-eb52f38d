@@ -1,6 +1,6 @@
-# ToonReels Android APK Build Guide
+# ToonlyReels Android APK Build Guide
 
-This guide walks you through building the ToonReels Android APK for distribution.
+This guide walks you through building the ToonlyReels Android APK for distribution.
 
 ## Prerequisites
 
@@ -55,7 +55,7 @@ import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
   appId: 'app.lovable.e97ab73c05cf482e9177c2c702a4a0b7',
-  appName: 'ToonReels',
+  appName: 'ToonlyReels',
   webDir: 'dist',
   android: {
     allowMixedContent: true,
@@ -121,7 +121,7 @@ APK location: `android/app/build/outputs/apk/debug/app-debug.apk`
 3. Create a new keystore or use existing one:
    - **Key store path**: Choose location to save
    - **Password**: Create a strong password
-   - **Key alias**: e.g., `toonreels-key`
+   - **Key alias**: e.g., `toonlyreels-key`
    - **Key password**: Create a strong password
    - **Validity**: 25 years (recommended)
    - Fill in certificate information
@@ -192,6 +192,6 @@ npx cap sync android
 ## App Details
 
 - **App ID**: `app.lovable.e97ab73c05cf482e9177c2c702a4a0b7`
-- **App Name**: ToonReels
+- **App Name**: ToonlyReels
 - **Min SDK**: 22 (Android 5.1)
 - **Target SDK**: 34 (Android 14)

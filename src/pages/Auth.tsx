@@ -190,11 +190,11 @@ const Auth = () => {
         
         <img 
           src={toonreelsLogo} 
-          alt="ToonReels" 
+          alt="ToonlyReels" 
           className="w-32 h-32 mb-6 animate-bounce drop-shadow-2xl relative z-10"
         />
         <h1 className="text-4xl font-black text-white mb-2 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-300 drop-shadow-lg relative z-10">
-          ToonReels
+          ToonlyReels
         </h1>
         <p className="text-white/80 text-lg animate-in fade-in slide-in-from-bottom-4 duration-700 delay-500 drop-shadow-md relative z-10">
           Watch. Create. Share.
@@ -224,7 +224,7 @@ const Auth = () => {
             <Play className="h-8 w-8 text-primary-foreground fill-primary-foreground" />
           </div>
           <CardTitle className="text-3xl font-black">
-            {isSignUp ? 'Join ToonReels!' : 'Welcome Back!'}
+            {isSignUp ? 'Join ToonlyReels!' : 'Welcome Back!'}
           </CardTitle>
           <CardDescription>
             {isSignUp ? 'Create your account to start watching' : 'Sign in to continue'}

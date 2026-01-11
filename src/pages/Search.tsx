@@ -353,7 +353,7 @@ const Search = () => {
                           {c.follower_count} {c.follower_count === 1 ? 'follower' : 'followers'}
                         </p>
                       </div>
-                      {c.is_verified && c.username === 'ToonReelsOff' ? (
+                      {c.is_verified && c.username === 'ToonlyReelsOff' ? (
                         <span className="text-yellow-400 text-base drop-shadow-[0_0_1px_rgba(0,0,0,1)] [text-shadow:_-1px_-1px_0_#000,_1px_-1px_0_#000,_-1px_1px_0_#000,_1px_1px_0_#000]">
                           ⭐
                         </span>
