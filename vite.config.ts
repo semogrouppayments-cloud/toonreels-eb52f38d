@@ -17,8 +17,8 @@ export default defineConfig(({ mode }) => ({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'robots.txt'],
       manifest: {
-        name: 'ToonReels - Animated Fun for Kids',
-        short_name: 'ToonReels',
+        name: 'ToonlyReels - Animated Fun for Kids',
+        short_name: 'ToonlyReels',
         description: 'Watch and share amazing animated cartoons for kids',
         theme_color: '#FF6B6B',
         background_color: '#FFFFFF',
