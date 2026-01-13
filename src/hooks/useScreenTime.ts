@@ -21,7 +21,7 @@ export const useScreenTime = (userId: string | null) => {
         .from('parental_controls')
         .select('*')
         .eq('user_id', userId)
-        .single();
+        .maybeSingle();
 
       if (!controls) {
         setIsLocked(false);
@@ -69,8 +69,8 @@ export const useScreenTime = (userId: string | null) => {
         }
       }
 
-      // Check screen time limit (only if enabled)
-      if (controls.screen_time_enabled !== false && controls.screen_time_limit) {
+      // Check screen time limit (only if explicitly enabled)
+      if (controls.screen_time_enabled === true && controls.screen_time_limit) {
         setTimeLimit(controls.screen_time_limit);
         
         const usageKey = getUsageKey();
