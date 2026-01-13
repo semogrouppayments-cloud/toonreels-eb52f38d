@@ -58,6 +58,7 @@ const Settings = () => {
   const [notifComments, setNotifComments] = useState(true);
   const [notifFollows, setNotifFollows] = useState(true);
   const [notifReplies, setNotifReplies] = useState(true);
+  const [notifNewVideos, setNotifNewVideos] = useState(true);
   const [notifPush, setNotifPush] = useState(false);
   const [notifSound, setNotifSound] = useState(true);
   const [isCreative, setIsCreative] = useState(false);
@@ -140,6 +141,7 @@ const Settings = () => {
         setNotifComments(notifPrefs.comments_enabled);
         setNotifFollows(notifPrefs.follows_enabled);
         setNotifReplies(notifPrefs.replies_enabled);
+        setNotifNewVideos((notifPrefs as any).new_videos_enabled !== false);
         setNotifPush(notifPrefs.push_enabled);
         setNotifSound(notifPrefs.sound_enabled);
       }
@@ -292,6 +294,7 @@ const Settings = () => {
         comments_enabled: notifComments,
         follows_enabled: notifFollows,
         replies_enabled: notifReplies,
+        new_videos_enabled: notifNewVideos,
         push_enabled: notifPush,
         sound_enabled: notifSound
       });
@@ -739,6 +742,13 @@ const Settings = () => {
                     <div className="flex justify-between"><Label className="text-xs">Comments</Label><Switch checked={notifComments} onCheckedChange={setNotifComments} /></div>
                     <div className="flex justify-between"><Label className="text-xs">Follows</Label><Switch checked={notifFollows} onCheckedChange={setNotifFollows} /></div>
                     <div className="flex justify-between"><Label className="text-xs">Replies</Label><Switch checked={notifReplies} onCheckedChange={setNotifReplies} /></div>
+                    <div className="flex justify-between">
+                      <div>
+                        <Label className="text-xs">New Video Uploads</Label>
+                        <p className="text-[10px] text-muted-foreground">Get notified when creators you follow upload</p>
+                      </div>
+                      <Switch checked={notifNewVideos} onCheckedChange={setNotifNewVideos} />
+                    </div>
                     <Button onClick={saveNotificationSettings} size="sm" className="h-7 text-xs">Save</Button>
                   </AccordionContent>
                 </AccordionItem>

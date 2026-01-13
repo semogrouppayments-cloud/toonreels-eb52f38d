@@ -31,6 +31,7 @@ interface NotificationPreferences {
   comments_enabled: boolean;
   follows_enabled: boolean;
   replies_enabled: boolean;
+  new_videos_enabled: boolean;
   push_enabled: boolean;
   sound_enabled: boolean;
 }
@@ -45,6 +46,7 @@ const NotificationBell = () => {
     comments_enabled: true,
     follows_enabled: true,
     replies_enabled: true,
+    new_videos_enabled: true,
     push_enabled: false,
     sound_enabled: true,
   });
@@ -71,7 +73,8 @@ const NotificationBell = () => {
             (newNotification.type === 'like' && preferences.likes_enabled) ||
             (newNotification.type === 'comment' && preferences.comments_enabled) ||
             (newNotification.type === 'follow' && preferences.follows_enabled) ||
-            (newNotification.type === 'reply' && preferences.replies_enabled);
+            (newNotification.type === 'reply' && preferences.replies_enabled) ||
+            (newNotification.type === 'new_video' && preferences.new_videos_enabled);
           
           if (typeEnabled) {
             // Play sound if enabled
@@ -109,7 +112,10 @@ const NotificationBell = () => {
       .single();
 
     if (data) {
-      setPreferences(data);
+      setPreferences({
+        ...data,
+        new_videos_enabled: (data as any).new_videos_enabled !== false,
+      });
     }
   };
 
@@ -159,7 +165,7 @@ const NotificationBell = () => {
     if (preferences.comments_enabled) enabledTypes.push('comment');
     if (preferences.follows_enabled) enabledTypes.push('follow');
     if (preferences.replies_enabled) enabledTypes.push('reply');
-    enabledTypes.push('new_video'); // Always include new_video notifications
+    if (preferences.new_videos_enabled) enabledTypes.push('new_video');
 
     if (enabledTypes.length > 0) {
       query = query.in('type', enabledTypes);

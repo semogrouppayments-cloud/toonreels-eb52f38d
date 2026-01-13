@@ -1062,11 +1062,19 @@ const Profile = () => {
                       {/* Gradient overlay for text readability */}
                       <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
                       
-                      {/* Creator attribution - shows who made this reel */}
-                      <div className="absolute top-2 left-2 right-2">
-                        <div className="bg-black/50 backdrop-blur-sm px-2 py-1 rounded text-white">
+                      {/* Creator attribution - shows who made this reel, clickable to go to profile */}
+                      <div 
+                        className="absolute top-2 left-2 right-2 cursor-pointer"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (video.creator_id) {
+                            navigate(`/profile?userId=${video.creator_id}`);
+                          }
+                        }}
+                      >
+                        <div className="bg-black/50 backdrop-blur-sm px-2 py-1 rounded text-white hover:bg-black/70 transition-colors">
                           <p className="text-[10px] font-semibold truncate">
-                            By: {video.creator_username || 'Unknown Creator'}
+                            By: {video.creator_username || 'Unknown Creator'} →
                           </p>
                           <p className="text-[8px] text-white/70 truncate">
                             Saved by {profile.username}
