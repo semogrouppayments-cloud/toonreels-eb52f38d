@@ -279,6 +279,7 @@ export type Database = {
           follows_enabled: boolean | null
           id: string
           likes_enabled: boolean | null
+          new_videos_enabled: boolean | null
           push_enabled: boolean | null
           replies_enabled: boolean | null
           sound_enabled: boolean | null
@@ -291,6 +292,7 @@ export type Database = {
           follows_enabled?: boolean | null
           id?: string
           likes_enabled?: boolean | null
+          new_videos_enabled?: boolean | null
           push_enabled?: boolean | null
           replies_enabled?: boolean | null
           sound_enabled?: boolean | null
@@ -303,6 +305,7 @@ export type Database = {
           follows_enabled?: boolean | null
           id?: string
           likes_enabled?: boolean | null
+          new_videos_enabled?: boolean | null
           push_enabled?: boolean | null
           replies_enabled?: boolean | null
           sound_enabled?: boolean | null
