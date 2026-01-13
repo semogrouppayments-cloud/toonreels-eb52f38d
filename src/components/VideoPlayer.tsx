@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { Heart, MessageCircle, Download, Flag, Trash2, Volume2, VolumeX, Bookmark, BookmarkCheck, Play, Settings, Repeat, Maximize, Minimize, Ban } from 'lucide-react';
+import { Heart, MessageCircle, Download, Flag, Trash2, Volume2, VolumeX, Bookmark, BookmarkCheck, Play, Settings, Repeat, Maximize, Minimize, Ban, BadgeCheck } from 'lucide-react';
 import { toast } from 'sonner';
 import { useSignedVideoUrl } from '@/hooks/useSignedVideoUrl';
 import LikeAnimation from '@/components/LikeAnimation';
@@ -972,9 +972,7 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
                 ⭐
               </span>
             ) : video.profiles.is_verified && (
-              <span className="bg-blue-500 text-white text-[8px] px-1.5 py-0.5 rounded-full font-bold flex items-center gap-0.5">
-                ✓
-              </span>
+              <BadgeCheck className="h-4 w-4 text-blue-500 drop-shadow-lg" fill="white" />
             )}
           </div>
           
