@@ -367,9 +367,11 @@ export type Database = {
           created_at: string | null
           id: string
           parental_pin: string | null
+          profile_pin_enabled: boolean | null
           school_end_time: string | null
           school_hours_lock: boolean | null
           school_start_time: string | null
+          screen_time_enabled: boolean | null
           screen_time_limit: number | null
           updated_at: string | null
           user_id: string
@@ -381,9 +383,11 @@ export type Database = {
           created_at?: string | null
           id?: string
           parental_pin?: string | null
+          profile_pin_enabled?: boolean | null
           school_end_time?: string | null
           school_hours_lock?: boolean | null
           school_start_time?: string | null
+          screen_time_enabled?: boolean | null
           screen_time_limit?: number | null
           updated_at?: string | null
           user_id: string
@@ -395,9 +399,11 @@ export type Database = {
           created_at?: string | null
           id?: string
           parental_pin?: string | null
+          profile_pin_enabled?: boolean | null
           school_end_time?: string | null
           school_hours_lock?: boolean | null
           school_start_time?: string | null
+          screen_time_enabled?: boolean | null
           screen_time_limit?: number | null
           updated_at?: string | null
           user_id?: string
