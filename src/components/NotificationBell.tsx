@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Bell } from 'lucide-react';
+import { Bell, Play } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
@@ -22,6 +22,7 @@ interface Notification {
   };
   video?: {
     title: string;
+    thumbnail_url?: string;
   };
 }
 
@@ -148,7 +149,7 @@ const NotificationBell = () => {
       .select(`
         *,
         actor_profile:profiles!notifications_actor_id_fkey(username, avatar_url),
-        video:videos(title)
+        video:videos(title, thumbnail_url)
       `)
       .eq('user_id', user.id);
 
@@ -158,6 +159,7 @@ const NotificationBell = () => {
     if (preferences.comments_enabled) enabledTypes.push('comment');
     if (preferences.follows_enabled) enabledTypes.push('follow');
     if (preferences.replies_enabled) enabledTypes.push('reply');
+    enabledTypes.push('new_video'); // Always include new_video notifications
 
     if (enabledTypes.length > 0) {
       query = query.in('type', enabledTypes);
@@ -199,13 +201,14 @@ const NotificationBell = () => {
     setUnreadCount(0);
   };
 
-  const handleNotificationClick = (notification: Notification) => {
+  const handleNotificationClick = (notification: Notification, playVideo: boolean = false) => {
     markAsRead(notification.id);
     
     if (notification.type === 'follow') {
       navigate(`/profile?userId=${notification.actor_id}`);
     } else if (notification.video_id) {
-      navigate(`/feed`); // Navigate to feed where video is visible
+      // Navigate to feed with specific video
+      navigate(`/feed?video=${notification.video_id}`);
     }
     
     setOpen(false);
@@ -290,21 +293,26 @@ const NotificationBell = () => {
               notifications.map((notification) => (
                 <div
                   key={notification.id}
-                  onClick={() => handleNotificationClick(notification)}
-                  className={`p-4 rounded-lg cursor-pointer transition-colors ${
+                  className={`p-4 rounded-lg transition-colors ${
                     notification.is_read
                       ? 'bg-background hover:bg-accent'
                       : 'bg-accent hover:bg-accent/80'
                   }`}
                 >
                   <div className="flex items-start gap-3">
-                    <Avatar className="h-10 w-10">
+                    <Avatar 
+                      className="h-10 w-10 cursor-pointer"
+                      onClick={() => handleNotificationClick(notification)}
+                    >
                       <AvatarImage src={notification.actor_profile?.avatar_url} />
                       <AvatarFallback>
                         {notification.actor_profile?.username?.[0]?.toUpperCase() || '?'}
                       </AvatarFallback>
                     </Avatar>
-                    <div className="flex-1 min-w-0">
+                    <div 
+                      className="flex-1 min-w-0 cursor-pointer"
+                      onClick={() => handleNotificationClick(notification)}
+                    >
                       <div className="flex items-start justify-between gap-2">
                         <p className="text-sm font-medium leading-tight">
                           {getNotificationText(notification)}
@@ -320,6 +328,41 @@ const NotificationBell = () => {
                       </p>
                     </div>
                   </div>
+                  
+                  {/* Video preview for new_video notifications */}
+                  {notification.type === 'new_video' && notification.video_id && (
+                    <div 
+                      className="mt-3 ml-13 cursor-pointer group"
+                      onClick={() => handleNotificationClick(notification, true)}
+                    >
+                      <div className="relative rounded-lg overflow-hidden bg-muted aspect-video max-w-[200px]">
+                        {notification.video?.thumbnail_url ? (
+                          <img 
+                            src={notification.video.thumbnail_url} 
+                            alt={notification.video?.title || 'Video'} 
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
+                            <Play className="h-8 w-8 text-primary/50" />
+                          </div>
+                        )}
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                          <div className="bg-white/90 rounded-full p-2">
+                            <Play className="h-6 w-6 text-black fill-black" />
+                          </div>
+                        </div>
+                        <div className="absolute bottom-1 left-1 right-1">
+                          <p className="text-white text-[10px] font-medium drop-shadow-lg line-clamp-1 bg-black/50 px-1 rounded">
+                            {notification.video?.title || 'New Video'}
+                          </p>
+                        </div>
+                      </div>
+                      <p className="text-xs text-primary mt-1 group-hover:underline">
+                        Tap to watch now →
+                      </p>
+                    </div>
+                  )}
                 </div>
               ))
             )}
