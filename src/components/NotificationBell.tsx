@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Bell, Play } from 'lucide-react';
+import { Bell, Play, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
@@ -41,6 +41,8 @@ const NotificationBell = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [open, setOpen] = useState(false);
+  const [showBadgePreview, setShowBadgePreview] = useState(false);
+  const [latestVideoNotification, setLatestVideoNotification] = useState<Notification | null>(null);
   const [preferences, setPreferences] = useState<NotificationPreferences>({
     likes_enabled: true,
     comments_enabled: true,
@@ -178,6 +180,15 @@ const NotificationBell = () => {
     if (data) {
       setNotifications(data as any);
       setUnreadCount(data.filter(n => !n.is_read).length);
+      
+      // Find latest unread new_video notification for badge preview
+      const latestVideo = (data as any[]).find(
+        n => n.type === 'new_video' && !n.is_read && n.video?.thumbnail_url
+      );
+      if (latestVideo && !open) {
+        setLatestVideoNotification(latestVideo);
+        setShowBadgePreview(true);
+      }
     }
   };
 
@@ -256,23 +267,91 @@ const NotificationBell = () => {
     }
   };
 
+  const handleBadgePreviewClick = () => {
+    if (latestVideoNotification) {
+      markAsRead(latestVideoNotification.id);
+      navigate(`/feed?video=${latestVideoNotification.video_id}`);
+      setShowBadgePreview(false);
+      setLatestVideoNotification(null);
+    }
+  };
+
+  const dismissBadgePreview = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setShowBadgePreview(false);
+    setLatestVideoNotification(null);
+  };
+
   return (
-    <Sheet open={open} onOpenChange={setOpen}>
-      <SheetTrigger asChild>
-        <Button
-          variant="secondary"
-          size="icon"
-          className="rounded-full relative"
+    <div className="relative">
+      {/* Badge Preview Popup */}
+      {showBadgePreview && latestVideoNotification && !open && (
+        <div 
+          className="absolute -top-2 right-12 z-50 animate-in slide-in-from-right-2 fade-in duration-300"
+          onClick={handleBadgePreviewClick}
         >
-          <Bell className="h-5 w-5" />
-          {unreadCount > 0 && (
-            <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-primary text-primary-foreground text-xs flex items-center justify-center font-bold">
-              {unreadCount > 9 ? '9+' : unreadCount}
-            </span>
-          )}
-        </Button>
-      </SheetTrigger>
-      <SheetContent side="right" className="w-full sm:max-w-md">
+          <div className="bg-card border border-border rounded-lg shadow-lg overflow-hidden w-48 cursor-pointer group">
+            <div className="relative aspect-video">
+              {latestVideoNotification.video?.thumbnail_url ? (
+                <img 
+                  src={latestVideoNotification.video.thumbnail_url} 
+                  alt={latestVideoNotification.video?.title || 'New Video'} 
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
+                  <Play className="h-6 w-6 text-primary/50" />
+                </div>
+              )}
+              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                <div className="bg-white/90 rounded-full p-2">
+                  <Play className="h-5 w-5 text-black fill-black" />
+                </div>
+              </div>
+              <button
+                onClick={dismissBadgePreview}
+                className="absolute top-1 right-1 bg-black/60 hover:bg-black/80 rounded-full p-1 transition-colors"
+              >
+                <X className="h-3 w-3 text-white" />
+              </button>
+            </div>
+            <div className="p-2 bg-card">
+              <p className="text-xs font-medium text-foreground line-clamp-1">
+                {latestVideoNotification.actor_profile?.username} uploaded
+              </p>
+              <p className="text-[10px] text-muted-foreground line-clamp-1">
+                {latestVideoNotification.video?.title || 'New Video'}
+              </p>
+            </div>
+          </div>
+          {/* Arrow pointing to bell */}
+          <div className="absolute top-1/2 -right-2 transform -translate-y-1/2">
+            <div className="w-0 h-0 border-t-[6px] border-t-transparent border-b-[6px] border-b-transparent border-l-[6px] border-l-border"></div>
+          </div>
+        </div>
+      )}
+
+      <Sheet open={open} onOpenChange={(isOpen) => {
+        setOpen(isOpen);
+        if (isOpen) {
+          setShowBadgePreview(false);
+        }
+      }}>
+        <SheetTrigger asChild>
+          <Button
+            variant="secondary"
+            size="icon"
+            className="rounded-full relative"
+          >
+            <Bell className="h-5 w-5" />
+            {unreadCount > 0 && (
+              <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-primary text-primary-foreground text-xs flex items-center justify-center font-bold">
+                {unreadCount > 9 ? '9+' : unreadCount}
+              </span>
+            )}
+          </Button>
+        </SheetTrigger>
+        <SheetContent side="right" className="w-full sm:max-w-md">
         <SheetHeader>
           <div className="flex items-center justify-between">
             <SheetTitle>Notifications</SheetTitle>
@@ -376,6 +455,7 @@ const NotificationBell = () => {
         </ScrollArea>
       </SheetContent>
     </Sheet>
+    </div>
   );
 };
 
