@@ -39,8 +39,10 @@ const Settings = () => {
   const [commentsVisibility, setCommentsVisibility] = useState("emoji_only");
   const [interactionLimits, setInteractionLimits] = useState(true);
   const [screenTimeLimit, setScreenTimeLimit] = useState(60);
+  const [screenTimeEnabled, setScreenTimeEnabled] = useState(true);
   const [schoolHoursLock, setSchoolHoursLock] = useState(false);
   const [bedtimeLock, setBedtimeLock] = useState(false);
+  const [profilePinEnabled, setProfilePinEnabled] = useState(true);
   const [parentalPin, setParentalPin] = useState("");
   const [autoplay, setAutoplay] = useState(true);
   const [videoQuality, setVideoQuality] = useState("auto");
@@ -116,10 +118,12 @@ const Settings = () => {
       
       const { data: parentalControls } = await supabase.from('parental_controls').select('*').eq('user_id', user.id).single();
       if (parentalControls) {
-        setScreenTimeLimit(parentalControls.screen_time_limit);
-        setSchoolHoursLock(parentalControls.school_hours_lock);
-        setBedtimeLock(parentalControls.bedtime_lock);
+        setScreenTimeLimit(parentalControls.screen_time_limit || 60);
+        setScreenTimeEnabled(parentalControls.screen_time_enabled !== false);
+        setSchoolHoursLock(parentalControls.school_hours_lock || false);
+        setBedtimeLock(parentalControls.bedtime_lock || false);
         setParentalPin(parentalControls.parental_pin || "");
+        setProfilePinEnabled(parentalControls.profile_pin_enabled !== false);
       }
       
       const { data: playbackSettings } = await supabase.from('playback_settings').select('*').eq('user_id', user.id).single();
@@ -220,7 +224,14 @@ const Settings = () => {
   const saveParentalControls = async () => {
     if (!userId) return;
     try {
-      const updates: any = { user_id: userId, screen_time_limit: screenTimeLimit, school_hours_lock: schoolHoursLock, bedtime_lock: bedtimeLock };
+      const updates: any = { 
+        user_id: userId, 
+        screen_time_limit: screenTimeLimit, 
+        screen_time_enabled: screenTimeEnabled,
+        school_hours_lock: schoolHoursLock, 
+        bedtime_lock: bedtimeLock,
+        profile_pin_enabled: profilePinEnabled
+      };
       
       // Save other settings first (without PIN)
       await supabase.from('parental_controls').upsert(updates);
@@ -230,6 +241,15 @@ const Settings = () => {
         const { error } = await supabase.rpc('set_parental_pin', {
           _user_id: userId,
           _raw_pin: parentalPin.trim()
+        });
+        if (error) throw error;
+      }
+      
+      // Save profile PIN if provided
+      if (profilePin && profilePin.trim()) {
+        const { error } = await supabase.rpc('set_profile_pin', {
+          _user_id: userId,
+          _raw_pin: profilePin.trim()
         });
         if (error) throw error;
       }
@@ -401,44 +421,6 @@ const Settings = () => {
                     </div>
                   </AccordionContent>
                 </AccordionItem>
-                <AccordionItem value="pin">
-                  <AccordionTrigger className="text-xs">Profile PIN</AccordionTrigger>
-                  <AccordionContent className="space-y-3">
-                    <p className="text-xs text-muted-foreground">Set a 4-digit PIN to protect your profile.</p>
-                    <div className="relative">
-                      <Input 
-                        type={showProfilePin ? "text" : "password"} 
-                        maxLength={4} 
-                        value={profilePin} 
-                        onChange={(e) => setProfilePin(e.target.value.replace(/\D/g, ''))} 
-                        placeholder="••••" 
-                        className="h-8 text-sm pr-10" 
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="absolute right-0 top-0 h-8 w-8"
-                        onClick={() => setShowProfilePin(!showProfilePin)}
-                      >
-                        {showProfilePin ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                      </Button>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button onClick={saveProfileSettings} size="sm" className="h-7 text-xs">Save PIN</Button>
-                      <Button 
-                        onClick={() => handleResetPin("profile")} 
-                        variant="outline" 
-                        size="sm" 
-                        className="h-7 text-xs gap-1"
-                        disabled={resettingProfilePin}
-                      >
-                        <Mail className="h-3 w-3" />
-                        {resettingProfilePin ? "Sending..." : "Reset via Email"}
-                      </Button>
-                    </div>
-                  </AccordionContent>
-                </AccordionItem>
               </Accordion>
             </CollapsibleContent>
           </Collapsible>
@@ -505,10 +487,69 @@ const Settings = () => {
             <SectionHeader title="Parental Controls" section="parental" />
             <CollapsibleContent className="mt-2 bg-card rounded-xl border border-border p-3">
               <Accordion type="single" collapsible>
-                <AccordionItem value="pin">
+                <AccordionItem value="profile-pin">
+                  <AccordionTrigger className="text-xs">Profile PIN (Child Lock)</AccordionTrigger>
+                  <AccordionContent className="space-y-3">
+                    <p className="text-xs text-muted-foreground">Set a 4-digit PIN to protect child's profile. Toggle off during weekends/holidays.</p>
+                    <div className="flex justify-between items-center">
+                      <Label className="text-xs">Profile PIN Enabled</Label>
+                      <Switch checked={profilePinEnabled} onCheckedChange={setProfilePinEnabled} />
+                    </div>
+                    <div className="relative">
+                      <Input 
+                        type={showProfilePin ? "text" : "password"} 
+                        maxLength={4} 
+                        value={profilePin} 
+                        onChange={(e) => setProfilePin(e.target.value.replace(/\D/g, ''))} 
+                        placeholder="••••" 
+                        className="h-8 text-sm pr-10" 
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="absolute right-0 top-0 h-8 w-8"
+                        onClick={() => setShowProfilePin(!showProfilePin)}
+                      >
+                        {showProfilePin ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </Button>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button onClick={saveParentalControls} size="sm" className="h-7 text-xs">Save</Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="h-7 text-xs gap-1"
+                            disabled={resettingProfilePin}
+                          >
+                            <Mail className="h-3 w-3" />
+                            {resettingProfilePin ? "Sending..." : "Reset via Email"}
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Reset Profile PIN?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              A new 4-digit PIN will be generated and sent to your registered email address. This will replace the current PIN.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => handleResetPin("profile")}>
+                              Send New PIN
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+                <AccordionItem value="parental-pin">
                   <AccordionTrigger className="text-xs">Parental PIN</AccordionTrigger>
                   <AccordionContent className="space-y-3">
-                    <p className="text-xs text-muted-foreground">Set a 4-digit PIN to protect parental settings.</p>
+                    <p className="text-xs text-muted-foreground">Set a 4-digit PIN to protect parental settings and unlock controls.</p>
                     <div className="relative">
                       <Input 
                         type={showParentalPin ? "text" : "password"} 
@@ -529,26 +570,55 @@ const Settings = () => {
                       </Button>
                     </div>
                     <div className="flex gap-2">
-                      <Button onClick={saveParentalControls} size="sm" className="h-7 text-xs">Save PIN</Button>
-                      <Button 
-                        onClick={() => handleResetPin("parental")} 
-                        variant="outline" 
-                        size="sm" 
-                        className="h-7 text-xs gap-1"
-                        disabled={resettingParentalPin}
-                      >
-                        <Mail className="h-3 w-3" />
-                        {resettingParentalPin ? "Sending..." : "Reset via Email"}
-                      </Button>
+                      <Button onClick={saveParentalControls} size="sm" className="h-7 text-xs">Save</Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="h-7 text-xs gap-1"
+                            disabled={resettingParentalPin}
+                          >
+                            <Mail className="h-3 w-3" />
+                            {resettingParentalPin ? "Sending..." : "Reset via Email"}
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Reset Parental PIN?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              A new 4-digit PIN will be generated and sent to your registered email address. This will replace the current PIN.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => handleResetPin("parental")}>
+                              Send New PIN
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
                     </div>
                   </AccordionContent>
                 </AccordionItem>
                 <AccordionItem value="screen">
                   <AccordionTrigger className="text-xs">Screen Time Limit</AccordionTrigger>
                   <AccordionContent className="space-y-3">
-                    <p className="text-xs text-muted-foreground">Set daily screen time limit in minutes (0 = unlimited).</p>
+                    <p className="text-xs text-muted-foreground">Set daily screen time limit. Toggle off during holidays.</p>
+                    <div className="flex justify-between items-center">
+                      <Label className="text-xs">Screen Time Enabled</Label>
+                      <Switch checked={screenTimeEnabled} onCheckedChange={setScreenTimeEnabled} />
+                    </div>
                     <div className="flex items-center gap-2">
-                      <Input type="number" min={0} max={480} value={screenTimeLimit} onChange={(e) => setScreenTimeLimit(parseInt(e.target.value) || 0)} className="h-8 text-sm w-24" />
+                      <Input 
+                        type="number" 
+                        min={0} 
+                        max={480} 
+                        value={screenTimeLimit} 
+                        onChange={(e) => setScreenTimeLimit(parseInt(e.target.value) || 0)} 
+                        className="h-8 text-sm w-24" 
+                        disabled={!screenTimeEnabled}
+                      />
                       <span className="text-xs text-muted-foreground">minutes/day</span>
                     </div>
                     <Button onClick={saveParentalControls} size="sm" className="h-7 text-xs">Save</Button>
@@ -557,7 +627,7 @@ const Settings = () => {
                 <AccordionItem value="school">
                   <AccordionTrigger className="text-xs">School Hours Lock</AccordionTrigger>
                   <AccordionContent className="space-y-3">
-                    <p className="text-xs text-muted-foreground">Block app usage during school hours (8 AM - 3 PM weekdays).</p>
+                    <p className="text-xs text-muted-foreground">Block app during school hours (8 AM - 3 PM weekdays). Toggle off during holidays.</p>
                     <div className="flex justify-between"><Label className="text-xs">Enabled</Label><Switch checked={schoolHoursLock} onCheckedChange={setSchoolHoursLock} /></div>
                     <Button onClick={saveParentalControls} size="sm" className="h-7 text-xs">Save</Button>
                   </AccordionContent>
@@ -565,7 +635,7 @@ const Settings = () => {
                 <AccordionItem value="bedtime">
                   <AccordionTrigger className="text-xs">Bedtime Lock</AccordionTrigger>
                   <AccordionContent className="space-y-3">
-                    <p className="text-xs text-muted-foreground">Block app usage during bedtime hours (9 PM - 7 AM).</p>
+                    <p className="text-xs text-muted-foreground">Block app during bedtime hours (9 PM - 7 AM).</p>
                     <div className="flex justify-between"><Label className="text-xs">Enabled</Label><Switch checked={bedtimeLock} onCheckedChange={setBedtimeLock} /></div>
                     <Button onClick={saveParentalControls} size="sm" className="h-7 text-xs">Save</Button>
                   </AccordionContent>

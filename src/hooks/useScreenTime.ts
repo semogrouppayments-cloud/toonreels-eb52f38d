@@ -69,8 +69,8 @@ export const useScreenTime = (userId: string | null) => {
         }
       }
 
-      // Check screen time limit
-      if (controls.screen_time_limit) {
+      // Check screen time limit (only if enabled)
+      if (controls.screen_time_enabled !== false && controls.screen_time_limit) {
         setTimeLimit(controls.screen_time_limit);
         
         const usageKey = getUsageKey();
