@@ -197,9 +197,10 @@ const CommentsSheet = ({ videoId, isOpen, onClose, currentUserId }: CommentsShee
                     size="sm"
                     variant="ghost"
                     onClick={() => handleReportComment(comment.id)}
-                    className="h-7 px-2"
+                    className="h-7 px-2 text-orange-500"
                   >
-                    <Flag className="h-3 w-3" />
+                    <Flag className="h-3 w-3 mr-1" />
+                    <span className="text-xs">Report</span>
                   </Button>
                   {comment.user_id !== currentUserId && (
                     <Button

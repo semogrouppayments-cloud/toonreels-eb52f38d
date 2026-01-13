@@ -55,6 +55,8 @@ interface Video {
   video_url: string;
   description: string;
   creator_id: string;
+  creator_username?: string;
+  creator_avatar_url?: string;
 }
 
 const Profile = () => {
@@ -84,6 +86,8 @@ const Profile = () => {
   const [milestoneToShow, setMilestoneToShow] = useState<{ type: MilestoneType; value: number } | null>(null);
   const [showVerificationDialog, setShowVerificationDialog] = useState(false);
   const [verificationStatus, setVerificationStatus] = useState<string | null>(null);
+  const [showFollowersList, setShowFollowersList] = useState(false);
+  const [followers, setFollowers] = useState<{ id: string; username: string; avatar_url: string | null }[]>([]);
 
   // Check for milestones when stats load
   useEffect(() => {
@@ -314,15 +318,50 @@ const Profile = () => {
           likes_count,
           video_url,
           description,
-          creator_id
+          creator_id,
+          profiles:creator_id (
+            username,
+            avatar_url
+          )
         )
       `)
       .eq('user_id', targetUserId)
       .order('created_at', { ascending: false });
 
     if (data) {
-      const videos = data.map(item => item.videos).filter(Boolean) as Video[];
+      const videos = data.map(item => {
+        const video = item.videos as any;
+        if (!video) return null;
+        return {
+          ...video,
+          creator_username: video.profiles?.username,
+          creator_avatar_url: video.profiles?.avatar_url,
+        };
+      }).filter(Boolean) as Video[];
       setSavedVideos(videos);
+    }
+  };
+
+  const fetchFollowers = async (targetUserId: string) => {
+    const { data } = await supabase
+      .from('follows')
+      .select(`
+        follower_id,
+        profiles:follower_id (
+          id,
+          username,
+          avatar_url
+        )
+      `)
+      .eq('following_id', targetUserId);
+
+    if (data) {
+      const followersList = data.map((item: any) => ({
+        id: item.profiles?.id || item.follower_id,
+        username: item.profiles?.username || 'Unknown',
+        avatar_url: item.profiles?.avatar_url || null,
+      }));
+      setFollowers(followersList);
     }
   };
 
@@ -752,21 +791,21 @@ const Profile = () => {
                 
                 {/* Bio Section */}
                 {editingBio && isOwnProfile ? (
-                  <div className="mt-2 space-y-2">
-                    <div className="relative">
+                  <div className="mt-2 flex items-start gap-2">
+                    <div className="relative flex-1">
                       <textarea
                         value={newBio}
                         onChange={(e) => setNewBio(e.target.value)}
                         maxLength={50}
                         placeholder="Add a bio..."
                         className="w-full max-w-xs text-white bg-black/30 backdrop-blur-sm rounded-lg p-2 text-xs resize-none border border-white/20 focus:border-white/40 outline-none"
-                        rows={3}
+                        rows={2}
                       />
                       <span className="text-[10px] text-white/60 absolute bottom-1 right-2">
                         {newBio.length}/50
                       </span>
                     </div>
-                    <div className="flex gap-1">
+                    <div className="flex gap-1 shrink-0">
                       <Button size="sm" onClick={handleBioUpdate} className="h-6 text-[10px] px-2">
                         Save
                       </Button>
@@ -784,7 +823,7 @@ const Profile = () => {
                     </div>
                   </div>
                 ) : (
-                  <div className="flex items-start gap-1 mt-1">
+                  <div className="flex items-center gap-1 mt-1">
                     {profile.bio ? (
                       <p className="text-white/80 drop-shadow-md text-xs flex-1">
                         {profile.bio}
@@ -798,7 +837,7 @@ const Profile = () => {
                       <Button
                         size="icon"
                         variant="ghost"
-                        className="h-5 w-5 text-white/80 hover:text-white"
+                        className="h-5 w-5 text-white/80 hover:text-white shrink-0"
                         onClick={() => {
                           setNewBio(profile.bio || '');
                           setEditingBio(true);
@@ -830,10 +869,18 @@ const Profile = () => {
                   <p className="text-[10px] md:text-xs text-white/90 drop-shadow-md font-semibold">Likes</p>
                 </div>
                 <div className="h-8 w-px bg-white/20"></div>
-                <div className="flex flex-col items-center min-w-0">
+                <button 
+                  className="flex flex-col items-center min-w-0 hover:opacity-80 transition-opacity"
+                  onClick={() => {
+                    if (isOwnProfile) {
+                      fetchFollowers(profile.id || currentUserId);
+                      setShowFollowersList(true);
+                    }
+                  }}
+                >
                   <p className="text-lg md:text-xl font-black text-white drop-shadow-lg">{followersCount}</p>
                   <p className="text-[10px] md:text-xs text-white/90 drop-shadow-md font-semibold">Followers</p>
-                </div>
+                </button>
                 <div className="h-8 w-px bg-white/20"></div>
                 <div className="flex flex-col items-center min-w-0">
                   <p className="text-lg md:text-xl font-black text-white drop-shadow-lg">{videos.length}</p>
@@ -1015,6 +1062,18 @@ const Profile = () => {
                       {/* Gradient overlay for text readability */}
                       <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
                       
+                      {/* Creator attribution - shows who made this reel */}
+                      <div className="absolute top-2 left-2 right-2">
+                        <div className="bg-black/50 backdrop-blur-sm px-2 py-1 rounded text-white">
+                          <p className="text-[10px] font-semibold truncate">
+                            By: {video.creator_username || 'Unknown Creator'}
+                          </p>
+                          <p className="text-[8px] text-white/70 truncate">
+                            Saved by {profile.username}
+                          </p>
+                        </div>
+                      </div>
+                      
                       {/* View Count - TikTok style */}
                       <div className="absolute bottom-2 left-2 flex items-center gap-1 bg-black/50 backdrop-blur-sm px-2 py-1 rounded-full">
                         <Eye className="h-3 w-3 text-white" />
@@ -1030,13 +1089,6 @@ const Profile = () => {
                           {video.likes_count || 0}
                         </span>
                       </div>
-                      
-                      {/* Video Title */}
-                      <div className="absolute top-2 left-2 right-2">
-                        <p className="text-white text-xs font-bold drop-shadow-lg line-clamp-2 bg-black/30 backdrop-blur-sm px-2 py-1 rounded">
-                          {video.title}
-                        </p>
-                      </div>
                     </div>
                   </div>
                 ))}
@@ -1050,28 +1102,40 @@ const Profile = () => {
       {selectedVideoIndex !== null && (
         <div className="fixed inset-0 z-50 bg-background">
           <div className="h-screen overflow-y-scroll snap-y snap-mandatory">
-            {(profile.user_type === 'creative' ? videos : savedVideos).map((video, index) => (
-              <div key={video.id} className="h-screen snap-start relative">
-                <VideoPlayer
-                  video={{
-                    ...video,
-                    profiles: {
-                      username: profile?.username || '',
-                      avatar_url: profile?.avatar_url || '',
-                      is_verified: profile?.is_verified || false,
-                    }
-                  }}
-                  currentUserId={currentUserId || ''}
-                  isPremium={false}
-                  isActive={index === selectedVideoIndex}
-                  onCommentsClick={() => {}}
-                  onDelete={() => {
-                    setSelectedVideoIndex(null);
-                    setVideos(videos.filter(v => v.id !== video.id));
-                  }}
-                />
-              </div>
-            ))}
+            {(profile.user_type === 'creative' ? videos : savedVideos).map((video, index) => {
+              // For saved videos, use the creator's info, not the viewer's
+              const isSavedVideo = profile.user_type === 'viewer';
+              const videoProfiles = isSavedVideo 
+                ? {
+                    username: video.creator_username || 'Unknown Creator',
+                    avatar_url: video.creator_avatar_url || '',
+                    is_verified: false,
+                  }
+                : {
+                    username: profile?.username || '',
+                    avatar_url: profile?.avatar_url || '',
+                    is_verified: profile?.is_verified || false,
+                  };
+              
+              return (
+                <div key={video.id} className="h-screen snap-start relative">
+                  <VideoPlayer
+                    video={{
+                      ...video,
+                      profiles: videoProfiles
+                    }}
+                    currentUserId={currentUserId || ''}
+                    isPremium={false}
+                    isActive={index === selectedVideoIndex}
+                    onCommentsClick={() => {}}
+                    onDelete={() => {
+                      setSelectedVideoIndex(null);
+                      setVideos(videos.filter(v => v.id !== video.id));
+                    }}
+                  />
+                </div>
+              );
+            })}
           </div>
           <Button
             size="icon"
@@ -1164,6 +1228,38 @@ const Profile = () => {
         onOpenChange={setShowVerificationDialog}
         onSuccess={() => setVerificationStatus('pending')}
       />
+
+      {/* Followers List Dialog */}
+      <Dialog open={showFollowersList} onOpenChange={setShowFollowersList}>
+        <DialogContent className="sm:max-w-[400px]">
+          <DialogHeader>
+            <DialogTitle>Your Followers</DialogTitle>
+            <DialogDescription>
+              People who follow you ({followersCount})
+            </DialogDescription>
+          </DialogHeader>
+          <div className="max-h-[60vh] overflow-y-auto space-y-2">
+            {followers.length === 0 ? (
+              <p className="text-center text-muted-foreground py-8">No followers yet</p>
+            ) : (
+              followers.map((follower) => (
+                <div
+                  key={follower.id}
+                  className="flex items-center gap-3 p-3 rounded-lg bg-muted/50"
+                >
+                  <Avatar className="h-10 w-10">
+                    <AvatarImage src={follower.avatar_url || undefined} />
+                    <AvatarFallback className="bg-primary text-primary-foreground font-bold">
+                      {follower.username[0]?.toUpperCase() || 'U'}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="font-medium text-sm">{follower.username}</span>
+                </div>
+              ))
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <BottomNav />
       </div>
