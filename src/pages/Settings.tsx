@@ -224,7 +224,14 @@ const Settings = () => {
   const saveParentalControls = async () => {
     if (!userId) return;
     try {
-      const updates: any = { 
+      // First check if parental_controls record exists
+      const { data: existingControls } = await supabase
+        .from('parental_controls')
+        .select('id')
+        .eq('user_id', userId)
+        .maybeSingle();
+      
+      const updates = { 
         user_id: userId, 
         screen_time_limit: screenTimeLimit, 
         screen_time_enabled: screenTimeEnabled,
@@ -233,11 +240,16 @@ const Settings = () => {
         profile_pin_enabled: profilePinEnabled
       };
       
-      // Save other settings first (without PIN)
-      await supabase.from('parental_controls').upsert(updates);
+      if (existingControls) {
+        // Update existing record
+        await supabase.from('parental_controls').update(updates).eq('user_id', userId);
+      } else {
+        // Insert new record for new users
+        await supabase.from('parental_controls').insert(updates);
+      }
       
-      // Save PIN using server-side hashing if provided
-      if (parentalPin && parentalPin.trim()) {
+      // Save Parental PIN using server-side hashing if provided
+      if (parentalPin && parentalPin.trim() && parentalPin.length === 4) {
         const { error } = await supabase.rpc('set_parental_pin', {
           _user_id: userId,
           _raw_pin: parentalPin.trim()
@@ -245,8 +257,8 @@ const Settings = () => {
         if (error) throw error;
       }
       
-      // Save profile PIN if provided
-      if (profilePin && profilePin.trim()) {
+      // Save Profile PIN using server-side hashing if provided
+      if (profilePin && profilePin.trim() && profilePin.length === 4) {
         const { error } = await supabase.rpc('set_profile_pin', {
           _user_id: userId,
           _raw_pin: profilePin.trim()
@@ -256,7 +268,8 @@ const Settings = () => {
       
       toast.success('Parental controls saved');
     } catch (error) {
-      toast.error('Failed to save');
+      console.error('Save parental controls error:', error);
+      toast.error('Failed to save parental controls');
     }
   };
 

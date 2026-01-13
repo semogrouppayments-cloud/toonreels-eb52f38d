@@ -747,10 +747,10 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
 
   return (
     <>
-      {/* Fullscreen backdrop for desktop/tablet */}
+      {/* Fullscreen backdrop for desktop/tablet - true fullscreen */}
       {isFullscreen && !isMobile && (
         <div 
-          className="fixed inset-0 z-40 fullscreen-backdrop"
+          className="fixed inset-0 z-40 bg-black"
           onClick={() => toggleFullscreen()}
         />
       )}
@@ -758,13 +758,13 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
       <div 
         className={`relative w-full bg-black snap-start snap-always ${
           isFullscreen && !isMobile 
-            ? 'fixed inset-4 z-50 rounded-3xl overflow-hidden shadow-2xl border border-white/10' 
+            ? 'fixed inset-0 z-50 overflow-hidden' 
             : ''
         }`}
         style={{ 
-          height: isFullscreen && !isMobile ? 'calc(100vh - 32px)' : '100vh', 
+          height: isFullscreen && !isMobile ? '100vh' : '100vh', 
           scrollSnapAlign: 'start',
-          width: isFullscreen && !isMobile ? 'calc(100vw - 32px)' : '100%',
+          width: isFullscreen && !isMobile ? '100vw' : '100%',
         }}
       >
       {/* Like animations */}
@@ -779,9 +779,7 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
       
       {/* Video container with tap handler and swipe gestures */}
       <div 
-        className={`absolute inset-0 flex items-center justify-center ${
-          isFullscreen && !isMobile ? 'rounded-3xl overflow-hidden' : ''
-        }`}
+        className="absolute inset-0 flex items-center justify-center"
         onClick={handleTap}
         onTouchStart={handleSwipeStart}
         onTouchEnd={handleSwipeEnd}
@@ -798,8 +796,8 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
           <video
             ref={videoRef}
             src={signedUrl || ''}
-            className={`w-full h-full object-contain ${
-              isFullscreen && !isMobile ? 'rounded-3xl' : ''
+            className={`w-full h-full ${
+              isFullscreen && !isMobile ? 'object-cover' : 'object-contain'
             }`}
             loop={isLooping}
             muted={isMuted}
@@ -810,7 +808,7 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
             crossOrigin="anonymous"
             autoPlay={false}
             style={{ 
-              maxHeight: isFullscreen && !isMobile ? '100%' : 'calc(100vh - 80px)',
+              maxHeight: isFullscreen && !isMobile ? '100vh' : 'calc(100vh - 80px)',
               marginBottom: isFullscreen && !isMobile ? '0' : '80px'
             }}
           />
