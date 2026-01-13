@@ -796,9 +796,7 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
           <video
             ref={videoRef}
             src={signedUrl || ''}
-            className={`w-full h-full ${
-              isFullscreen && !isMobile ? 'object-cover' : 'object-contain'
-            }`}
+            className="w-full h-full object-contain"
             loop={isLooping}
             muted={isMuted}
             playsInline
