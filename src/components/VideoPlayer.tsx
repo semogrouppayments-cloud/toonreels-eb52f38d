@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { Heart, MessageCircle, Download, Flag, Trash2, Volume2, VolumeX, Bookmark, BookmarkCheck, Play, Settings, Repeat, Maximize, Minimize, Ban, BadgeCheck } from 'lucide-react';
+import { Heart, MessageCircle, Download, Flag, Trash2, Volume2, VolumeX, Bookmark, BookmarkCheck, Play, Settings, Repeat, Maximize, Minimize, Ban, BadgeCheck, Subtitles } from 'lucide-react';
 import { toast } from 'sonner';
 import { useSignedVideoUrl } from '@/hooks/useSignedVideoUrl';
 import LikeAnimation from '@/components/LikeAnimation';
@@ -31,6 +31,13 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 
+interface SubtitleSegment {
+  id: number;
+  text: string;
+  start: number;
+  end: number;
+}
+
 interface VideoPlayerProps {
   video: {
     id: string;
@@ -41,6 +48,7 @@ interface VideoPlayerProps {
     likes_count: number;
     views_count: number;
     tags?: string[] | null;
+    subtitles?: SubtitleSegment[] | null;
     profiles: {
       username: string;
       avatar_url: string;
@@ -86,6 +94,8 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
   const [downloadStage, setDownloadStage] = useState('');
   const [isDownloading, setIsDownloading] = useState(false);
   const [isBlocked, setIsBlocked] = useState(false);
+  const [subtitlesEnabled, setSubtitlesEnabled] = useState(true);
+  const [currentSubtitle, setCurrentSubtitle] = useState<string>('');
   const downloadControllerRef = useRef<WatermarkController | null>(null);
   
   const { signedUrl, loading, error } = useSignedVideoUrl(video.video_url);
@@ -232,7 +242,20 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
       }
     };
 
-    const handleTimeUpdate = () => setCurrentTime(videoEl.currentTime);
+    const handleTimeUpdate = () => {
+      const time = videoEl.currentTime;
+      setCurrentTime(time);
+      
+      // Update current subtitle based on time
+      if (video.subtitles && subtitlesEnabled) {
+        const activeSubtitle = video.subtitles.find(
+          (sub) => time >= sub.start && time <= sub.end
+        );
+        setCurrentSubtitle(activeSubtitle?.text || '');
+      } else {
+        setCurrentSubtitle('');
+      }
+    };
     const handleLoadedMetadata = () => setDuration(videoEl.duration);
     const handleDurationChange = () => setDuration(videoEl.duration);
     const handleProgress = () => {
@@ -829,6 +852,20 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
         )}
       </div>
       
+      {/* Subtitle Display */}
+      {subtitlesEnabled && currentSubtitle && (
+        <div 
+          className="absolute left-0 right-0 z-30 flex justify-center pointer-events-none px-4"
+          style={{ bottom: '180px' }}
+        >
+          <div className="bg-black/70 rounded-lg px-4 py-2 max-w-[90%]">
+            <p className="text-white text-center text-sm font-medium leading-relaxed">
+              {currentSubtitle}
+            </p>
+          </div>
+        </div>
+      )}
+      
       {/* Gradient overlay */}
       <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
       
@@ -886,6 +923,21 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
               <Repeat className={`h-4 w-4 ${isLooping ? 'text-primary' : ''}`} />
               {isLooping ? 'Disable Loop' : 'Enable Loop'}
             </DropdownMenuItem>
+            {video.subtitles && video.subtitles.length > 0 && (
+              <>
+                <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground border-t mt-1 pt-2">Subtitles</div>
+                <DropdownMenuItem 
+                  onClick={() => {
+                    setSubtitlesEnabled(!subtitlesEnabled);
+                    toast.success(subtitlesEnabled ? 'Subtitles disabled' : 'Subtitles enabled');
+                  }}
+                  className="flex items-center gap-2"
+                >
+                  <Subtitles className={`h-4 w-4 ${subtitlesEnabled ? 'text-primary' : ''}`} />
+                  {subtitlesEnabled ? 'Hide Subtitles' : 'Show Subtitles'}
+                </DropdownMenuItem>
+              </>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
 

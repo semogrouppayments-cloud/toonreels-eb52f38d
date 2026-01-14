@@ -17,6 +17,13 @@ import { useAppRating } from '@/hooks/useAppRating';
 import { useChangelog } from '@/hooks/useChangelog';
 import { useScreenTime } from '@/hooks/useScreenTime';
 
+interface SubtitleSegment {
+  id: number;
+  text: string;
+  start: number;
+  end: number;
+}
+
 interface Video {
   id: string;
   video_url: string;
@@ -26,6 +33,7 @@ interface Video {
   likes_count: number;
   views_count: number;
   tags?: string[] | null;
+  subtitles?: SubtitleSegment[] | null;
   profiles: {
     username: string;
     avatar_url: string;
@@ -147,6 +155,7 @@ const Feed = () => {
       .from('videos')
       .select(`
         *,
+        subtitles,
         profiles(username, avatar_url, is_verified)
       `)
       .order('created_at', { ascending: false })
@@ -177,19 +186,23 @@ const Feed = () => {
       return;
     }
 
-    const newVideos = data || [];
+    // Transform data to ensure subtitles are properly typed
+    const transformedVideos: Video[] = (data || []).map(video => ({
+      ...video,
+      subtitles: video.subtitles as unknown as SubtitleSegment[] | null
+    }));
     
-    if (newVideos.length < PAGE_SIZE) {
+    if (transformedVideos.length < PAGE_SIZE) {
       setHasMore(false);
     }
 
     // Shuffle videos for variety
-    const shuffledVideos = shuffleArray(newVideos);
+    const shuffledVideos = shuffleArray(transformedVideos);
     
     if (reset) {
       setVideos(shuffledVideos);
       setPage(0);
-      setHasMore(newVideos.length === PAGE_SIZE);
+      setHasMore(transformedVideos.length === PAGE_SIZE);
     } else {
       setVideos(prev => [...prev, ...shuffledVideos]);
     }
