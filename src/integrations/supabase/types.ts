@@ -692,9 +692,11 @@ export type Database = {
           duration: number | null
           id: string
           likes_count: number
+          subtitles: Json | null
           tags: string[] | null
           thumbnail_url: string | null
           title: string
+          transcription_status: string | null
           updated_at: string
           video_url: string
           views_count: number
@@ -706,9 +708,11 @@ export type Database = {
           duration?: number | null
           id?: string
           likes_count?: number
+          subtitles?: Json | null
           tags?: string[] | null
           thumbnail_url?: string | null
           title: string
+          transcription_status?: string | null
           updated_at?: string
           video_url: string
           views_count?: number
@@ -720,9 +724,11 @@ export type Database = {
           duration?: number | null
           id?: string
           likes_count?: number
+          subtitles?: Json | null
           tags?: string[] | null
           thumbnail_url?: string | null
           title?: string
+          transcription_status?: string | null
           updated_at?: string
           video_url?: string
           views_count?: number

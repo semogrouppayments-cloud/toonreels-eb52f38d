@@ -104,6 +104,36 @@ const Upload = () => {
     return matches ? matches.map(tag => tag.replace('#', '').toLowerCase()) : [];
   };
 
+  // Trigger AI transcription in the background
+  const triggerTranscription = async (videoId: string, videoUrl: string) => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/transcribe-video`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({ videoId, videoUrl }),
+        }
+      );
+
+      if (response.ok) {
+        const result = await response.json();
+        console.log('Transcription complete:', result);
+        toast.success('Subtitles generated successfully!');
+      } else {
+        console.error('Transcription failed:', await response.text());
+      }
+    } catch (error) {
+      console.error('Transcription error:', error);
+    }
+  };
+
   const handleUpload = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!videoFile) {
@@ -229,7 +259,7 @@ const Upload = () => {
 
       // Create video record with extracted hashtags from title
       const extractedTags = extractHashtags(description);
-      const { error: insertError } = await supabase
+      const { data: insertedVideo, error: insertError } = await supabase
         .from('videos')
         .insert({
           creator_id: user.id,
@@ -238,12 +268,21 @@ const Upload = () => {
           video_url: videoUrl,
           thumbnail_url: thumbnailUrl,
           tags: extractedTags,
-        });
+          transcription_status: 'pending',
+        })
+        .select('id')
+        .single();
 
       if (insertError) throw insertError;
 
       setUploadProgress(100);
       toast.success('Video uploaded successfully!');
+      
+      // Trigger transcription in background (don't wait for it)
+      if (insertedVideo?.id) {
+        triggerTranscription(insertedVideo.id, videoUrl);
+      }
+      
       setTimeout(() => navigate('/feed'), 500);
     } catch (error: any) {
       if (progressInterval) clearInterval(progressInterval);
