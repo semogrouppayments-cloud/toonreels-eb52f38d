@@ -9,7 +9,7 @@ import BottomNav from '@/components/BottomNav';
 import NotificationBell from '@/components/NotificationBell';
 import { toast } from 'sonner';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import VideoPlayer from '@/components/VideoPlayer';
+import ProfileVideoViewer from '@/components/ProfileVideoViewer';
 import ProfileSkeleton from '@/components/ProfileSkeleton';
 import MilestoneConfetti from '@/components/MilestoneConfetti';
 import VerificationRequestDialog from '@/components/VerificationRequestDialog';
@@ -1108,52 +1108,17 @@ const Profile = () => {
 
       {/* Video Viewer Modal */}
       {selectedVideoIndex !== null && (
-        <div className="fixed inset-0 z-50 bg-background">
-          <div className="h-screen overflow-y-scroll snap-y snap-mandatory">
-            {(profile.user_type === 'creative' ? videos : savedVideos).map((video, index) => {
-              // For saved videos, use the creator's info, not the viewer's
-              const isSavedVideo = profile.user_type === 'viewer';
-              const videoProfiles = isSavedVideo 
-                ? {
-                    username: video.creator_username || 'Unknown Creator',
-                    avatar_url: video.creator_avatar_url || '',
-                    is_verified: false,
-                  }
-                : {
-                    username: profile?.username || '',
-                    avatar_url: profile?.avatar_url || '',
-                    is_verified: profile?.is_verified || false,
-                  };
-              
-              return (
-                <div key={video.id} className="h-screen snap-start relative">
-                  <VideoPlayer
-                    video={{
-                      ...video,
-                      profiles: videoProfiles
-                    }}
-                    currentUserId={currentUserId || ''}
-                    isPremium={false}
-                    isActive={index === selectedVideoIndex}
-                    onCommentsClick={() => {}}
-                    onDelete={() => {
-                      setSelectedVideoIndex(null);
-                      setVideos(videos.filter(v => v.id !== video.id));
-                    }}
-                  />
-                </div>
-              );
-            })}
-          </div>
-          <Button
-            size="icon"
-            variant="ghost"
-            onClick={() => setSelectedVideoIndex(null)}
-            className="fixed top-4 left-4 z-50 rounded-full bg-black/50 text-white"
-          >
-            ✕
-          </Button>
-        </div>
+        <ProfileVideoViewer
+          videos={profile.user_type === 'creative' ? videos : savedVideos}
+          initialIndex={selectedVideoIndex}
+          profile={profile}
+          currentUserId={currentUserId || ''}
+          onClose={() => setSelectedVideoIndex(null)}
+          onDelete={(videoId) => {
+            setSelectedVideoIndex(null);
+            setVideos(videos.filter(v => v.id !== videoId));
+          }}
+        />
       )}
 
 

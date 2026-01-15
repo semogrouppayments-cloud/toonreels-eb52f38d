@@ -413,28 +413,17 @@ const Search = () => {
           </h2>
           <div className="grid grid-cols-3 gap-2">
             {trendingVideos.slice(0, 3).map((video) => (
-              <div
+              <VideoPreviewCard
                 key={video.id}
+                id={video.id}
+                title={video.title}
+                thumbnailUrl={video.thumbnail_url}
+                videoUrl={video.video_url}
+                viewsCount={video.views_count}
+                likesCount={video.likes_count}
                 onClick={() => handleVideoClick(video.id)}
-                className="relative aspect-[9/16] bg-muted rounded-lg overflow-hidden cursor-pointer group"
-              >
-                {video.thumbnail_url ? (
-                  <img src={video.thumbnail_url} alt={video.title} className="w-full h-full object-cover" />
-                ) : (
-                  <div className="w-full h-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
-                    <Play className="h-6 w-6 text-primary/50" />
-                  </div>
-                )}
-                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                  <Play className="h-6 w-6 text-white fill-white" />
-                </div>
-                <div className="absolute bottom-0 left-0 right-0 p-1.5 bg-gradient-to-t from-black/80 to-transparent">
-                  <div className="flex items-center gap-1 text-white/90 text-[10px]">
-                    <Eye className="h-2.5 w-2.5" />
-                    {formatCount(video.views_count)}
-                  </div>
-                </div>
-              </div>
+                formatCount={formatCount}
+              />
             ))}
           </div>
         </div>
