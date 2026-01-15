@@ -216,6 +216,25 @@ const Profile = () => {
     if (!currentUserId || !profile?.id) return;
 
     try {
+      // Check if current user is creative and target is viewer
+      const { data: currentUserProfile } = await supabase
+        .from('profiles')
+        .select('user_type')
+        .eq('id', currentUserId)
+        .single();
+
+      const { data: targetUserProfile } = await supabase
+        .from('profiles')
+        .select('user_type')
+        .eq('id', profile.id)
+        .single();
+
+      // Creatives cannot follow viewers
+      if (currentUserProfile?.user_type === 'creative' && targetUserProfile?.user_type === 'viewer') {
+        toast.error('Creatives can only follow other creatives');
+        return;
+      }
+
       if (isFollowing) {
         await supabase
           .from('follows')
