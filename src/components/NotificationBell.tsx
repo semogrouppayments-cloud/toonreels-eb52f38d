@@ -152,11 +152,11 @@ const NotificationBell = () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
+    // First get notifications
     let query = supabase
       .from('notifications')
       .select(`
         *,
-        actor_profile:profiles!notifications_actor_id_fkey(username, avatar_url),
         video:videos(title, thumbnail_url)
       `)
       .eq('user_id', user.id);
@@ -178,11 +178,25 @@ const NotificationBell = () => {
       .limit(20);
 
     if (data) {
-      setNotifications(data as any);
-      setUnreadCount(data.filter(n => !n.is_read).length);
+      // Fetch actor profiles separately since the FK points to auth.users
+      const actorIds = [...new Set(data.map(n => n.actor_id))];
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, username, avatar_url')
+        .in('id', actorIds);
+
+      const profileMap = new Map(profiles?.map(p => [p.id, p]) || []);
+      
+      const enrichedNotifications = data.map(n => ({
+        ...n,
+        actor_profile: profileMap.get(n.actor_id) || { username: 'Unknown', avatar_url: null }
+      }));
+
+      setNotifications(enrichedNotifications as any);
+      setUnreadCount(enrichedNotifications.filter(n => !n.is_read).length);
       
       // Find latest unread new_video notification for badge preview
-      const latestVideo = (data as any[]).find(
+      const latestVideo = (enrichedNotifications as any[]).find(
         n => n.type === 'new_video' && !n.is_read && n.video?.thumbnail_url
       );
       if (latestVideo && !open) {
