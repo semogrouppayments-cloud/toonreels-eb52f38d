@@ -44,15 +44,15 @@ const Auth = () => {
   const [userType, setUserType] = useState<'viewer' | 'creative'>('viewer');
   const [errors, setErrors] = useState<{ email?: string; password?: string; username?: string }>({})
 
-  // Splash screen timer - 4 seconds
+  // Splash screen timer - reduced to 1.5 seconds for faster startup
   useEffect(() => {
     const fadeTimer = setTimeout(() => {
       setSplashFading(true);
-    }, 3500);
+    }, 1200);
 
     const hideTimer = setTimeout(() => {
       setShowSplash(false);
-    }, 4000);
+    }, 1500);
 
     return () => {
       clearTimeout(fadeTimer);
