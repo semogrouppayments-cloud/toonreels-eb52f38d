@@ -95,8 +95,11 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
   const [isDownloading, setIsDownloading] = useState(false);
   const [isBlocked, setIsBlocked] = useState(false);
   const [subtitlesEnabled, setSubtitlesEnabled] = useState(true);
+  const [subtitlesSize, setSubtitlesSize] = useState<'small' | 'medium' | 'large'>('medium');
   const [currentSubtitle, setCurrentSubtitle] = useState<string>('');
-  const downloadControllerRef = useRef<WatermarkController | null>(null);
+  const [subtitlePosition, setSubtitlePosition] = useState({ x: 0, y: 180 });
+  const [isDraggingSubtitle, setIsDraggingSubtitle] = useState(false);
+  const subtitleDragStart = useRef<{ x: number; y: number; posX: number; posY: number } | null>(null);
   
   const { signedUrl, loading, error } = useSignedVideoUrl(video.video_url);
   const lastTapRef = useRef<number>(0);
@@ -109,6 +112,8 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
   const playAttemptRef = useRef<number>(0);
   const touchStartXRef = useRef<number>(0);
   const touchStartYRef = useRef<number>(0);
+  const downloadControllerRef = useRef<WatermarkController | null>(null);
+  const subtitleRef = useRef<HTMLDivElement>(null);
 
   const isOwnVideo = currentUserId === video.creator_id;
 
@@ -120,7 +125,22 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
     checkIfBlocked();
     fetchCommentsCount();
     fetchSavesCount();
+    fetchSubtitleSettings();
   }, [video.id, currentUserId]);
+
+  // Fetch user subtitle settings
+  const fetchSubtitleSettings = async () => {
+    if (!currentUserId) return;
+    const { data } = await supabase
+      .from('playback_settings')
+      .select('subtitles_enabled, subtitles_size')
+      .eq('user_id', currentUserId)
+      .maybeSingle();
+    if (data) {
+      setSubtitlesEnabled(data.subtitles_enabled ?? true);
+      setSubtitlesSize((data.subtitles_size as 'small' | 'medium' | 'large') || 'medium');
+    }
+  };
 
   const fetchCommentsCount = async () => {
     const { count } = await supabase
@@ -503,6 +523,54 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
     }
   };
 
+  // Subtitle drag handlers
+  const handleSubtitleDragStart = (e: React.MouseEvent | React.TouchEvent) => {
+    e.stopPropagation();
+    setIsDraggingSubtitle(true);
+    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+    subtitleDragStart.current = {
+      x: clientX,
+      y: clientY,
+      posX: subtitlePosition.x,
+      posY: subtitlePosition.y
+    };
+    
+    // Add global listeners for drag
+    if ('touches' in e) {
+      document.addEventListener('touchmove', handleSubtitleDragMove as any);
+      document.addEventListener('touchend', handleSubtitleDragEnd);
+    } else {
+      document.addEventListener('mousemove', handleSubtitleDragMove as any);
+      document.addEventListener('mouseup', handleSubtitleDragEnd);
+    }
+  };
+
+  const handleSubtitleDragMove = (e: MouseEvent | TouchEvent) => {
+    if (!subtitleDragStart.current || !isDraggingSubtitle) return;
+    e.preventDefault();
+    
+    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+    
+    const deltaX = clientX - subtitleDragStart.current.x;
+    const deltaY = subtitleDragStart.current.y - clientY; // Inverted for bottom positioning
+    
+    setSubtitlePosition({
+      x: subtitleDragStart.current.posX + deltaX,
+      y: Math.max(100, Math.min(window.innerHeight - 200, subtitleDragStart.current.posY + deltaY))
+    });
+  };
+
+  const handleSubtitleDragEnd = () => {
+    setIsDraggingSubtitle(false);
+    subtitleDragStart.current = null;
+    document.removeEventListener('mousemove', handleSubtitleDragMove as any);
+    document.removeEventListener('mouseup', handleSubtitleDragEnd);
+    document.removeEventListener('touchmove', handleSubtitleDragMove as any);
+    document.removeEventListener('touchend', handleSubtitleDragEnd);
+  };
+
   const togglePlayPause = () => {
     const videoEl = videoRef.current;
     if (!videoEl) return;
@@ -852,14 +920,26 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
         )}
       </div>
       
-      {/* Subtitle Display */}
+      {/* Subtitle Display - Draggable */}
       {subtitlesEnabled && currentSubtitle && (
         <div 
-          className="absolute left-0 right-0 z-30 flex justify-center pointer-events-none px-4"
-          style={{ bottom: '180px' }}
+          ref={subtitleRef}
+          className={`absolute z-30 flex justify-center px-4 cursor-grab active:cursor-grabbing select-none ${isDraggingSubtitle ? 'pointer-events-auto' : 'pointer-events-auto'}`}
+          style={{ 
+            bottom: `${subtitlePosition.y}px`,
+            left: '50%',
+            transform: `translateX(calc(-50% + ${subtitlePosition.x}px))`,
+            touchAction: 'none'
+          }}
+          onMouseDown={handleSubtitleDragStart}
+          onTouchStart={handleSubtitleDragStart}
         >
           <div className="bg-black/70 rounded-lg px-4 py-2 max-w-[90%]">
-            <p className="text-white text-center text-sm font-medium leading-relaxed">
+            <p className={`text-white text-center font-medium leading-relaxed ${
+              subtitlesSize === 'small' ? 'text-xs' : 
+              subtitlesSize === 'large' ? 'text-lg' : 
+              'text-sm'
+            }`}>
               {currentSubtitle}
             </p>
           </div>
