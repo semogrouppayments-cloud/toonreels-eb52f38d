@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Search as SearchIcon, Play, Heart, Eye, TrendingUp, Hash } from 'lucide-react';
 import BottomNav from '@/components/BottomNav';
-
+import VideoPreviewCard from '@/components/VideoPreviewCard';
 
 const CATEGORIES = [
   { id: 'all', label: 'All', emoji: '🎬' },
@@ -488,51 +488,20 @@ const Search = () => {
         ) : (
           <div className="grid grid-cols-2 gap-3">
             {videos.map((video) => (
-              <div
-                key={video.id}
-                onClick={() => handleVideoClick(video.id)}
-                className="relative aspect-[9/16] bg-muted rounded-xl overflow-hidden cursor-pointer group"
-              >
-                {/* Thumbnail */}
-                {video.thumbnail_url ? (
-                  <img
-                    src={video.thumbnail_url}
-                    alt={video.title}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
-                    <Play className="h-8 w-8 text-primary/50" />
-                  </div>
-                )}
-
-                {/* Overlay on hover */}
-                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                  <div className="bg-white/20 backdrop-blur-sm rounded-full p-3">
-                    <Play className="h-8 w-8 text-white fill-white" />
-                  </div>
-                </div>
-
-                {/* Video info */}
-                <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/80 to-transparent">
-                  <p className="text-white text-xs font-medium line-clamp-2 mb-1">
-                    {video.description || video.title}
-                  </p>
-                  <div className="flex items-center gap-2 text-white/80 text-xs">
-                    <span className="flex items-center gap-0.5">
-                      <Eye className="h-3 w-3" />
-                      {formatCount(video.views_count)}
-                    </span>
-                    <span className="flex items-center gap-0.5">
-                      <Heart className="h-3 w-3" />
-                      {formatCount(video.likes_count)}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Tags */}
+              <div key={video.id} className="relative">
+                <VideoPreviewCard
+                  id={video.id}
+                  title={video.title}
+                  thumbnailUrl={video.thumbnail_url}
+                  videoUrl={video.video_url}
+                  viewsCount={video.views_count}
+                  likesCount={video.likes_count}
+                  onClick={() => handleVideoClick(video.id)}
+                  formatCount={formatCount}
+                />
+                {/* Tags overlay */}
                 {video.tags && video.tags.length > 0 && (
-                  <div className="absolute top-2 left-2 right-2 flex flex-wrap gap-1">
+                  <div className="absolute top-2 left-2 right-2 flex flex-wrap gap-1 z-10 pointer-events-auto">
                     {video.tags.slice(0, 2).map((tag, i) => (
                       <span
                         key={i}
