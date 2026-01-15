@@ -603,6 +603,30 @@ export type Database = {
         }
         Relationships: []
       }
+      user_type_changes: {
+        Row: {
+          changed_at: string
+          id: string
+          new_type: string
+          original_type: string
+          user_id: string
+        }
+        Insert: {
+          changed_at?: string
+          id?: string
+          new_type: string
+          original_type: string
+          user_id: string
+        }
+        Update: {
+          changed_at?: string
+          id?: string
+          new_type?: string
+          original_type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       video_analytics: {
         Row: {
           completed: boolean | null

@@ -62,6 +62,10 @@ const Settings = () => {
   const [notifPush, setNotifPush] = useState(false);
   const [notifSound, setNotifSound] = useState(true);
   const [isCreative, setIsCreative] = useState(false);
+  const [userType, setUserType] = useState<string>('viewer');
+  const [hasChangedType, setHasChangedType] = useState(false);
+  const [showTypeChangeDialog, setShowTypeChangeDialog] = useState(false);
+  const [pendingTypeChange, setPendingTypeChange] = useState<string | null>(null);
   const [blockedUsers, setBlockedUsers] = useState<{ id: string; blocked_id: string; username: string; avatar: string }[]>([]);
   const [showProfilePin, setShowProfilePin] = useState(false);
   const [showParentalPin, setShowParentalPin] = useState(false);
@@ -96,12 +100,21 @@ const Settings = () => {
         .eq('user_id', user.id);
       setIsCreative(roles?.some(r => r.role === 'creative') || false);
       
-      const { data: profile } = await supabase.from('profiles').select('username, selected_avatar, age_range').eq('id', user.id).single();
+      const { data: profile } = await supabase.from('profiles').select('username, selected_avatar, age_range, user_type').eq('id', user.id).single();
       if (profile) {
         setUsername(profile.username || "");
         setSelectedAvatar(profile.selected_avatar || "🦊");
         setAgeRange(profile.age_range || "7-9");
+        setUserType(profile.user_type || 'viewer');
       }
+      
+      // Check if user has already changed their type
+      const { data: typeChange } = await supabase
+        .from('user_type_changes')
+        .select('id')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      setHasChangedType(!!typeChange);
       
       // Fetch profile PIN from secure table
       const { data: profileSecrets } = await supabase.from('profile_secrets').select('profile_pin').eq('user_id', user.id).single();
@@ -366,6 +379,63 @@ const Settings = () => {
     }
   };
 
+  const handleAccountTypeChange = async () => {
+    if (!userId || !pendingTypeChange) return;
+    
+    try {
+      const newType = pendingTypeChange as 'viewer' | 'creative';
+      const oldType = userType;
+      
+      // Record the change (this can only happen once due to UNIQUE constraint)
+      const { error: changeError } = await supabase
+        .from('user_type_changes')
+        .insert({
+          user_id: userId,
+          original_type: oldType,
+          new_type: newType
+        });
+      
+      if (changeError) {
+        if (changeError.code === '23505') { // Unique violation
+          toast.error('You have already used your one-time account type change');
+        } else {
+          throw changeError;
+        }
+        return;
+      }
+      
+      // Update profile
+      await supabase
+        .from('profiles')
+        .update({ user_type: newType })
+        .eq('id', userId);
+      
+      // Update or remove user role
+      if (newType === 'creative') {
+        await supabase
+          .from('user_roles')
+          .upsert({ user_id: userId, role: 'creative' }, { onConflict: 'user_id,role' });
+      } else {
+        await supabase
+          .from('user_roles')
+          .delete()
+          .eq('user_id', userId)
+          .eq('role', 'creative');
+      }
+      
+      setUserType(newType);
+      setIsCreative(newType === 'creative');
+      setHasChangedType(true);
+      setShowTypeChangeDialog(false);
+      setPendingTypeChange(null);
+      
+      toast.success(`Account type changed to ${newType === 'creative' ? 'Creative' : 'Viewer'}. This cannot be undone.`);
+    } catch (error) {
+      console.error('Account type change error:', error);
+      toast.error('Failed to change account type');
+    }
+  };
+
   // Collapsible section header component
   const SectionHeader = ({ title, section }: { title: string; section: string }) => (
     <CollapsibleTrigger 
@@ -426,6 +496,36 @@ const Settings = () => {
                       </SelectContent>
                     </Select>
                     <Button onClick={saveProfileSettings} size="sm" className="h-7 text-xs">Save</Button>
+                  </AccordionContent>
+                </AccordionItem>
+                <AccordionItem value="accountType">
+                  <AccordionTrigger className="text-xs">Account Type (One-Time Change)</AccordionTrigger>
+                  <AccordionContent className="space-y-3">
+                    <p className="text-xs text-muted-foreground">
+                      Current type: <span className="font-semibold capitalize">{userType}</span>
+                    </p>
+                    {hasChangedType ? (
+                      <p className="text-xs text-amber-600 dark:text-amber-400">
+                        ⚠️ You have already used your one-time account type change. This cannot be changed again.
+                      </p>
+                    ) : (
+                      <>
+                        <p className="text-xs text-muted-foreground">
+                          Made a mistake during signup? You can change your account type <strong>once</strong>. This action is permanent and cannot be undone.
+                        </p>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="h-7 text-xs w-full"
+                          onClick={() => {
+                            setPendingTypeChange(userType === 'creative' ? 'viewer' : 'creative');
+                            setShowTypeChangeDialog(true);
+                          }}
+                        >
+                          Switch to {userType === 'creative' ? 'Viewer' : 'Creative'}
+                        </Button>
+                      </>
+                    )}
                   </AccordionContent>
                 </AccordionItem>
                 <AccordionItem value="theme">
@@ -860,6 +960,12 @@ const Settings = () => {
                     <p className="text-xs text-muted-foreground">Downloading reel videos is a premium feature.</p>
                   </AccordionContent>
                 </AccordionItem>
+                <AccordionItem value="accounttype">
+                  <AccordionTrigger className="text-xs">Can I change my account type?</AccordionTrigger>
+                  <AccordionContent>
+                    <p className="text-xs text-muted-foreground">If you accidentally chose the wrong account type (Viewer vs Creative) during signup, you can change it <span className="font-semibold text-destructive">once and only once</span> in Settings → Account & Profile → Account Type. This is permanent and cannot be reversed.</p>
+                  </AccordionContent>
+                </AccordionItem>
                 <AccordionItem value="delete">
                   <AccordionTrigger className="text-xs">How do I delete my account?</AccordionTrigger>
                   <AccordionContent>
@@ -1100,6 +1206,27 @@ const Settings = () => {
           </Collapsible>
         </div>
       </div>
+      
+      {/* Account Type Change Dialog */}
+      <AlertDialog open={showTypeChangeDialog} onOpenChange={setShowTypeChangeDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-sm">⚠️ Permanent Account Type Change</AlertDialogTitle>
+            <AlertDialogDescription className="text-xs space-y-2">
+              <p>You are about to change your account type from <strong className="capitalize">{userType}</strong> to <strong className="capitalize">{pendingTypeChange}</strong>.</p>
+              <p className="text-destructive font-semibold">This is a ONE-TIME change and CANNOT be undone. You will never be able to change your account type again.</p>
+              <p>Are you absolutely sure you want to proceed?</p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="h-8 text-xs" onClick={() => setPendingTypeChange(null)}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleAccountTypeChange} className="bg-destructive text-destructive-foreground hover:bg-destructive/90 h-8 text-xs">
+              Yes, Change Permanently
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      
       <BottomNav />
     </div>
   );
