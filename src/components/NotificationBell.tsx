@@ -237,12 +237,13 @@ const NotificationBell = () => {
     
     if (notification.type === 'follow') {
       navigate(`/profile?userId=${notification.actor_id}`);
+      setOpen(false);
     } else if (notification.video_id) {
       // Navigate to feed with specific video
       navigate(`/feed?video=${notification.video_id}`);
+      setOpen(false);
     }
-    
-    setOpen(false);
+    // Keep sheet open if no navigation occurred
   };
 
   const getNotificationText = (notification: Notification) => {
