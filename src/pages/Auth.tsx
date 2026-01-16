@@ -158,47 +158,186 @@ const Auth = () => {
   // Show branded splash screen
   if (showSplash) {
     // Generate floating bubbles
-    const bubbles = Array.from({ length: 12 }, (_, i) => ({
+    const bubbles = Array.from({ length: 15 }, (_, i) => ({
       id: i,
-      size: Math.random() * 40 + 20,
+      size: Math.random() * 50 + 25,
       left: Math.random() * 100,
-      delay: Math.random() * 2,
-      duration: Math.random() * 2 + 3,
+      delay: Math.random() * 1.5,
+      duration: Math.random() * 3 + 4,
     }));
+
+    // Spinning stars
+    const stars = [
+      { emoji: '⭐', top: '12%', left: '8%', size: 'text-3xl', delay: '0s', duration: '3s' },
+      { emoji: '✨', top: '18%', right: '10%', size: 'text-4xl', delay: '0.5s', duration: '2.5s' },
+      { emoji: '🌟', top: '25%', left: '15%', size: 'text-2xl', delay: '1s', duration: '4s' },
+      { emoji: '⭐', bottom: '30%', right: '12%', size: 'text-3xl', delay: '0.3s', duration: '3.5s' },
+      { emoji: '✨', bottom: '25%', left: '10%', size: 'text-2xl', delay: '0.8s', duration: '2.8s' },
+      { emoji: '🌟', top: '35%', right: '20%', size: 'text-xl', delay: '1.2s', duration: '3.2s' },
+    ];
+
+    // Floating cartoon emojis
+    const cartoonElements = [
+      { emoji: '🎬', left: '5%', delay: 0, duration: 5 },
+      { emoji: '🎨', left: '25%', delay: 1, duration: 6 },
+      { emoji: '🎭', left: '45%', delay: 0.5, duration: 5.5 },
+      { emoji: '🎪', left: '65%', delay: 1.5, duration: 4.5 },
+      { emoji: '🎠', left: '85%', delay: 0.8, duration: 5.2 },
+      { emoji: '🦄', left: '15%', delay: 2, duration: 6 },
+      { emoji: '🌈', left: '75%', delay: 1.2, duration: 5.8 },
+    ];
 
     return (
       <div 
-        className={`flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-fun-yellow via-accent to-primary transition-opacity duration-500 overflow-hidden relative ${splashFading ? 'opacity-0' : 'opacity-100'}`}
+        className={`flex min-h-screen flex-col items-center justify-center transition-opacity duration-500 overflow-hidden relative ${splashFading ? 'opacity-0' : 'opacity-100'}`}
+        style={{
+          background: 'linear-gradient(135deg, #FF6B35 0%, #FF4444 35%, #E91E63 70%, #FF6B6B 100%)'
+        }}
       >
-        {/* Floating bubbles */}
+        {/* Animated background waves */}
+        <div className="absolute inset-0 overflow-hidden">
+          <div 
+            className="absolute w-[200%] h-40 bg-white/10 rounded-full"
+            style={{
+              top: '20%',
+              left: '-50%',
+              animation: 'wave 8s ease-in-out infinite',
+            }}
+          />
+          <div 
+            className="absolute w-[200%] h-32 bg-white/5 rounded-full"
+            style={{
+              top: '60%',
+              left: '-50%',
+              animation: 'wave 10s ease-in-out infinite reverse',
+            }}
+          />
+        </div>
+
+        {/* Floating bubbles from bottom */}
         {bubbles.map((bubble) => (
           <div
             key={bubble.id}
-            className="absolute rounded-full bg-white/20 backdrop-blur-sm"
+            className="absolute rounded-full bg-white/25 backdrop-blur-sm shadow-lg"
             style={{
               width: bubble.size,
               height: bubble.size,
               left: `${bubble.left}%`,
-              bottom: '-10%',
-              animation: `floatUp ${bubble.duration}s ease-in-out ${bubble.delay}s infinite`,
+              bottom: '-15%',
+              animation: `floatUp ${bubble.duration}s ease-out ${bubble.delay}s infinite`,
             }}
           />
         ))}
+
+        {/* Spinning stars */}
+        {stars.map((star, i) => (
+          <div
+            key={i}
+            className={`absolute ${star.size} drop-shadow-lg`}
+            style={{
+              top: star.top,
+              left: star.left,
+              right: star.right,
+              bottom: star.bottom,
+              animation: `spin ${star.duration} linear infinite, pulse 2s ease-in-out infinite`,
+              animationDelay: star.delay,
+            }}
+          >
+            {star.emoji}
+          </div>
+        ))}
+
+        {/* Floating cartoon elements from bottom */}
+        {cartoonElements.map((element, i) => (
+          <div
+            key={`cartoon-${i}`}
+            className="absolute text-4xl"
+            style={{
+              left: element.left,
+              bottom: '-15%',
+              animation: `floatUp ${element.duration}s ease-out ${element.delay}s infinite, wiggle 2s ease-in-out infinite`,
+            }}
+          >
+            {element.emoji}
+          </div>
+        ))}
         
-        {/* Logo glow effect */}
-        <div className="absolute w-48 h-48 bg-white/30 rounded-full blur-3xl animate-pulse" />
+        {/* Multiple glowing effects */}
+        <div className="absolute w-72 h-72 bg-yellow-400/30 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute w-48 h-48 bg-orange-300/40 rounded-full blur-2xl animate-pulse" style={{ animationDelay: '0.5s' }} />
+        <div className="absolute w-32 h-32 bg-white/30 rounded-full blur-xl animate-ping" style={{ animationDuration: '2s' }} />
         
+        {/* Logo with enhanced bounce animation */}
         <img 
           src={toonreelsLogo} 
           alt="ToonlyReels" 
-          className="w-32 h-32 mb-6 animate-bounce drop-shadow-2xl relative z-10"
+          className="w-40 h-40 mb-8 drop-shadow-2xl relative z-10"
+          style={{ 
+            animation: 'bounceScale 1.5s ease-in-out infinite',
+            filter: 'drop-shadow(0 0 30px rgba(255,255,255,0.5))'
+          }}
         />
-        <h1 className="text-4xl font-black text-white mb-2 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-300 drop-shadow-lg relative z-10">
+        
+        {/* Bold title with playful styling */}
+        <h1 
+          className="text-5xl md:text-6xl font-black text-white mb-4 relative z-10 tracking-tight"
+          style={{
+            textShadow: '3px 3px 0 rgba(0,0,0,0.2), 0 0 30px rgba(255,255,255,0.3)',
+            animation: 'fadeInUp 0.8s ease-out forwards',
+          }}
+        >
           ToonlyReels
         </h1>
-        <p className="text-white/80 text-lg animate-in fade-in slide-in-from-bottom-4 duration-700 delay-500 drop-shadow-md relative z-10">
-          Watch. Create. Share.
-        </p>
+        
+        {/* Tagline with animated words */}
+        <div className="flex gap-3 text-xl md:text-2xl font-bold text-white/95 relative z-10">
+          <span 
+            className="animate-in fade-in slide-in-from-bottom-4 duration-500"
+            style={{ animationDelay: '0.3s', textShadow: '2px 2px 0 rgba(0,0,0,0.2)' }}
+          >
+            Watch.
+          </span>
+          <span 
+            className="animate-in fade-in slide-in-from-bottom-4 duration-500"
+            style={{ animationDelay: '0.5s', textShadow: '2px 2px 0 rgba(0,0,0,0.2)' }}
+          >
+            Create.
+          </span>
+          <span 
+            className="animate-in fade-in slide-in-from-bottom-4 duration-500"
+            style={{ animationDelay: '0.7s', textShadow: '2px 2px 0 rgba(0,0,0,0.2)' }}
+          >
+            Share.
+          </span>
+        </div>
+
+        {/* Decorative confetti dots */}
+        <div className="absolute top-[15%] left-[20%] w-3 h-3 bg-yellow-300 rounded-full animate-ping" style={{ animationDuration: '1.5s' }} />
+        <div className="absolute top-[25%] right-[25%] w-2 h-2 bg-white rounded-full animate-ping" style={{ animationDuration: '2s', animationDelay: '0.3s' }} />
+        <div className="absolute bottom-[35%] left-[18%] w-2 h-2 bg-orange-200 rounded-full animate-ping" style={{ animationDuration: '1.8s', animationDelay: '0.6s' }} />
+        <div className="absolute bottom-[40%] right-[15%] w-3 h-3 bg-yellow-200 rounded-full animate-ping" style={{ animationDuration: '2.2s', animationDelay: '0.9s' }} />
+
+        {/* Custom keyframes style tag */}
+        <style>{`
+          @keyframes bounceScale {
+            0%, 100% { transform: scale(1) translateY(0); }
+            25% { transform: scale(1.05) translateY(-10px); }
+            50% { transform: scale(0.98) translateY(0); }
+            75% { transform: scale(1.02) translateY(-5px); }
+          }
+          @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+          }
+          @keyframes wave {
+            0%, 100% { transform: translateX(0) rotate(-2deg); }
+            50% { transform: translateX(-25%) rotate(2deg); }
+          }
+          @keyframes wiggle {
+            0%, 100% { transform: rotate(-5deg); }
+            50% { transform: rotate(5deg); }
+          }
+        `}</style>
       </div>
     );
   }
