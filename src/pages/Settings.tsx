@@ -440,11 +440,11 @@ const Settings = () => {
   const SectionHeader = ({ title, section }: { title: string; section: string }) => (
     <CollapsibleTrigger 
       onClick={() => toggleSection(section)}
-      className="flex items-center justify-between w-full p-3 bg-card rounded-xl border border-border hover:bg-accent/50 transition-colors"
+      className="flex items-center justify-between w-full p-3 bg-primary/10 rounded-xl border border-primary/30 hover:bg-primary/20 transition-colors"
     >
-      <span className="font-bold text-sm">{title}</span>
+      <span className="font-bold text-sm text-primary">{title}</span>
       <ChevronDown 
-        className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${
+        className={`h-4 w-4 text-primary transition-transform duration-200 ${
           openSections.includes(section) ? 'rotate-180' : ''
         }`} 
       />
