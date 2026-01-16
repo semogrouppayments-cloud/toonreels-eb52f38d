@@ -157,48 +157,57 @@ const Auth = () => {
 
   // Show branded splash screen
   if (showSplash) {
-    // Generate floating bubbles
-    const bubbles = Array.from({ length: 12 }, (_, i) => ({
+    // Generate floating bubbles from bottom
+    const bubbles = Array.from({ length: 15 }, (_, i) => ({
       id: i,
-      size: Math.random() * 40 + 20,
+      size: Math.random() * 50 + 25,
       left: Math.random() * 100,
-      delay: Math.random() * 2,
-      duration: Math.random() * 2 + 3,
+      delay: Math.random() * 1.5,
+      duration: Math.random() * 3 + 4,
     }));
 
     return (
       <div 
-        className={`flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-fun-yellow via-accent to-primary transition-opacity duration-500 overflow-hidden relative ${splashFading ? 'opacity-0' : 'opacity-100'}`}
+        className={`flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-primary via-primary to-destructive transition-opacity duration-500 overflow-hidden relative ${splashFading ? 'opacity-0' : 'opacity-100'}`}
       >
-        {/* Floating bubbles */}
+        {/* Floating bubbles from bottom */}
         {bubbles.map((bubble) => (
           <div
             key={bubble.id}
-            className="absolute rounded-full bg-white/20 backdrop-blur-sm"
+            className="absolute rounded-full bg-white/25 backdrop-blur-sm shadow-lg"
             style={{
               width: bubble.size,
               height: bubble.size,
               left: `${bubble.left}%`,
-              bottom: '-10%',
-              animation: `floatUp ${bubble.duration}s ease-in-out ${bubble.delay}s infinite`,
+              bottom: '-15%',
+              animation: `floatUp ${bubble.duration}s ease-out ${bubble.delay}s infinite`,
             }}
           />
         ))}
         
-        {/* Logo glow effect */}
-        <div className="absolute w-48 h-48 bg-white/30 rounded-full blur-3xl animate-pulse" />
+        {/* Glowing background effect */}
+        <div className="absolute w-64 h-64 bg-white/20 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute w-32 h-32 bg-white/30 rounded-full blur-2xl animate-ping" style={{ animationDuration: '2s' }} />
         
+        {/* Logo with bounce animation */}
         <img 
           src={toonreelsLogo} 
           alt="ToonlyReels" 
-          className="w-32 h-32 mb-6 animate-bounce drop-shadow-2xl relative z-10"
+          className="w-36 h-36 mb-6 drop-shadow-2xl relative z-10"
+          style={{ animation: 'bounce 1s ease-in-out infinite' }}
         />
-        <h1 className="text-4xl font-black text-white mb-2 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-300 drop-shadow-lg relative z-10">
+        <h1 className="text-5xl font-black text-white mb-3 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-300 drop-shadow-lg relative z-10">
           ToonlyReels
         </h1>
-        <p className="text-white/80 text-lg animate-in fade-in slide-in-from-bottom-4 duration-700 delay-500 drop-shadow-md relative z-10">
+        <p className="text-white/90 text-xl font-medium animate-in fade-in slide-in-from-bottom-4 duration-700 delay-500 drop-shadow-md relative z-10">
           Watch. Create. Share.
         </p>
+        
+        {/* Decorative stars */}
+        <div className="absolute top-20 left-10 text-4xl animate-pulse">✨</div>
+        <div className="absolute top-32 right-12 text-3xl animate-pulse" style={{ animationDelay: '0.5s' }}>⭐</div>
+        <div className="absolute bottom-40 left-8 text-2xl animate-pulse" style={{ animationDelay: '1s' }}>🌟</div>
+        <div className="absolute bottom-32 right-16 text-3xl animate-pulse" style={{ animationDelay: '0.3s' }}>✨</div>
       </div>
     );
   }
