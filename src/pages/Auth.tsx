@@ -246,6 +246,22 @@ const Auth = () => {
           Watch. Create. Share.
         </p>
 
+        {/* Subtle loading indicator */}
+        <div className="mt-8 flex items-center gap-2 relative z-10">
+          <div className="flex gap-1.5">
+            {[0, 1, 2].map((i) => (
+              <div
+                key={i}
+                className="w-2 h-2 rounded-full bg-white/70"
+                style={{
+                  animation: 'loadingDot 1.4s ease-in-out infinite',
+                  animationDelay: `${i * 0.2}s`,
+                }}
+              />
+            ))}
+          </div>
+        </div>
+
         {/* Custom keyframes */}
         <style>{`
           @keyframes floatUp {
@@ -260,6 +276,10 @@ const Auth = () => {
           @keyframes twinkle {
             0%, 100% { opacity: 0.6; transform: scale(1); }
             50% { opacity: 1; transform: scale(1.2); }
+          }
+          @keyframes loadingDot {
+            0%, 80%, 100% { transform: scale(0.6); opacity: 0.5; }
+            40% { transform: scale(1); opacity: 1; }
           }
         `}</style>
       </div>
