@@ -33,7 +33,37 @@ const NotificationVideoModal = ({ videoId, onClose }: NotificationVideoModalProp
   const [isLiked, setIsLiked] = useState(false);
   const [likesCount, setLikesCount] = useState(0);
   const [signedUrl, setSignedUrl] = useState<string | null>(null);
+  const [dragY, setDragY] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
+  const touchStartY = useRef(0);
+
+  // Swipe down to close gesture
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartY.current = e.touches[0].clientY;
+    setIsDragging(true);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!isDragging) return;
+    const currentY = e.touches[0].clientY;
+    const diff = currentY - touchStartY.current;
+    // Only allow dragging down
+    if (diff > 0) {
+      setDragY(diff);
+    }
+  };
+
+  const handleTouchEnd = () => {
+    setIsDragging(false);
+    // If dragged more than 100px, close the modal
+    if (dragY > 100) {
+      onClose();
+    } else {
+      setDragY(0);
+    }
+  };
 
   useEffect(() => {
     fetchVideo();
@@ -175,8 +205,25 @@ const NotificationVideoModal = ({ videoId, onClose }: NotificationVideoModalProp
 
   return (
     <div className="fixed inset-0 z-[100] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+      {/* Swipe indicator */}
+      <div className="absolute top-6 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 text-white/50 pointer-events-none">
+        <div className="w-10 h-1 rounded-full bg-white/30" />
+        <span className="text-xs">Swipe down to close</span>
+      </div>
+
       {/* Standalone Video Preview Card */}
-      <div className="relative w-full max-w-sm aspect-[9/16] rounded-3xl overflow-hidden bg-black shadow-2xl">
+      <div 
+        ref={cardRef}
+        className="relative w-full max-w-sm aspect-[9/16] rounded-3xl overflow-hidden bg-black shadow-2xl transition-transform"
+        style={{ 
+          transform: `translateY(${dragY}px)`,
+          opacity: 1 - (dragY / 300),
+          transition: isDragging ? 'none' : 'transform 0.3s ease-out, opacity 0.3s ease-out'
+        }}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
         {/* Close Button */}
         <button
           onClick={onClose}
