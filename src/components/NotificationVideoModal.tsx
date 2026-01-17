@@ -154,42 +154,43 @@ const NotificationVideoModal = ({ videoId, onClose }: NotificationVideoModalProp
 
   if (loading) {
     return (
-      <div className="fixed inset-0 z-[100] bg-black flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      <div className="fixed inset-0 z-[100] bg-black/70 backdrop-blur-sm flex items-center justify-center">
+        <div className="bg-background rounded-3xl p-8 shadow-2xl">
+          <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-primary"></div>
+        </div>
       </div>
     );
   }
 
   if (!video) {
     return (
-      <div className="fixed inset-0 z-[100] bg-black flex flex-col items-center justify-center gap-4">
-        <p className="text-white">Video not found</p>
-        <Button onClick={onClose} variant="outline">Go Back</Button>
+      <div className="fixed inset-0 z-[100] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+        <div className="bg-background rounded-3xl p-8 shadow-2xl flex flex-col items-center gap-4">
+          <p className="text-foreground">Video not found</p>
+          <Button onClick={onClose} variant="outline" className="rounded-full">Go Back</Button>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="fixed inset-0 z-[100] bg-black">
-      {/* Back Button */}
-      <div className="absolute top-4 left-4 z-[110] safe-area-inset-top">
-        <Button
-          variant="ghost"
-          size="icon"
+    <div className="fixed inset-0 z-[100] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+      {/* Standalone Video Preview Card */}
+      <div className="relative w-full max-w-sm aspect-[9/16] rounded-3xl overflow-hidden bg-black shadow-2xl">
+        {/* Close Button */}
+        <button
           onClick={onClose}
-          className="rounded-full bg-black/50 hover:bg-black/70 text-white"
+          className="absolute top-3 right-3 z-20 w-8 h-8 rounded-full bg-black/60 hover:bg-black/80 text-white flex items-center justify-center transition-colors"
         >
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
-      </div>
+          <ArrowLeft className="h-4 w-4" />
+        </button>
 
-      {/* Video Container with Rounded Corners */}
-      <div className="absolute inset-4 top-16 bottom-4 rounded-3xl overflow-hidden bg-black/50">
+        {/* Video */}
         <div className="relative w-full h-full" onClick={togglePlayPause}>
           <video
             ref={videoRef}
             src={signedUrl || video.video_url}
-            className="w-full h-full object-contain"
+            className="w-full h-full object-cover"
             autoPlay
             loop
             playsInline
@@ -199,67 +200,48 @@ const NotificationVideoModal = ({ videoId, onClose }: NotificationVideoModalProp
           {/* Play/Pause Overlay */}
           {!isPlaying && (
             <div className="absolute inset-0 flex items-center justify-center bg-black/30">
-              <div className="bg-white/20 backdrop-blur-sm rounded-full p-6">
-                <Play className="h-12 w-12 text-white fill-white" />
+              <div className="bg-white/20 backdrop-blur-sm rounded-full p-5">
+                <Play className="h-10 w-10 text-white fill-white" />
               </div>
             </div>
           )}
 
-          {/* Video Info */}
-          <div className="absolute bottom-0 left-0 right-16 p-4 bg-gradient-to-t from-black/80 to-transparent">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center overflow-hidden">
-                {video.creator?.avatar_url ? (
-                  <img src={video.creator.avatar_url} alt={video.creator.username} className="w-full h-full object-cover" />
-                ) : (
-                  <span className="text-white font-bold">{video.creator?.username?.[0]?.toUpperCase() || '?'}</span>
-                )}
-              </div>
-              <span className="text-white font-semibold text-sm">
-                @{video.creator?.username || 'unknown'}
-              </span>
-              {video.creator?.is_verified && (
-                <span className="bg-yellow-400 text-black text-[10px] px-1 rounded">✓</span>
-              )}
-            </div>
-            <h3 className="text-white font-bold text-base mb-1 line-clamp-1">{video.title}</h3>
+          {/* Video Title Only - No Creator Info */}
+          <div className="absolute bottom-0 left-0 right-14 p-4 bg-gradient-to-t from-black/80 via-black/40 to-transparent">
+            <h3 className="text-white font-bold text-base line-clamp-2">{video.title}</h3>
             {video.description && (
-              <p className="text-white/80 text-xs line-clamp-2">{video.description}</p>
+              <p className="text-white/70 text-xs mt-1 line-clamp-1">{video.description}</p>
             )}
           </div>
 
-          {/* Side Actions */}
-          <div className="absolute right-2 bottom-20 flex flex-col items-center gap-5">
+          {/* Minimal Side Actions */}
+          <div className="absolute right-2 bottom-4 flex flex-col items-center gap-4">
             <button 
               onClick={(e) => { e.stopPropagation(); handleLike(); }}
-              className="flex flex-col items-center gap-1"
+              className="flex flex-col items-center gap-0.5"
             >
               <div className={`p-2 rounded-full ${isLiked ? 'bg-red-500' : 'bg-black/50'}`}>
-                <Heart className={`h-6 w-6 ${isLiked ? 'text-white fill-white' : 'text-white'}`} />
+                <Heart className={`h-5 w-5 ${isLiked ? 'text-white fill-white' : 'text-white'}`} />
               </div>
-              <span className="text-white text-xs">{likesCount}</span>
+              <span className="text-white text-[10px]">{likesCount}</span>
             </button>
 
             <button 
               onClick={(e) => { e.stopPropagation(); toggleMute(); }}
-              className="flex flex-col items-center gap-1"
+              className="p-2 rounded-full bg-black/50"
             >
-              <div className="p-2 rounded-full bg-black/50">
-                {isMuted ? (
-                  <VolumeX className="h-6 w-6 text-white" />
-                ) : (
-                  <Volume2 className="h-6 w-6 text-white" />
-                )}
-              </div>
+              {isMuted ? (
+                <VolumeX className="h-5 w-5 text-white" />
+              ) : (
+                <Volume2 className="h-5 w-5 text-white" />
+              )}
             </button>
 
             <button 
               onClick={(e) => { e.stopPropagation(); handleShare(); }}
-              className="flex flex-col items-center gap-1"
+              className="p-2 rounded-full bg-black/50"
             >
-              <div className="p-2 rounded-full bg-black/50">
-                <Share2 className="h-6 w-6 text-white" />
-              </div>
+              <Share2 className="h-5 w-5 text-white" />
             </button>
           </div>
         </div>
