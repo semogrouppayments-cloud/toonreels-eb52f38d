@@ -154,7 +154,7 @@ const NotificationVideoModal = ({ videoId, onClose }: NotificationVideoModalProp
 
   if (loading) {
     return (
-      <div className="fixed inset-0 z-50 bg-black flex items-center justify-center">
+      <div className="fixed inset-0 z-[100] bg-black flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
       </div>
     );
@@ -162,7 +162,7 @@ const NotificationVideoModal = ({ videoId, onClose }: NotificationVideoModalProp
 
   if (!video) {
     return (
-      <div className="fixed inset-0 z-50 bg-black flex flex-col items-center justify-center gap-4">
+      <div className="fixed inset-0 z-[100] bg-black flex flex-col items-center justify-center gap-4">
         <p className="text-white">Video not found</p>
         <Button onClick={onClose} variant="outline">Go Back</Button>
       </div>
@@ -170,9 +170,9 @@ const NotificationVideoModal = ({ videoId, onClose }: NotificationVideoModalProp
   }
 
   return (
-    <div className="fixed inset-0 z-50 bg-black">
+    <div className="fixed inset-0 z-[100] bg-black">
       {/* Back Button */}
-      <div className="absolute top-4 left-4 z-10 safe-area-inset-top">
+      <div className="absolute top-4 left-4 z-[110] safe-area-inset-top">
         <Button
           variant="ghost"
           size="icon"
