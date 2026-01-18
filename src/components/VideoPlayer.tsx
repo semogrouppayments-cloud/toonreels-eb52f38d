@@ -70,6 +70,7 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
   const { isFullscreen, toggleFullscreen } = useFullscreen();
   const isMobile = useIsMobile();
   const [isExpanded, setIsExpanded] = useState(false);
+  const [trendingTags, setTrendingTags] = useState<string[]>([]);
   const [liked, setLiked] = useState(false);
   const [likesCount, setLikesCount] = useState(video.likes_count);
   const [commentsCount, setCommentsCount] = useState(0);
@@ -126,7 +127,36 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
     fetchCommentsCount();
     fetchSavesCount();
     fetchSubtitleSettings();
+    fetchTrendingTags();
   }, [video.id, currentUserId]);
+
+  // Fetch trending tags to show fire emoji
+  const fetchTrendingTags = async () => {
+    const { data: recentVideos } = await supabase
+      .from('videos')
+      .select('tags, views_count')
+      .not('tags', 'is', null)
+      .order('created_at', { ascending: false })
+      .limit(100);
+
+    if (!recentVideos) return;
+
+    const tagCounts: Record<string, number> = {};
+    recentVideos.forEach((vid) => {
+      if (vid.tags && Array.isArray(vid.tags)) {
+        vid.tags.forEach((tag: string) => {
+          tagCounts[tag] = (tagCounts[tag] || 0) + (vid.views_count || 1);
+        });
+      }
+    });
+
+    const topTags = Object.entries(tagCounts)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 10)
+      .map(([tag]) => tag);
+
+    setTrendingTags(topTags);
+  };
 
   // Fetch user subtitle settings
   const fetchSubtitleSettings = async () => {
@@ -1132,26 +1162,30 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
         >
           {video.title}
         </p>
-        {/* Hashtags under title - blue and clickable */}
+        {/* Hashtags under title - blue and clickable with trending indicator */}
         {video.tags && video.tags.length > 0 && (
           <div className="flex flex-wrap gap-1.5 mb-0.5">
-            {video.tags.slice(0, 4).map((tag, i) => (
-              <span 
-                key={i} 
-                className="text-[10px] text-blue-400 font-medium cursor-pointer hover:text-blue-300 hover:underline transition-colors"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  navigate(`/search?tag=${encodeURIComponent(tag)}`);
-                }}
-              >
-                #{tag.length > 15 ? tag.slice(0, 15) : tag}
-              </span>
-            ))}
+            {video.tags.slice(0, 4).map((tag, i) => {
+              const isTrending = trendingTags.includes(tag);
+              return (
+                <span 
+                  key={i} 
+                  className="text-[10px] text-blue-400 font-medium cursor-pointer hover:text-blue-300 hover:underline transition-colors flex items-center gap-0.5"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigate(`/search?tag=${encodeURIComponent(tag)}`);
+                  }}
+                >
+                  #{tag.length > 15 ? tag.slice(0, 15) : tag}
+                  {isTrending && <span className="text-[8px]">🔥</span>}
+                </span>
+              );
+            })}
           </div>
         )}
-        {/* Description - optional, shown when expanded */}
-        {isExpanded && video.description && (
-          <p className="text-[10px] opacity-80 leading-tight">
+        {/* Description - shown when expanded */}
+        {isExpanded && video.description && video.description !== video.title && (
+          <p className="text-[10px] opacity-80 leading-tight mt-1">
             {video.description}
           </p>
         )}
