@@ -157,21 +157,19 @@ const Auth = () => {
 
   // Show branded splash screen
   if (showSplash) {
-    // Simple floating bubbles from bottom
-    const bubbles = Array.from({ length: 8 }, (_, i) => ({
+    const bubbles = Array.from({ length: 6 }, (_, i) => ({
       id: i,
-      size: Math.random() * 30 + 15,
+      size: Math.random() * 20 + 10,
       left: Math.random() * 100,
       delay: Math.random() * 2,
-      duration: Math.random() * 4 + 5,
+      duration: Math.random() * 4 + 6,
     }));
 
-    // Simple stars
     const stars = [
-      { emoji: '⭐', top: '15%', left: '12%', delay: '0s' },
-      { emoji: '✨', top: '20%', right: '15%', delay: '0.5s' },
-      { emoji: '🌟', bottom: '25%', left: '10%', delay: '1s' },
-      { emoji: '⭐', bottom: '20%', right: '12%', delay: '0.3s' },
+      { top: '18%', left: '15%', delay: '0s' },
+      { top: '22%', right: '18%', delay: '0.6s' },
+      { bottom: '28%', left: '12%', delay: '1.2s' },
+      { bottom: '24%', right: '14%', delay: '0.3s' },
     ];
 
     return (
@@ -181,105 +179,78 @@ const Auth = () => {
           background: 'linear-gradient(135deg, #FF8C00 0%, #FF6B35 40%, #FF4444 100%)'
         }}
       >
-        {/* Floating bubbles from bottom */}
+        {/* Floating bubbles */}
         {bubbles.map((bubble) => (
           <div
             key={bubble.id}
-            className="absolute rounded-full bg-white/20"
+            className="absolute rounded-full bg-white/15"
             style={{
               width: bubble.size,
               height: bubble.size,
               left: `${bubble.left}%`,
-              bottom: '-10%',
+              bottom: '-5%',
               animation: `floatUp ${bubble.duration}s ease-out ${bubble.delay}s infinite`,
             }}
           />
         ))}
 
-        {/* Simple twinkling stars */}
+        {/* Stars */}
         {stars.map((star, i) => (
           <div
             key={i}
-            className="absolute text-2xl opacity-80"
+            className="absolute text-xl text-white/70"
             style={{
               top: star.top,
               left: star.left,
               right: star.right,
               bottom: star.bottom,
-              animation: `twinkle 2s ease-in-out infinite`,
+              animation: `twinkle 2.5s ease-in-out infinite`,
               animationDelay: star.delay,
             }}
           >
-            {star.emoji}
+            ✦
           </div>
         ))}
-        
-        {/* Subtle glow behind logo */}
-        <div className="absolute w-48 h-48 bg-white/20 rounded-full blur-3xl" />
         
         {/* Bouncing Logo */}
         <img 
           src={toonreelsLogo} 
           alt="ToonlyReels" 
-          className="w-32 h-32 mb-6 drop-shadow-2xl relative z-10"
+          className="w-28 h-28 mb-5 relative z-10"
           style={{ 
             animation: 'bounce 1.5s ease-in-out infinite',
-            filter: 'drop-shadow(0 0 20px rgba(255,255,255,0.4))'
+            filter: 'drop-shadow(0 0 25px rgba(255,255,255,0.3))'
           }}
         />
         
         {/* App Name */}
         <h1 
-          className="text-4xl md:text-5xl font-black text-white mb-3 relative z-10"
-          style={{
-            textShadow: '2px 2px 0 rgba(0,0,0,0.15)',
-          }}
+          className="text-4xl font-black text-white mb-2 relative z-10"
+          style={{ textShadow: '2px 2px 0 rgba(0,0,0,0.15)' }}
         >
           ToonlyReels
         </h1>
         
         {/* Tagline */}
         <p 
-          className="text-lg md:text-xl font-semibold text-white/90 relative z-10"
+          className="text-base font-semibold text-white/90 relative z-10"
           style={{ textShadow: '1px 1px 0 rgba(0,0,0,0.1)' }}
         >
           Watch. Create. Share.
         </p>
 
-        {/* Subtle loading indicator */}
-        <div className="mt-8 flex items-center gap-2 relative z-10">
-          <div className="flex gap-1.5">
-            {[0, 1, 2].map((i) => (
-              <div
-                key={i}
-                className="w-2 h-2 rounded-full bg-white/70"
-                style={{
-                  animation: 'loadingDot 1.4s ease-in-out infinite',
-                  animationDelay: `${i * 0.2}s`,
-                }}
-              />
-            ))}
-          </div>
-        </div>
-
-        {/* Custom keyframes */}
         <style>{`
           @keyframes floatUp {
-            0% { transform: translateY(0) scale(1); opacity: 0.6; }
-            50% { opacity: 0.8; }
-            100% { transform: translateY(-100vh) scale(0.5); opacity: 0; }
+            0% { transform: translateY(0); opacity: 0.5; }
+            100% { transform: translateY(-100vh); opacity: 0; }
           }
           @keyframes bounce {
             0%, 100% { transform: translateY(0); }
             50% { transform: translateY(-15px); }
           }
           @keyframes twinkle {
-            0%, 100% { opacity: 0.6; transform: scale(1); }
-            50% { opacity: 1; transform: scale(1.2); }
-          }
-          @keyframes loadingDot {
-            0%, 80%, 100% { transform: scale(0.6); opacity: 0.5; }
-            40% { transform: scale(1); opacity: 1; }
+            0%, 100% { opacity: 0.5; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.15); }
           }
         `}</style>
       </div>
