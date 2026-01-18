@@ -130,7 +130,8 @@ const Auth = () => {
         });
 
         if (error) throw error;
-        toast.success('Account created! Redirecting...');
+        const roleLabel = userType === 'creative' ? '🎨 Creator' : '👀 Viewer';
+        toast.success(`Account created as ${roleLabel}! Redirecting...`);
         setTimeout(() => navigate('/feed'), 1000);
       } else {
         const { error } = await supabase.auth.signInWithPassword({
