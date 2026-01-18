@@ -1122,22 +1122,23 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
             </button>
           )}
         </div>
+        {/* Title */}
         <p 
-          className={`text-[11px] opacity-90 leading-tight mb-0.5 cursor-pointer ${!isExpanded ? 'line-clamp-1' : ''}`}
+          className={`text-xs font-semibold leading-tight mb-0.5 cursor-pointer ${!isExpanded ? 'line-clamp-1' : ''}`}
           onClick={(e) => {
             e.stopPropagation();
             setIsExpanded(!isExpanded);
           }}
         >
-          {video.description || video.title}
+          {video.title}
         </p>
-        {/* Hashtags under description */}
+        {/* Hashtags under title - blue and clickable */}
         {video.tags && video.tags.length > 0 && (
-          <div className="flex flex-wrap gap-1">
+          <div className="flex flex-wrap gap-1.5 mb-0.5">
             {video.tags.slice(0, 4).map((tag, i) => (
               <span 
                 key={i} 
-                className="text-[10px] text-primary/90 font-medium cursor-pointer hover:text-primary hover:underline"
+                className="text-[10px] text-blue-400 font-medium cursor-pointer hover:text-blue-300 hover:underline transition-colors"
                 onClick={(e) => {
                   e.stopPropagation();
                   navigate(`/search?tag=${encodeURIComponent(tag)}`);
@@ -1147,6 +1148,12 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
               </span>
             ))}
           </div>
+        )}
+        {/* Description - optional, shown when expanded */}
+        {isExpanded && video.description && (
+          <p className="text-[10px] opacity-80 leading-tight">
+            {video.description}
+          </p>
         )}
       </div>
 
