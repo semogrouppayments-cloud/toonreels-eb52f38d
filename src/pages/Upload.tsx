@@ -4,8 +4,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Upload as UploadIcon, ArrowLeft } from 'lucide-react';
+import { Upload as UploadIcon, ArrowLeft, X, Hash } from 'lucide-react';
 import BottomNav from '@/components/BottomNav';
 import { toast } from 'sonner';
 
@@ -13,11 +14,35 @@ const Upload = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
+  const [hashtags, setHashtags] = useState<string[]>([]);
+  const [hashtagInput, setHashtagInput] = useState('');
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
   const [videoPreview, setVideoPreview] = useState<string | null>(null);
   const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
+
+  const addHashtag = () => {
+    const tag = hashtagInput.trim().replace(/^#/, '').toLowerCase();
+    if (tag && !hashtags.includes(tag) && hashtags.length < 10) {
+      setHashtags([...hashtags, tag]);
+      setHashtagInput('');
+    } else if (hashtags.length >= 10) {
+      toast.error('Maximum 10 hashtags allowed');
+    }
+  };
+
+  const removeHashtag = (tagToRemove: string) => {
+    setHashtags(hashtags.filter(tag => tag !== tagToRemove));
+  };
+
+  const handleHashtagKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ' || e.key === ',') {
+      e.preventDefault();
+      addHashtag();
+    }
+  };
 
   const generateThumbnail = (videoFile: File): Promise<Blob> => {
     return new Promise((resolve, reject) => {
@@ -136,6 +161,10 @@ const Upload = () => {
 
   const handleUpload = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!title.trim()) {
+      toast.error('Please enter a title');
+      return;
+    }
     if (!videoFile) {
       toast.error('Please select a video file');
       return;
@@ -257,17 +286,19 @@ const Upload = () => {
         .from('videos')
         .getPublicUrl(fileName);
 
-      // Create video record with extracted hashtags from title
-      const extractedTags = extractHashtags(description);
+      // Combine manually added hashtags with any extracted from title
+      const extractedTags = extractHashtags(title);
+      const allTags = [...new Set([...hashtags, ...extractedTags])].slice(0, 10);
+      
       const { data: insertedVideo, error: insertError } = await supabase
         .from('videos')
         .insert({
           creator_id: user.id,
-          title: description,
-          description,
+          title: title.trim(),
+          description: description.trim() || null,
           video_url: videoUrl,
           thumbnail_url: thumbnailUrl,
-          tags: extractedTags,
+          tags: allTags.length > 0 ? allTags : null,
           transcription_status: 'pending',
         })
         .select('id')
@@ -325,16 +356,78 @@ const Upload = () => {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleUpload} className="space-y-6">
+              {/* Title */}
               <div className="space-y-2">
-                <Label htmlFor="description">Title</Label>
+                <Label htmlFor="title">Title *</Label>
+                <Input
+                  id="title"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value.slice(0, 100))}
+                  placeholder="Give your animation a catchy title"
+                  maxLength={100}
+                  required
+                />
+                <p className="text-xs text-muted-foreground text-right">{title.length}/100</p>
+              </div>
+
+              {/* Hashtags */}
+              <div className="space-y-2">
+                <Label htmlFor="hashtags" className="flex items-center gap-1.5">
+                  <Hash className="h-4 w-4 text-blue-400" />
+                  Hashtags
+                </Label>
+                <div className="flex gap-2">
+                  <Input
+                    id="hashtags"
+                    value={hashtagInput}
+                    onChange={(e) => setHashtagInput(e.target.value.replace(/\s/g, ''))}
+                    onKeyDown={handleHashtagKeyDown}
+                    onBlur={addHashtag}
+                    placeholder="Type a hashtag and press Enter"
+                    className="flex-1"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={addHashtag}
+                    disabled={!hashtagInput.trim()}
+                  >
+                    Add
+                  </Button>
+                </div>
+                {hashtags.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {hashtags.map((tag) => (
+                      <span
+                        key={tag}
+                        className="inline-flex items-center gap-1 px-2.5 py-1 bg-blue-500/20 text-blue-400 rounded-full text-sm font-medium"
+                      >
+                        #{tag}
+                        <button
+                          type="button"
+                          onClick={() => removeHashtag(tag)}
+                          className="hover:text-blue-200 transition-colors"
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+                <p className="text-xs text-muted-foreground">{hashtags.length}/10 hashtags</p>
+              </div>
+
+              {/* Description */}
+              <div className="space-y-2">
+                <Label htmlFor="description">Description (Optional)</Label>
                 <Textarea
                   id="description"
                   value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Give your animation a catchy title and description"
-                  rows={4}
-                  required
+                  onChange={(e) => setDescription(e.target.value.slice(0, 500))}
+                  placeholder="Add more details about your animation"
+                  rows={3}
                 />
+                <p className="text-xs text-muted-foreground text-right">{description.length}/500</p>
               </div>
 
               <div className="space-y-2">
