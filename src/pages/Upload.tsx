@@ -6,7 +6,8 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Upload as UploadIcon, ArrowLeft, X, Hash } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { Upload as UploadIcon, ArrowLeft, X, Hash, Stamp } from 'lucide-react';
 import BottomNav from '@/components/BottomNav';
 import { toast } from 'sonner';
 
@@ -22,6 +23,7 @@ const Upload = () => {
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
   const [videoPreview, setVideoPreview] = useState<string | null>(null);
   const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
+  const [applyWatermark, setApplyWatermark] = useState(false);
 
   const addHashtag = () => {
     const tag = hashtagInput.trim().replace(/^#/, '').toLowerCase();
@@ -428,6 +430,30 @@ const Upload = () => {
                   rows={3}
                 />
                 <p className="text-xs text-muted-foreground text-right">{description.length}/500</p>
+              </div>
+
+              {/* Watermark Option */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between p-4 rounded-xl border border-border bg-muted/30">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-primary/10">
+                      <Stamp className="h-5 w-5 text-primary" />
+                    </div>
+                    <div>
+                      <Label htmlFor="watermark" className="text-sm font-medium cursor-pointer">
+                        Add ToonlyReels Watermark
+                      </Label>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        Protect your content with our watermark (Optional)
+                      </p>
+                    </div>
+                  </div>
+                  <Switch
+                    id="watermark"
+                    checked={applyWatermark}
+                    onCheckedChange={setApplyWatermark}
+                  />
+                </div>
               </div>
 
               <div className="space-y-2">
