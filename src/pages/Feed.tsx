@@ -82,7 +82,7 @@ const Feed = () => {
   const preloadedVideosRef = useRef<Set<string>>(new Set());
 
   // Screen time tracking
-  const { isLocked, unlock } = useScreenTime(currentUserId);
+  const { isLocked, lockReason, timeUsed, timeLimit, unlock } = useScreenTime(currentUserId);
 
   const PULL_THRESHOLD = 80;
   const SWIPE_THRESHOLD = 50;
@@ -547,7 +547,13 @@ const Feed = () => {
       
       {/* Screen Time Lock */}
       {isLocked && currentUserId && (
-        <ScreenTimeLock userId={currentUserId} onUnlock={unlock} />
+        <ScreenTimeLock
+          userId={currentUserId}
+          lockReason={lockReason}
+          timeUsed={timeUsed}
+          timeLimit={timeLimit}
+          onUnlock={unlock}
+        />
       )}
       
       <BottomNav />
