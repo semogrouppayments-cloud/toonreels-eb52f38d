@@ -10,6 +10,8 @@ interface VideoPreviewCardProps {
   likesCount: number;
   onClick: () => void;
   formatCount: (count: number) => string;
+  compact?: boolean;
+  showStatsTopRight?: boolean;
 }
 
 const VideoPreviewCard = ({
@@ -20,7 +22,9 @@ const VideoPreviewCard = ({
   viewsCount,
   likesCount,
   onClick,
-  formatCount
+  formatCount,
+  compact = false,
+  showStatsTopRight = false
 }: VideoPreviewCardProps) => {
   const [isHovering, setIsHovering] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
@@ -131,19 +135,32 @@ const VideoPreviewCard = ({
         </div>
       )}
 
-      {/* Stats overlay */}
-      <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/80 via-black/40 to-transparent">
-        <div className="flex items-center justify-between text-white text-xs">
-          <div className="flex items-center gap-1">
-            <Eye className="h-3 w-3" />
+      {/* Stats overlay - top right or bottom based on prop */}
+      {showStatsTopRight ? (
+        <div className="absolute top-1.5 right-1.5 flex flex-col gap-1 text-white text-[10px]">
+          <div className="flex items-center gap-0.5 bg-black/60 backdrop-blur-sm rounded-full px-1.5 py-0.5">
+            <Eye className="h-2.5 w-2.5" />
             <span>{formatCount(viewsCount)}</span>
           </div>
-          <div className="flex items-center gap-1">
-            <Heart className="h-3 w-3" />
+          <div className="flex items-center gap-0.5 bg-black/60 backdrop-blur-sm rounded-full px-1.5 py-0.5">
+            <Heart className="h-2.5 w-2.5" />
             <span>{formatCount(likesCount)}</span>
           </div>
         </div>
-      </div>
+      ) : (
+        <div className={`absolute bottom-0 left-0 right-0 ${compact ? 'p-1.5' : 'p-2'} bg-gradient-to-t from-black/80 via-black/40 to-transparent`}>
+          <div className={`flex items-center justify-between text-white ${compact ? 'text-[10px]' : 'text-xs'}`}>
+            <div className="flex items-center gap-1">
+              <Eye className={compact ? 'h-2.5 w-2.5' : 'h-3 w-3'} />
+              <span>{formatCount(viewsCount)}</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <Heart className={compact ? 'h-2.5 w-2.5' : 'h-3 w-3'} />
+              <span>{formatCount(likesCount)}</span>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Hover indicator */}
       {showVideo && videoLoaded && (

@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Search as SearchIcon, Play, Heart, Eye, TrendingUp, Hash } from 'lucide-react';
+import { Search as SearchIcon, TrendingUp, Hash } from 'lucide-react';
 import BottomNav from '@/components/BottomNav';
 import VideoPreviewCard from '@/components/VideoPreviewCard';
 
@@ -411,7 +411,27 @@ const Search = () => {
           <h2 className="text-lg font-bold mb-3 flex items-center gap-2">
             🔥 Trending Now
           </h2>
-          <div className="grid grid-cols-3 gap-2">
+          {/* Horizontal scroll on laptop, grid on mobile */}
+          <div className="hidden lg:flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+            {trendingVideos.slice(0, 6).map((video) => (
+              <div key={video.id} className="flex-shrink-0 w-32">
+                <VideoPreviewCard
+                  id={video.id}
+                  title={video.title}
+                  thumbnailUrl={video.thumbnail_url}
+                  videoUrl={video.video_url}
+                  viewsCount={video.views_count}
+                  likesCount={video.likes_count}
+                  onClick={() => handleVideoClick(video.id)}
+                  formatCount={formatCount}
+                  compact
+                  showStatsTopRight
+                />
+              </div>
+            ))}
+          </div>
+          {/* Grid on mobile */}
+          <div className="lg:hidden grid grid-cols-3 gap-2">
             {trendingVideos.slice(0, 3).map((video) => (
               <VideoPreviewCard
                 key={video.id}
@@ -436,7 +456,7 @@ const Search = () => {
             <TrendingUp className="h-5 w-5 text-primary" />
             Trending Hashtags
           </h2>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2 mb-4">
             {trendingHashtags.map((item, index) => (
               <button
                 key={item.tag}
@@ -455,6 +475,42 @@ const Search = () => {
                 <Hash className="h-3 w-3" />
                 <span>{item.tag}</span>
               </button>
+            ))}
+          </div>
+          {/* Videos from trending hashtags - horizontal scroll on laptop */}
+          <div className="hidden lg:flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+            {trendingVideos.filter(v => v.tags && v.tags.length > 0).slice(0, 8).map((video) => (
+              <div key={video.id} className="flex-shrink-0 w-28">
+                <VideoPreviewCard
+                  id={video.id}
+                  title={video.title}
+                  thumbnailUrl={video.thumbnail_url}
+                  videoUrl={video.video_url}
+                  viewsCount={video.views_count}
+                  likesCount={video.likes_count}
+                  onClick={() => handleVideoClick(video.id)}
+                  formatCount={formatCount}
+                  compact
+                  showStatsTopRight
+                />
+              </div>
+            ))}
+          </div>
+          {/* Grid on mobile */}
+          <div className="lg:hidden grid grid-cols-3 gap-2">
+            {trendingVideos.filter(v => v.tags && v.tags.length > 0).slice(0, 3).map((video) => (
+              <VideoPreviewCard
+                key={video.id}
+                id={video.id}
+                title={video.title}
+                thumbnailUrl={video.thumbnail_url}
+                videoUrl={video.video_url}
+                viewsCount={video.views_count}
+                likesCount={video.likes_count}
+                onClick={() => handleVideoClick(video.id)}
+                formatCount={formatCount}
+                showStatsTopRight
+              />
             ))}
           </div>
         </div>
