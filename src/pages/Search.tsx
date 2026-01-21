@@ -517,6 +517,51 @@ const Search = () => {
         </div>
       )}
 
+      {/* Videos under Top Creatives - matching size */}
+      {!hasSearched && selectedCategory === 'all' && trendingVideos.length > 0 && (
+        <div className="p-4 border-b border-border">
+          <h2 className="text-lg font-bold mb-3 flex items-center gap-2">
+            🎬 Popular Animations
+          </h2>
+          {/* Horizontal scroll on laptop */}
+          <div className="hidden lg:flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+            {trendingVideos.slice(0, 8).map((video) => (
+              <div key={video.id} className="flex-shrink-0 w-32">
+                <VideoPreviewCard
+                  id={video.id}
+                  title={video.title}
+                  thumbnailUrl={video.thumbnail_url}
+                  videoUrl={video.video_url}
+                  viewsCount={video.views_count}
+                  likesCount={video.likes_count}
+                  onClick={() => handleVideoClick(video.id)}
+                  formatCount={formatCount}
+                  compact
+                  showStatsTopRight
+                />
+              </div>
+            ))}
+          </div>
+          {/* Grid on mobile */}
+          <div className="lg:hidden grid grid-cols-3 gap-2">
+            {trendingVideos.slice(0, 3).map((video) => (
+              <VideoPreviewCard
+                key={video.id}
+                id={video.id}
+                title={video.title}
+                thumbnailUrl={video.thumbnail_url}
+                videoUrl={video.video_url}
+                viewsCount={video.views_count}
+                likesCount={video.likes_count}
+                onClick={() => handleVideoClick(video.id)}
+                formatCount={formatCount}
+                showStatsTopRight
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* This Week's Top Creatives Section */}
       {!hasSearched && selectedCategory === 'all' && (
         <TopCreativesSection formatCount={formatCount} />

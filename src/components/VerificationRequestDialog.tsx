@@ -82,14 +82,14 @@ const VerificationRequestDialog = ({ open, onOpenChange, onSuccess }: Verificati
       }
 
       // Submit verification request
-      const { error } = await supabase.from('creator_verifications').insert({
+      const { data: verificationData, error } = await supabase.from('creator_verifications').insert({
         user_id: user.id,
         full_name: fullName.trim(),
         company_name: companyName.trim() || null,
         business_email: businessEmail.trim(),
         id_document_url: idDocumentUrl,
         business_document_url: businessDocumentUrl,
-      });
+      }).select('id').single();
 
       if (error) {
         if (error.code === '23505') {
@@ -99,6 +99,32 @@ const VerificationRequestDialog = ({ open, onOpenChange, onSuccess }: Verificati
         }
         return;
       }
+
+      // Get user profile for username
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('username')
+        .eq('id', user.id)
+        .single();
+
+      // Notify admins via edge function (fire and forget)
+      fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/notify-verification`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
+          },
+          body: JSON.stringify({
+            verification_id: verificationData?.id,
+            user_id: user.id,
+            full_name: fullName.trim(),
+            business_email: businessEmail.trim(),
+            username: profile?.username,
+          }),
+        }
+      ).catch(err => console.error('Failed to notify admins:', err));
 
       toast.success('Verification request submitted! We will review it shortly.');
       onSuccess();
