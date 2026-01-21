@@ -909,6 +909,23 @@ const Settings = () => {
                     {clearing ? 'Clearing...' : 'Clear Cache & Reload'}
                   </Button>
                 </div>
+                
+                {/* Diagnostics Mode (for parents) */}
+                <div className="pt-2 border-t border-border">
+                  <p className="text-xs text-muted-foreground mb-2">
+                    Enable diagnostics to debug performance issues on this device.
+                  </p>
+                  <div className="flex justify-between items-center">
+                    <Label className="text-xs">Diagnostics Overlay</Label>
+                    <Switch 
+                      checked={localStorage.getItem('diagnostics') === 'true'} 
+                      onCheckedChange={(checked) => {
+                        localStorage.setItem('diagnostics', checked ? 'true' : 'false');
+                        toast.success(checked ? 'Diagnostics enabled. Refresh to see overlay.' : 'Diagnostics disabled.');
+                      }} 
+                    />
+                  </div>
+                </div>
               </div>
             </CollapsibleContent>
           </Collapsible>
