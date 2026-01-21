@@ -12,6 +12,7 @@ import { ArrowLeft, Clock, Eye, Heart, Shield, Lock, Video, Calendar, HardDrive,
 import { toast } from 'sonner';
 import BottomNav from '@/components/BottomNav';
 import StorageAnalytics from '@/components/StorageAnalytics';
+import WeeklyScreenTimeChart from '@/components/WeeklyScreenTimeChart';
 
 interface ActivityStats {
   totalWatchTime: number;
@@ -262,6 +263,9 @@ const ParentDashboard = () => {
           </TabsList>
 
           <TabsContent value="activity" className="space-y-4">
+            {/* Weekly Screen Time Chart */}
+            {userId && <WeeklyScreenTimeChart userId={userId} />}
+            
             {/* Activity Stats */}
             <div>
               <h2 className="text-lg font-bold mb-3 flex items-center gap-2">

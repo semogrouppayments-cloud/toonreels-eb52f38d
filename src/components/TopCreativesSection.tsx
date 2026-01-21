@@ -184,24 +184,60 @@ const TopCreativesSection = ({ formatCount }: TopCreativesSectionProps) => {
     ctx.fillStyle = rank === 1 ? '#FFD700' : rank === 2 ? '#C0C0C0' : '#CD7F32';
     ctx.fillText(`#${rank}`, 500, 220);
 
-    // Creator name
+    // Draw profile picture if available
+    if (creator.avatar_url) {
+      try {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        await new Promise<void>((resolve, reject) => {
+          img.onload = () => resolve();
+          img.onerror = () => reject();
+          img.src = creator.avatar_url!;
+        });
+        
+        // Draw circular avatar
+        const avatarSize = 150;
+        const avatarX = 500 - avatarSize / 2;
+        const avatarY = 280;
+        
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(500, avatarY + avatarSize / 2, avatarSize / 2, 0, Math.PI * 2);
+        ctx.closePath();
+        ctx.clip();
+        ctx.drawImage(img, avatarX, avatarY, avatarSize, avatarSize);
+        ctx.restore();
+        
+        // Add border around avatar
+        ctx.beginPath();
+        ctx.arc(500, avatarY + avatarSize / 2, avatarSize / 2 + 4, 0, Math.PI * 2);
+        ctx.strokeStyle = '#FFFFFF';
+        ctx.lineWidth = 6;
+        ctx.stroke();
+      } catch {
+        // Profile picture failed to load, skip it
+      }
+    }
+
+    // Creator name (adjusted position)
     ctx.font = 'bold 72px system-ui, -apple-system, sans-serif';
     ctx.fillStyle = '#FFFFFF';
     ctx.shadowColor = 'rgba(0,0,0,0.5)';
     ctx.shadowBlur = 10;
-    ctx.fillText(`@${creator.username}`, 500, 480);
+    ctx.fillText(`@${creator.username}`, 500, creator.avatar_url ? 530 : 480);
     ctx.shadowBlur = 0;
 
-    // Stats with growth indicators
+    // Stats with growth indicators (adjusted positions)
+    const statsStartY = creator.avatar_url ? 620 : 600;
     ctx.font = 'bold 56px system-ui, -apple-system, sans-serif';
     ctx.fillStyle = '#FFFFFF';
     
     const viewsGrowthText = creator.viewsGrowth >= 0 ? `+${creator.viewsGrowth}%` : `${creator.viewsGrowth}%`;
     const likesGrowthText = creator.likesGrowth >= 0 ? `+${creator.likesGrowth}%` : `${creator.likesGrowth}%`;
     
-    ctx.fillText(`👁 ${formatCount(creator.weeklyViews)} views (${viewsGrowthText})`, 500, 600);
-    ctx.fillText(`❤️ ${formatCount(creator.weeklyLikes)} likes (${likesGrowthText})`, 500, 680);
-    ctx.fillText(`🎬 ${creator.videoCount} videos`, 500, 760);
+    ctx.fillText(`👁 ${formatCount(creator.weeklyViews)} views (${viewsGrowthText})`, 500, statsStartY);
+    ctx.fillText(`❤️ ${formatCount(creator.weeklyLikes)} likes (${likesGrowthText})`, 500, statsStartY + 80);
+    ctx.fillText(`🎬 ${creator.videoCount} videos`, 500, statsStartY + 160);
 
     // Footer with ToonlyReels branding
     ctx.font = 'bold 36px system-ui, -apple-system, sans-serif';
