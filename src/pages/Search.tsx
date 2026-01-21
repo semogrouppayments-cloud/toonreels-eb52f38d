@@ -567,12 +567,12 @@ const Search = () => {
         <TopCreativesSection formatCount={formatCount} />
       )}
 
-      {/* Results */}
+      {/* Results - matching size with other sections */}
       <div className="p-4">
         {isLoading ? (
-          <div className="grid grid-cols-2 gap-3">
-            {[...Array(6)].map((_, i) => (
-              <div key={i} className="aspect-[9/16] bg-muted rounded-xl animate-pulse" />
+          <div className="hidden lg:flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+            {[...Array(8)].map((_, i) => (
+              <div key={i} className="flex-shrink-0 w-32 aspect-[9/16] bg-muted rounded-xl animate-pulse" />
             ))}
           </div>
         ) : videos.length === 0 ? (
@@ -582,38 +582,51 @@ const Search = () => {
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-3">
-            {videos.map((video) => (
-              <div key={video.id} className="relative">
-                <VideoPreviewCard
-                  id={video.id}
-                  title={video.title}
-                  thumbnailUrl={video.thumbnail_url}
-                  videoUrl={video.video_url}
-                  viewsCount={video.views_count}
-                  likesCount={video.likes_count}
-                  onClick={() => handleVideoClick(video.id)}
-                  formatCount={formatCount}
-                />
-                {/* Tags overlay */}
-                {video.tags && video.tags.length > 0 && (
-                  <div className="absolute top-2 left-2 right-2 flex flex-wrap gap-1 z-10 pointer-events-auto">
-                    {video.tags.slice(0, 2).map((tag, i) => (
-                      <span
-                        key={i}
-                        className="bg-black/50 backdrop-blur-sm text-white text-[10px] px-1.5 py-0.5 rounded-full cursor-pointer hover:bg-primary/70 transition-colors"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setSearchQuery(`#${tag}`);
-                          handleSearchByTag(tag);
-                        }}
-                      >
-                        #{tag}
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </div>
+          <>
+            {/* Horizontal scroll on laptop - matching w-32 size */}
+            <div className="hidden lg:flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+              {videos.map((video) => (
+                <div key={video.id} className="flex-shrink-0 w-32 relative">
+                  <VideoPreviewCard
+                    id={video.id}
+                    title={video.title}
+                    thumbnailUrl={video.thumbnail_url}
+                    videoUrl={video.video_url}
+                    viewsCount={video.views_count}
+                    likesCount={video.likes_count}
+                    onClick={() => handleVideoClick(video.id)}
+                    formatCount={formatCount}
+                    compact
+                    showStatsTopRight
+                  />
+                </div>
+              ))}
+            </div>
+            {/* Grid on mobile */}
+            <div className="lg:hidden grid grid-cols-3 gap-2">
+              {videos.map((video) => (
+                <div key={video.id} className="relative">
+                  <VideoPreviewCard
+                    id={video.id}
+                    title={video.title}
+                    thumbnailUrl={video.thumbnail_url}
+                    videoUrl={video.video_url}
+                    viewsCount={video.views_count}
+                    likesCount={video.likes_count}
+                    onClick={() => handleVideoClick(video.id)}
+                    formatCount={formatCount}
+                    showStatsTopRight
+                  />
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+        {/* Loading skeleton for mobile */}
+        {isLoading && (
+          <div className="lg:hidden grid grid-cols-3 gap-2">
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className="aspect-[9/16] bg-muted rounded-xl animate-pulse" />
             ))}
           </div>
         )}
