@@ -7,6 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Search as SearchIcon, TrendingUp, Hash } from 'lucide-react';
 import BottomNav from '@/components/BottomNav';
 import VideoPreviewCard from '@/components/VideoPreviewCard';
+import TopCreativesSection from '@/components/TopCreativesSection';
 
 const CATEGORIES = [
   { id: 'all', label: 'All', emoji: '🎬' },
@@ -451,7 +452,7 @@ const Search = () => {
 
       {/* Trending Hashtags Section */}
       {!hasSearched && selectedCategory === 'all' && trendingHashtags.length > 0 && (
-        <div className="px-4 py-3 border-b border-border">
+        <div className="p-4 border-b border-border">
           <h2 className="text-lg font-bold mb-3 flex items-center gap-2">
             <TrendingUp className="h-5 w-5 text-primary" />
             Trending Hashtags
@@ -480,7 +481,7 @@ const Search = () => {
           {/* Videos from trending hashtags - horizontal scroll on laptop */}
           <div className="hidden lg:flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
             {trendingVideos.filter(v => v.tags && v.tags.length > 0).slice(0, 8).map((video) => (
-              <div key={video.id} className="flex-shrink-0 w-28">
+              <div key={video.id} className="flex-shrink-0 w-32">
                 <VideoPreviewCard
                   id={video.id}
                   title={video.title}
@@ -514,6 +515,11 @@ const Search = () => {
             ))}
           </div>
         </div>
+      )}
+
+      {/* This Week's Top Creatives Section */}
+      {!hasSearched && selectedCategory === 'all' && (
+        <TopCreativesSection formatCount={formatCount} />
       )}
 
       {/* Results */}
