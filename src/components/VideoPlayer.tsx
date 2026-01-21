@@ -208,24 +208,49 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
 
     // Video is active - attempt to play with debounce to prevent rapid fire
     let playTimeout: NodeJS.Timeout;
+    let isCancelled = false;
     
     const attemptPlay = async () => {
+      if (isCancelled) return;
       playAttemptRef.current++;
       const currentAttempt = playAttemptRef.current;
       
       try {
-        // Wait for video to be ready
-        if (videoEl.readyState < 2) {
-          await new Promise<void>((resolve) => {
+        // Ensure video source is set
+        if (!videoEl.src && signedUrl) {
+          videoEl.src = signedUrl;
+          videoEl.load();
+        }
+        
+        // Wait for video to be ready with a more reliable check
+        if (videoEl.readyState < 3) {
+          await new Promise<void>((resolve, reject) => {
+            const timeoutId = setTimeout(() => {
+              videoEl.removeEventListener('canplaythrough', onCanPlay);
+              videoEl.removeEventListener('error', onError);
+              resolve(); // Continue anyway after timeout
+            }, 3000);
+            
             const onCanPlay = () => {
-              videoEl.removeEventListener('canplay', onCanPlay);
+              clearTimeout(timeoutId);
+              videoEl.removeEventListener('canplaythrough', onCanPlay);
+              videoEl.removeEventListener('error', onError);
               resolve();
             };
-            videoEl.addEventListener('canplay', onCanPlay);
-            // Timeout fallback
-            setTimeout(resolve, 2000);
+            
+            const onError = () => {
+              clearTimeout(timeoutId);
+              videoEl.removeEventListener('canplaythrough', onCanPlay);
+              videoEl.removeEventListener('error', onError);
+              reject(new Error('Video load error'));
+            };
+            
+            videoEl.addEventListener('canplaythrough', onCanPlay);
+            videoEl.addEventListener('error', onError);
           });
         }
+        
+        if (isCancelled) return;
         
         // Reset video position for fresh start only if at the end
         if (videoEl.currentTime >= videoEl.duration - 0.5) {
@@ -236,8 +261,15 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
         videoEl.muted = true;
         setIsMuted(true);
         
-        await videoEl.play();
+        // Use a play promise with proper handling
+        const playPromise = videoEl.play();
+        if (playPromise !== undefined) {
+          await playPromise;
+        }
+        
+        if (isCancelled) return;
         setIsPlaying(true);
+        setIsBuffering(false);
         
         // Track view only once per video
         if (!hasTrackedViewRef.current) {
@@ -248,9 +280,9 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
         }
         
         // After successful muted play, try to unmute with delay
-        if (currentAttempt === playAttemptRef.current) {
+        if (currentAttempt === playAttemptRef.current && !isCancelled) {
           setTimeout(() => {
-            if (videoEl && currentAttempt === playAttemptRef.current && isActive) {
+            if (videoEl && currentAttempt === playAttemptRef.current && isActive && !isCancelled) {
               videoEl.muted = false;
               setIsMuted(false);
             }
@@ -259,13 +291,15 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
       } catch (err) {
         console.log('Autoplay failed, waiting for user interaction');
         setIsPlaying(false);
+        setIsBuffering(false);
       }
     };
 
     // Small delay to prevent rapid play attempts during scrolling
-    playTimeout = setTimeout(attemptPlay, 100);
+    playTimeout = setTimeout(attemptPlay, 150);
     
     return () => {
+      isCancelled = true;
       clearTimeout(playTimeout);
     };
   }, [isActive, signedUrl]);
