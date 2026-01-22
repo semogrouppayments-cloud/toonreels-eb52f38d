@@ -71,6 +71,9 @@ const Settings = () => {
   const [showParentalPin, setShowParentalPin] = useState(false);
   const [resettingProfilePin, setResettingProfilePin] = useState(false);
   const [resettingParentalPin, setResettingParentalPin] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showGoodbyeMessage, setShowGoodbyeMessage] = useState(false);
 
   // Collapsible section states
   const [openSections, setOpenSections] = useState<string[]>([]);
@@ -323,6 +326,11 @@ const Settings = () => {
   };
 
   const handleDeleteAccount = async () => {
+    if (deleteConfirmText !== "DELETE") {
+      toast.error("Please type DELETE to confirm");
+      return;
+    }
+    
     try {
       const deleteToast = toast.loading("Deleting account...");
       
@@ -335,10 +343,16 @@ const Settings = () => {
       }
 
       toast.success("Account deleted successfully", { id: deleteToast });
+      setShowDeleteDialog(false);
       
-      // Sign out the user and redirect to Auth
-      await supabase.auth.signOut();
-      navigate('/auth');
+      // Show goodbye message before redirecting
+      setShowGoodbyeMessage(true);
+      
+      // Wait 3 seconds then sign out and redirect
+      setTimeout(async () => {
+        await supabase.auth.signOut();
+        navigate('/auth');
+      }, 3000);
     } catch (error: any) {
       console.error('Delete account error:', error);
       toast.error(error.message || "Failed to delete account");
@@ -1104,27 +1118,17 @@ const Settings = () => {
                     </div>
 
                     <div className="pt-3 border-t">
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button variant="destructive" size="sm" className="w-full h-7 text-xs">
-                            Delete Account
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle className="text-sm">Are you sure you want to delete your account?</AlertDialogTitle>
-                            <AlertDialogDescription className="text-xs">
-                              This action cannot be undone. This will permanently delete your account and remove all your data including videos, likes, comments, and followers from our servers.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel className="h-8 text-xs">Cancel</AlertDialogCancel>
-                            <AlertDialogAction onClick={handleDeleteAccount} className="bg-destructive text-destructive-foreground hover:bg-destructive/90 h-8 text-xs">
-                              Yes, Delete My Account
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
+                      <Button 
+                        variant="destructive" 
+                        size="sm" 
+                        className="w-full h-7 text-xs"
+                        onClick={() => {
+                          setDeleteConfirmText("");
+                          setShowDeleteDialog(true);
+                        }}
+                      >
+                        Delete Account
+                      </Button>
                     </div>
                   </AccordionContent>
                 </AccordionItem>
@@ -1246,6 +1250,53 @@ const Settings = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      
+      {/* Delete Account Confirmation Dialog */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-sm">⚠️ Delete Your Account</AlertDialogTitle>
+            <AlertDialogDescription className="text-xs space-y-3" asChild>
+              <div>
+                <p>This action cannot be undone. This will permanently delete your account and remove all your data including videos, likes, comments, and followers from our servers.</p>
+                <p className="text-destructive font-semibold">To confirm, please type DELETE below:</p>
+                <Input 
+                  value={deleteConfirmText}
+                  onChange={(e) => setDeleteConfirmText(e.target.value.toUpperCase())}
+                  placeholder="Type DELETE to confirm"
+                  className="h-8 text-xs mt-2"
+                />
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="h-8 text-xs">Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDeleteAccount} 
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90 h-8 text-xs"
+              disabled={deleteConfirmText !== "DELETE"}
+            >
+              Delete My Account
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      
+      {/* Goodbye Message Overlay */}
+      {showGoodbyeMessage && (
+        <div className="fixed inset-0 z-50 bg-background/95 flex items-center justify-center">
+          <div className="text-center space-y-4 p-6">
+            <div className="text-6xl">👋</div>
+            <h2 className="text-xl font-bold text-foreground">Goodbye!</h2>
+            <p className="text-sm text-muted-foreground">
+              Your account has been deleted. We're sorry to see you go.
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Redirecting you shortly...
+            </p>
+          </div>
+        </div>
+      )}
       
       <BottomNav />
     </div>
