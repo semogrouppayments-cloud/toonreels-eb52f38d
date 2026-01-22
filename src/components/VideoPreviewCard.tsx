@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, memo } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Play, Eye, Heart } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 
@@ -14,7 +14,7 @@ interface VideoPreviewCardProps {
   showStatsTopRight?: boolean;
 }
 
-const VideoPreviewCard = memo(({
+const VideoPreviewCardComponent = ({
   title,
   thumbnailUrl,
   videoUrl,
@@ -175,8 +175,8 @@ const VideoPreviewCard = memo(({
       )}
     </div>
   );
-});
+};
 
-VideoPreviewCard.displayName = 'VideoPreviewCard';
+const VideoPreviewCard = React.memo(VideoPreviewCardComponent);
 
 export default VideoPreviewCard;
