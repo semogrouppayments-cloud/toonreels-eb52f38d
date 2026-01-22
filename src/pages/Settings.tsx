@@ -335,6 +335,9 @@ const Settings = () => {
       }
 
       toast.success("Account deleted successfully", { id: deleteToast });
+      
+      // Sign out the user and redirect to Auth
+      await supabase.auth.signOut();
       navigate('/auth');
     } catch (error: any) {
       console.error('Delete account error:', error);
