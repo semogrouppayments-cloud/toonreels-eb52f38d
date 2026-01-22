@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -59,8 +59,15 @@ interface Video {
   creator_avatar_url?: string;
 }
 
+// Move schema outside component to avoid recreation on every render
+const videoEditSchema = z.object({
+  title: z.string().trim().min(1, { message: "Title is required" }).max(100, { message: "Title must be less than 100 characters" }),
+  description: z.string().trim().max(500, { message: "Description must be less than 500 characters" }).optional()
+});
+
 const Profile = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const touchStartXRef = useRef<number>(0);
   const touchStartYRef = useRef<number>(0);
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -126,16 +133,11 @@ const Profile = () => {
     }
   }, [totalViews, isOwnProfile]);
 
-  const videoEditSchema = z.object({
-    title: z.string().trim().min(1, { message: "Title is required" }).max(100, { message: "Title must be less than 100 characters" }),
-    description: z.string().trim().max(500, { message: "Description must be less than 500 characters" }).optional()
-  });
+  // Extract userId from search params properly for React
+  const userIdParam = searchParams.get('userId');
 
   useEffect(() => {
     const loadProfile = async () => {
-      const urlParams = new URLSearchParams(window.location.search);
-      const userId = urlParams.get('userId');
-      
       // Get session once and reuse
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user) {
@@ -147,8 +149,8 @@ const Profile = () => {
       setCurrentUserId(currentUser.id);
       
       // Determine target user
-      const targetUserId = userId || currentUser.id;
-      const isOwn = !userId || userId === currentUser.id;
+      const targetUserId = userIdParam || currentUser.id;
+      const isOwn = !userIdParam || userIdParam === currentUser.id;
       setIsOwnProfile(isOwn);
       
       // Fetch all data in parallel for faster loading
@@ -165,7 +167,7 @@ const Profile = () => {
     };
     
     loadProfile();
-  }, [window.location.search]);
+  }, [userIdParam]);
 
   const fetchVerificationStatus = async (userId: string) => {
     const { data } = await supabase
