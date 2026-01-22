@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback, memo } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Heart, MessageCircle, Download, Flag, Trash2, Volume2, VolumeX, Bookmark, BookmarkCheck, Play, Settings, Repeat, Maximize, Minimize, Ban, BadgeCheck, Subtitles } from 'lucide-react';
@@ -63,7 +63,7 @@ interface VideoPlayerProps {
   onPositiveAction?: () => void;
 }
 
-const VideoPlayer = memo(({ video, currentUserId, isPremium, isActive, onCommentsClick, onDelete, onPositiveAction }: VideoPlayerProps) => {
+const VideoPlayerComponent = ({ video, currentUserId, isPremium, isActive, onCommentsClick, onDelete, onPositiveAction }: VideoPlayerProps) => {
   const navigate = useNavigate();
   const { triggerLikeHaptic, triggerHaptic } = useHapticFeedback();
   const { playLikeSound, playTapSound, playSuccessSound } = useSoundEffects();
@@ -1387,8 +1387,8 @@ const VideoPlayer = memo(({ video, currentUserId, isPremium, isActive, onComment
     </div>
     </>
   );
-});
+};
 
-VideoPlayer.displayName = 'VideoPlayer';
+const VideoPlayer = React.memo(VideoPlayerComponent);
 
 export default VideoPlayer;
