@@ -1,8 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
 import { Play, Eye, Heart } from 'lucide-react';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface VideoPreviewCardProps {
-  id: string;
   title: string;
   thumbnailUrl: string | null;
   videoUrl: string;
@@ -15,7 +15,6 @@ interface VideoPreviewCardProps {
 }
 
 const VideoPreviewCard = ({
-  id,
   title,
   thumbnailUrl,
   videoUrl,
@@ -26,15 +25,21 @@ const VideoPreviewCard = ({
   compact = false,
   showStatsTopRight = false
 }: VideoPreviewCardProps) => {
+  const isMobile = useIsMobile();
   const [isHovering, setIsHovering] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
   const [videoLoaded, setVideoLoaded] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-
-  // Intersection Observer for mobile auto-preview
+  // Intersection Observer for mobile auto-preview only
   useEffect(() => {
+    // Skip intersection observer on desktop - only use hover
+    if (!isMobile) {
+      setIsVisible(false);
+      return;
+    }
+
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
@@ -49,7 +54,7 @@ const VideoPreviewCard = ({
     }
 
     return () => observer.disconnect();
-  }, []);
+  }, [isMobile]);
 
   // Handle video playback based on hover (desktop) or visibility (mobile)
   useEffect(() => {

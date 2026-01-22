@@ -417,7 +417,6 @@ const Search = () => {
             {trendingVideos.slice(0, 6).map((video) => (
               <div key={video.id} className="flex-shrink-0 w-32">
                 <VideoPreviewCard
-                  id={video.id}
                   title={video.title}
                   thumbnailUrl={video.thumbnail_url}
                   videoUrl={video.video_url}
@@ -436,7 +435,6 @@ const Search = () => {
             {trendingVideos.slice(0, 3).map((video) => (
               <VideoPreviewCard
                 key={video.id}
-                id={video.id}
                 title={video.title}
                 thumbnailUrl={video.thumbnail_url}
                 videoUrl={video.video_url}
@@ -483,7 +481,6 @@ const Search = () => {
             {trendingVideos.filter(v => v.tags && v.tags.length > 0).slice(0, 8).map((video) => (
               <div key={video.id} className="flex-shrink-0 w-32">
                 <VideoPreviewCard
-                  id={video.id}
                   title={video.title}
                   thumbnailUrl={video.thumbnail_url}
                   videoUrl={video.video_url}
@@ -502,7 +499,6 @@ const Search = () => {
             {trendingVideos.filter(v => v.tags && v.tags.length > 0).slice(0, 3).map((video) => (
               <VideoPreviewCard
                 key={video.id}
-                id={video.id}
                 title={video.title}
                 thumbnailUrl={video.thumbnail_url}
                 videoUrl={video.video_url}
@@ -528,7 +524,6 @@ const Search = () => {
             {trendingVideos.slice(0, 8).map((video) => (
               <div key={video.id} className="flex-shrink-0 w-32">
                 <VideoPreviewCard
-                  id={video.id}
                   title={video.title}
                   thumbnailUrl={video.thumbnail_url}
                   videoUrl={video.video_url}
@@ -547,7 +542,6 @@ const Search = () => {
             {trendingVideos.slice(0, 3).map((video) => (
               <VideoPreviewCard
                 key={video.id}
-                id={video.id}
                 title={video.title}
                 thumbnailUrl={video.thumbnail_url}
                 videoUrl={video.video_url}
@@ -588,7 +582,6 @@ const Search = () => {
               {videos.map((video) => (
                 <div key={video.id} className="flex-shrink-0 w-32 relative">
                   <VideoPreviewCard
-                    id={video.id}
                     title={video.title}
                     thumbnailUrl={video.thumbnail_url}
                     videoUrl={video.video_url}
@@ -607,7 +600,6 @@ const Search = () => {
               {videos.map((video) => (
                 <div key={video.id} className="relative">
                   <VideoPreviewCard
-                    id={video.id}
                     title={video.title}
                     thumbnailUrl={video.thumbnail_url}
                     videoUrl={video.video_url}
