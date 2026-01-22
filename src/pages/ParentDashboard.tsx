@@ -8,11 +8,13 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Slider } from '@/components/ui/slider';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, Clock, Eye, Heart, Shield, Lock, Video, Calendar, HardDrive, Activity } from 'lucide-react';
+import { ArrowLeft, Clock, Eye, Heart, Shield, Lock, Video, Calendar, HardDrive, Activity, Mail } from 'lucide-react';
 import { toast } from 'sonner';
 import BottomNav from '@/components/BottomNav';
 import StorageAnalytics from '@/components/StorageAnalytics';
 import WeeklyScreenTimeChart from '@/components/WeeklyScreenTimeChart';
+import ContentCategoryChart from '@/components/ContentCategoryChart';
+import MonthlyReportSettings from '@/components/MonthlyReportSettings';
 
 interface ActivityStats {
   totalWatchTime: number;
@@ -247,7 +249,7 @@ const ParentDashboard = () => {
         </div>
 
         <Tabs defaultValue="activity" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 mb-4">
+          <TabsList className="grid w-full grid-cols-4 mb-4">
             <TabsTrigger value="activity" className="text-xs">
               <Activity className="h-3 w-3 mr-1" />
               Activity
@@ -255,6 +257,10 @@ const ParentDashboard = () => {
             <TabsTrigger value="controls" className="text-xs">
               <Lock className="h-3 w-3 mr-1" />
               Controls
+            </TabsTrigger>
+            <TabsTrigger value="reports" className="text-xs">
+              <Mail className="h-3 w-3 mr-1" />
+              Reports
             </TabsTrigger>
             <TabsTrigger value="storage" className="text-xs">
               <HardDrive className="h-3 w-3 mr-1" />
@@ -265,6 +271,9 @@ const ParentDashboard = () => {
           <TabsContent value="activity" className="space-y-4">
             {/* Weekly Screen Time Chart */}
             {userId && <WeeklyScreenTimeChart userId={userId} />}
+            
+            {/* Content Category Chart */}
+            {userId && <ContentCategoryChart userId={userId} />}
             
             {/* Activity Stats */}
             <div>
@@ -436,6 +445,10 @@ const ParentDashboard = () => {
             <Button onClick={saveSettings} className="w-full" size="lg">
               Save All Settings
             </Button>
+          </TabsContent>
+
+          <TabsContent value="reports" className="space-y-4">
+            {userId && <MonthlyReportSettings userId={userId} />}
           </TabsContent>
 
           <TabsContent value="storage" className="space-y-4">
