@@ -36,31 +36,7 @@
 </head>
 
   <body>
-    <!-- Instant native splash screen - shows immediately before JS loads -->
-    <div id="splash-screen" style="position:fixed;inset:0;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;background:linear-gradient(135deg,#FF8C00 0%,#FF6B35 40%,#FF4444 100%);transition:opacity 0.3s ease-out;overflow:hidden;">
-      <img src="/toonreels-icon.png" alt="" style="width:96px;height:96px;animation:bounce 1.5s ease-in-out infinite;filter:drop-shadow(0 0 20px rgba(255,255,255,0.4));" />
-      <p style="color:white;font-size:28px;font-weight:800;margin-top:16px;text-shadow:2px 2px 0 rgba(0,0,0,0.15);">ToonlyReels</p>
-      <p style="color:rgba(255,255,255,0.9);font-size:14px;font-weight:600;margin-top:8px;text-shadow:1px 1px 0 rgba(0,0,0,0.1);">Watch. Create. Share.</p>
-    </div>
-    <style>
-      @keyframes bounce {
-        0%, 100% { transform: translateY(0); }
-        50% { transform: translateY(-15px); }
-      }
-    </style>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
-    <script>
-      // Hide splash once React mounts
-      window.addEventListener('load', function() {
-        setTimeout(function() {
-          var splash = document.getElementById('splash-screen');
-          if (splash) {
-            splash.style.opacity = '0';
-            setTimeout(function() { splash.remove(); }, 300);
-          }
-        }, 500);
-      });
-    </script>
   </body>
 </html>
