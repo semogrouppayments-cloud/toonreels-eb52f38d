@@ -1,4 +1,4 @@
-import { Home, Search, Upload, User } from 'lucide-react';
+import { Film, Search, Upload, User } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
@@ -110,7 +110,7 @@ const BottomNav = () => {
               : 'text-muted-foreground hover:text-foreground'
           }`}
         >
-          <Home className="h-5 w-5" />
+          <Film className="h-5 w-5" />
           <span className="text-[10px] font-semibold">Reels</span>
         </button>
 
