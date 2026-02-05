@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import VideoPlayer from '@/components/VideoPlayer';
 import VideoSkeleton from '@/components/VideoSkeleton';
 import CommentsSheet from '@/components/CommentsSheet';
-import BottomNav from '@/components/BottomNav';
+import ResponsiveLayout from '@/components/ResponsiveLayout';
 import RatingPrompt from '@/components/RatingPrompt';
 import ChangelogModal from '@/components/ChangelogModal';
 import ScreenTimeLock from '@/components/ScreenTimeLock';
@@ -385,10 +385,11 @@ const Feed = () => {
 
   if (isLoading) {
     return (
-      <div className="h-screen w-full overflow-hidden bg-black">
-        <VideoSkeleton />
-        <BottomNav />
-      </div>
+      <ResponsiveLayout>
+        <div className="h-screen w-full overflow-hidden bg-black">
+          <VideoSkeleton />
+        </div>
+      </ResponsiveLayout>
     );
   }
 
@@ -407,9 +408,63 @@ const Feed = () => {
 
   if (videos.length === 0 && !isLoading) {
     return (
-      <div className="min-h-screen bg-black flex flex-col">
+      <ResponsiveLayout>
+        <div className="min-h-screen bg-black flex flex-col">
+          {/* Tab header */}
+          <div className="fixed top-0 left-0 right-0 z-40 flex justify-center gap-6 py-4 bg-gradient-to-b from-black/80 to-transparent md:left-56 lg:left-64">
+            <button
+              onClick={() => handleTabChange('forYou')}
+              className={`text-sm font-semibold transition-colors ${
+                activeTab === 'forYou' ? 'text-white' : 'text-white/50'
+              }`}
+            >
+              For You
+            </button>
+            <button
+              onClick={() => handleTabChange('following')}
+              className={`text-sm font-semibold transition-colors ${
+                activeTab === 'following' ? 'text-white' : 'text-white/50'
+              }`}
+            >
+              Following
+            </button>
+          </div>
+          <div className="flex-1 flex items-center justify-center pb-24">
+            <div className="text-center">
+              <h2 className="text-2xl font-black mb-2 text-white">
+                {activeTab === 'following' ? 'No videos from followed creators' : 'No videos yet!'}
+              </h2>
+              <p className="text-white/60">
+                {activeTab === 'following' 
+                  ? 'Follow some creators to see their content here' 
+                  : 'Check back later for amazing animations'}
+              </p>
+            </div>
+          </div>
+        </div>
+      </ResponsiveLayout>
+    );
+  }
+
+  return (
+    <ResponsiveLayout>
+      <div 
+        ref={containerRef}
+        className="h-screen w-full overflow-y-scroll bg-black scrollbar-hide"
+        style={{ 
+          scrollSnapType: 'y mandatory',
+          WebkitOverflowScrolling: 'touch',
+          overscrollBehavior: 'contain',
+          willChange: 'scroll-position',
+          transform: 'translateZ(0)',
+          backfaceVisibility: 'hidden'
+        }}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
         {/* Tab header */}
-        <div className="fixed top-0 left-0 right-0 z-40 flex justify-center gap-6 py-4 bg-gradient-to-b from-black/80 to-transparent">
+        <div className="fixed top-0 left-0 right-0 z-40 flex justify-center gap-6 py-4 bg-gradient-to-b from-black/80 to-transparent md:left-56 lg:left-64">
           <button
             onClick={() => handleTabChange('forYou')}
             className={`text-sm font-semibold transition-colors ${
@@ -427,144 +482,90 @@ const Feed = () => {
             Following
           </button>
         </div>
-        <div className="flex-1 flex items-center justify-center pb-24">
-          <div className="text-center">
-            <h2 className="text-2xl font-black mb-2 text-white">
-              {activeTab === 'following' ? 'No videos from followed creators' : 'No videos yet!'}
-            </h2>
-            <p className="text-white/60">
-              {activeTab === 'following' 
-                ? 'Follow some creators to see their content here' 
-                : 'Check back later for amazing animations'}
-            </p>
+
+        {/* Pull to refresh indicator */}
+        {pullDistance > 0 && (
+          <div 
+            className="fixed top-0 left-0 right-0 z-50 flex items-center justify-center bg-black/80 transition-all md:left-56 lg:left-64"
+            style={{ height: pullDistance }}
+          >
+            <RefreshCw 
+              className={`h-6 w-6 text-white transition-transform ${
+                pullDistance >= PULL_THRESHOLD ? 'rotate-180' : ''
+              } ${isRefreshing ? 'animate-spin' : ''}`}
+            />
           </div>
-        </div>
-        <BottomNav />
-      </div>
-    );
-  }
+        )}
 
-  return (
-    <div 
-      ref={containerRef}
-      className="h-screen w-full overflow-y-scroll bg-black scrollbar-hide"
-      style={{ 
-        scrollSnapType: 'y mandatory',
-        WebkitOverflowScrolling: 'touch',
-        overscrollBehavior: 'contain',
-        willChange: 'scroll-position',
-        transform: 'translateZ(0)',
-        backfaceVisibility: 'hidden'
-      }}
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
-    >
-      {/* Tab header */}
-      <div className="fixed top-0 left-0 right-0 z-40 flex justify-center gap-6 py-4 bg-gradient-to-b from-black/80 to-transparent">
-        <button
-          onClick={() => handleTabChange('forYou')}
-          className={`text-sm font-semibold transition-colors ${
-            activeTab === 'forYou' ? 'text-white' : 'text-white/50'
-          }`}
-        >
-          For You
-        </button>
-        <button
-          onClick={() => handleTabChange('following')}
-          className={`text-sm font-semibold transition-colors ${
-            activeTab === 'following' ? 'text-white' : 'text-white/50'
-          }`}
-        >
-          Following
-        </button>
-      </div>
-
-      {/* Pull to refresh indicator */}
-      {pullDistance > 0 && (
-        <div 
-          className="fixed top-0 left-0 right-0 z-50 flex items-center justify-center bg-black/80 transition-all"
-          style={{ height: pullDistance }}
-        >
-          <RefreshCw 
-            className={`h-6 w-6 text-white transition-transform ${
-              pullDistance >= PULL_THRESHOLD ? 'rotate-180' : ''
-            } ${isRefreshing ? 'animate-spin' : ''}`}
-          />
-        </div>
-      )}
-
-
-      {videos.map((video, index) => (
-        <div 
-          key={video.id} 
-          className="h-screen w-full flex-shrink-0"
-          style={{ 
-            scrollSnapAlign: 'start',
-            willChange: 'transform',
-            transform: 'translateZ(0)',
-            contain: 'layout style paint'
+        {videos.map((video, index) => (
+          <div 
+            key={video.id} 
+            className="h-screen w-full flex-shrink-0"
+            style={{ 
+              scrollSnapAlign: 'start',
+              willChange: 'transform',
+              transform: 'translateZ(0)',
+              contain: 'layout style paint'
+            }}
+          >
+            <VideoPlayer
+              video={video}
+              currentUserId={currentUserId}
+              isPremium={isPremium}
+              isActive={index === activeIndex}
+              onCommentsClick={() => setSelectedVideoId(video.id)}
+              onDelete={video.creator_id === currentUserId ? () => handleDeleteVideo(video.id) : undefined}
+              onPositiveAction={trackPositiveAction}
+            />
+          </div>
+        ))}
+        
+        {/* Loading more indicator */}
+        {isLoadingMore && (
+          <div className="h-screen w-full flex items-center justify-center bg-black snap-start">
+            <Loader2 className="h-8 w-8 text-white animate-spin" />
+          </div>
+        )}
+        
+        <CommentsSheet
+          videoId={selectedVideoId || ''}
+          isOpen={!!selectedVideoId}
+          onClose={() => {
+            setSelectedVideoId(null);
+            trackPositiveAction();
           }}
-        >
-          <VideoPlayer
-            video={video}
-            currentUserId={currentUserId}
-            isPremium={isPremium}
-            isActive={index === activeIndex}
-            onCommentsClick={() => setSelectedVideoId(video.id)}
-            onDelete={video.creator_id === currentUserId ? () => handleDeleteVideo(video.id) : undefined}
-            onPositiveAction={trackPositiveAction}
-          />
-        </div>
-      ))}
-      
-      {/* Loading more indicator */}
-      {isLoadingMore && (
-        <div className="h-screen w-full flex items-center justify-center bg-black snap-start">
-          <Loader2 className="h-8 w-8 text-white animate-spin" />
-        </div>
-      )}
-      
-      <CommentsSheet
-        videoId={selectedVideoId || ''}
-        isOpen={!!selectedVideoId}
-        onClose={() => {
-          setSelectedVideoId(null);
-          trackPositiveAction(); // Track commenting as positive action
-        }}
-        currentUserId={currentUserId}
-      />
-      
-      {/* Rating Prompt */}
-      <RatingPrompt
-        open={showRatingPrompt}
-        onRateNow={handleRateNow}
-        onRemindLater={handleRemindLater}
-        onNoThanks={handleNoThanks}
-      />
-      
-      {/* Changelog Modal */}
-      <ChangelogModal
-        open={showChangelog}
-        onClose={markAsSeen}
-        isNewVersion={isNewVersion}
-        currentVersion={currentVersion}
-        changelog={changelog}
-      />
-      
-      {/* Screen Time Lock */}
-      {isLocked && currentUserId && (
-        <ScreenTimeLock
-          userId={currentUserId}
-          lockReason={lockReason}
-          timeUsed={timeUsed}
-          timeLimit={timeLimit}
-          onUnlock={unlock}
+          currentUserId={currentUserId}
         />
-      )}
-      
-      <BottomNav />
-    </div>
+        
+        {/* Rating Prompt */}
+        <RatingPrompt
+          open={showRatingPrompt}
+          onRateNow={handleRateNow}
+          onRemindLater={handleRemindLater}
+          onNoThanks={handleNoThanks}
+        />
+        
+        {/* Changelog Modal */}
+        <ChangelogModal
+          open={showChangelog}
+          onClose={markAsSeen}
+          isNewVersion={isNewVersion}
+          currentVersion={currentVersion}
+          changelog={changelog}
+        />
+        
+        {/* Screen Time Lock */}
+        {isLocked && currentUserId && (
+          <ScreenTimeLock
+            userId={currentUserId}
+            lockReason={lockReason}
+            timeUsed={timeUsed}
+            timeLimit={timeLimit}
+            onUnlock={unlock}
+          />
+        )}
+      </div>
+    </ResponsiveLayout>
   );
 };
 
