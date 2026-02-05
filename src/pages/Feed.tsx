@@ -450,9 +450,11 @@ const Feed = () => {
       className="h-screen w-full overflow-y-scroll bg-black scrollbar-hide"
       style={{ 
         scrollSnapType: 'y mandatory',
-        scrollSnapStop: 'always',
         WebkitOverflowScrolling: 'touch',
-        overscrollBehavior: 'none'
+        overscrollBehavior: 'contain',
+        willChange: 'scroll-position',
+        transform: 'translateZ(0)',
+        backfaceVisibility: 'hidden'
       }}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
@@ -497,7 +499,12 @@ const Feed = () => {
         <div 
           key={video.id} 
           className="h-screen w-full flex-shrink-0"
-          style={{ scrollSnapAlign: 'start', scrollSnapStop: 'always' }}
+          style={{ 
+            scrollSnapAlign: 'start',
+            willChange: 'transform',
+            transform: 'translateZ(0)',
+            contain: 'layout style paint'
+          }}
         >
           <VideoPlayer
             video={video}

@@ -111,7 +111,7 @@ const BottomNav = () => {
           }`}
         >
           <Home className="h-5 w-5" />
-          <span className="text-[10px] font-semibold">Home</span>
+          <span className="text-[10px] font-semibold">Reels</span>
         </button>
 
         <button

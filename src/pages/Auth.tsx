@@ -9,7 +9,6 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Play, Sparkles, Eye, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { z } from 'zod';
-import toonreelsLogo from '@/assets/toonreels-logo.png';
 
 
 // Validation schemas
@@ -36,29 +35,11 @@ const Auth = () => {
   const [isSignUp, setIsSignUp] = useState(false);
   const [loading, setLoading] = useState(false);
   const [checkingSession, setCheckingSession] = useState(true);
-  const [showSplash, setShowSplash] = useState(true);
-  const [splashFading, setSplashFading] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [username, setUsername] = useState('');
   const [userType, setUserType] = useState<'viewer' | 'creative'>('viewer');
-  const [errors, setErrors] = useState<{ email?: string; password?: string; username?: string }>({})
-
-  // Splash screen timer - reduced to 1.5 seconds for faster startup
-  useEffect(() => {
-    const fadeTimer = setTimeout(() => {
-      setSplashFading(true);
-    }, 1200);
-
-    const hideTimer = setTimeout(() => {
-      setShowSplash(false);
-    }, 1500);
-
-    return () => {
-      clearTimeout(fadeTimer);
-      clearTimeout(hideTimer);
-    };
-  }, []);
+  const [errors, setErrors] = useState<{ email?: string; password?: string; username?: string }>({});
 
   // Check for existing session on mount - remember login
   useEffect(() => {
@@ -155,108 +136,6 @@ const Auth = () => {
       setLoading(false);
     }
   };
-
-  // Show branded splash screen
-  if (showSplash) {
-    const bubbles = Array.from({ length: 6 }, (_, i) => ({
-      id: i,
-      size: Math.random() * 20 + 10,
-      left: Math.random() * 100,
-      delay: Math.random() * 2,
-      duration: Math.random() * 4 + 6,
-    }));
-
-    const stars = [
-      { top: '18%', left: '15%', delay: '0s' },
-      { top: '22%', right: '18%', delay: '0.6s' },
-      { bottom: '28%', left: '12%', delay: '1.2s' },
-      { bottom: '24%', right: '14%', delay: '0.3s' },
-    ];
-
-    return (
-      <div 
-        className={`flex min-h-screen flex-col items-center justify-center transition-opacity duration-500 overflow-hidden relative ${splashFading ? 'opacity-0' : 'opacity-100'}`}
-        style={{
-          background: 'linear-gradient(135deg, #FF8C00 0%, #FF6B35 40%, #FF4444 100%)'
-        }}
-      >
-        {/* Floating bubbles */}
-        {bubbles.map((bubble) => (
-          <div
-            key={bubble.id}
-            className="absolute rounded-full bg-white/15"
-            style={{
-              width: bubble.size,
-              height: bubble.size,
-              left: `${bubble.left}%`,
-              bottom: '-5%',
-              animation: `floatUp ${bubble.duration}s ease-out ${bubble.delay}s infinite`,
-            }}
-          />
-        ))}
-
-        {/* Stars */}
-        {stars.map((star, i) => (
-          <div
-            key={i}
-            className="absolute text-xl text-white/70"
-            style={{
-              top: star.top,
-              left: star.left,
-              right: star.right,
-              bottom: star.bottom,
-              animation: `twinkle 2.5s ease-in-out infinite`,
-              animationDelay: star.delay,
-            }}
-          >
-            ✦
-          </div>
-        ))}
-        
-        {/* Bouncing Logo */}
-        <img 
-          src={toonreelsLogo} 
-          alt="ToonlyReels" 
-          className="w-28 h-28 mb-5 relative z-10"
-          style={{ 
-            animation: 'bounce 1.5s ease-in-out infinite',
-            filter: 'drop-shadow(0 0 25px rgba(255,255,255,0.3))'
-          }}
-        />
-        
-        {/* App Name */}
-        <h1 
-          className="text-4xl font-black text-white mb-2 relative z-10"
-          style={{ textShadow: '2px 2px 0 rgba(0,0,0,0.15)' }}
-        >
-          ToonlyReels
-        </h1>
-        
-        {/* Tagline */}
-        <p 
-          className="text-base font-semibold text-white/90 relative z-10"
-          style={{ textShadow: '1px 1px 0 rgba(0,0,0,0.1)' }}
-        >
-          Watch. Create. Share.
-        </p>
-
-        <style>{`
-          @keyframes floatUp {
-            0% { transform: translateY(0); opacity: 0.5; }
-            100% { transform: translateY(-100vh); opacity: 0; }
-          }
-          @keyframes bounce {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-15px); }
-          }
-          @keyframes twinkle {
-            0%, 100% { opacity: 0.5; transform: scale(1); }
-            50% { opacity: 1; transform: scale(1.15); }
-          }
-        `}</style>
-      </div>
-    );
-  }
 
   // Show loading while checking session
   if (checkingSession) {
