@@ -7,7 +7,7 @@ import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { useAgeVerification } from "@/hooks/useAgeVerification";
 import AgeGate from "@/components/AgeGate";
-import DiagnosticsOverlay from "@/components/DiagnosticsOverlay";
+
 
 // Eager load critical path
 import Auth from "./pages/Auth";
@@ -88,7 +88,7 @@ const App = () => (
       <TooltipProvider>
         <Toaster />
         <Sonner />
-        <DiagnosticsOverlay enabled={import.meta.env.DEV || localStorage.getItem('diagnostics') === 'true'} />
+        
         <BrowserRouter>
           <AppContent />
         </BrowserRouter>
