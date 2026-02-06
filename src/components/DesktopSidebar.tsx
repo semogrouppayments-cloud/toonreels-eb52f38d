@@ -9,9 +9,52 @@ import SidebarMoreMenu from './SidebarMoreMenu';
 const creativeStatusCache = new Map<string, boolean>();
 let cachedUserId: string | null = null;
 
+// Hook to get unread notification count
+const useUnreadNotifications = () => {
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    const fetchUnread = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { count } = await supabase
+        .from('notifications')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+        .eq('is_read', false);
+
+      setUnreadCount(count || 0);
+    };
+
+    fetchUnread();
+
+    // Subscribe to new notifications
+    const channel = supabase
+      .channel('sidebar-notifications')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'notifications'
+        },
+        () => fetchUnread()
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+  return unreadCount;
+};
+
 const DesktopSidebar = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const unreadCount = useUnreadNotifications();
   
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [isCreative, setIsCreative] = useState<boolean>(() => {
@@ -106,11 +149,11 @@ const DesktopSidebar = () => {
 
   // Main nav items - Reels, Explore, Upload (creative only), Notifications, Profile
   const navItems = [
-    { path: '/feed', icon: Film, label: 'Reels' },
-    { path: '/search', icon: Search, label: 'Explore' },
-    ...(isLoaded && isCreative ? [{ path: '/upload', icon: Upload, label: 'Upload' }] : []),
-    { path: '/notifications', icon: Bell, label: 'Notifications' },
-    { path: currentUserId ? `/profile/${currentUserId}` : '/profile', icon: User, label: 'Profile' },
+    { path: '/feed', icon: Film, label: 'Reels', badge: 0 },
+    { path: '/search', icon: Search, label: 'Explore', badge: 0 },
+    ...(isLoaded && isCreative ? [{ path: '/upload', icon: Upload, label: 'Upload', badge: 0 }] : []),
+    { path: '/notifications', icon: Bell, label: 'Notifications', badge: unreadCount },
+    { path: currentUserId ? `/profile/${currentUserId}` : '/profile', icon: User, label: 'Profile', badge: 0 },
   ];
 
   return (
@@ -133,7 +176,14 @@ const DesktopSidebar = () => {
                 : 'text-muted-foreground hover:bg-muted hover:text-foreground'
             }`}
           >
-            <item.icon className="h-5 w-5" />
+            <div className="relative">
+              <item.icon className="h-5 w-5" />
+              {item.badge > 0 && (
+                <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-destructive text-destructive-foreground text-[10px] flex items-center justify-center font-bold">
+                  {item.badge > 9 ? '9+' : item.badge}
+                </span>
+              )}
+            </div>
             <span>{item.label}</span>
           </button>
         ))}

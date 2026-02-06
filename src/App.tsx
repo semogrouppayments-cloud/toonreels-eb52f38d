@@ -26,6 +26,7 @@ const NotFound = lazy(() => import("./pages/NotFound"));
 const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
 const TermsOfService = lazy(() => import("./pages/TermsOfService"));
 const ParentDashboard = lazy(() => import("./pages/ParentDashboard"));
+const Notifications = lazy(() => import("./pages/Notifications"));
 
 const queryClient = new QueryClient();
 
@@ -69,6 +70,8 @@ const AppContent = () => {
         <Route path="/upload" element={<Upload />} />
         <Route path="/messages" element={<Messages />} />
         <Route path="/profile" element={<Profile />} />
+        <Route path="/profile/:userId" element={<Profile />} />
+        <Route path="/notifications" element={<Notifications />} />
         <Route path="/settings" element={<Settings />} />
         <Route path="/video-analytics/:videoId" element={<VideoAnalytics />} />
         <Route path="/creator-dashboard" element={<CreatorDashboard />} />
