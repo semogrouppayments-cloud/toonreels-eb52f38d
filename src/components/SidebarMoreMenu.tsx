@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Menu, Settings, BarChart3, Trophy, Users, Sun, Moon, LogOut, Plus, User } from 'lucide-react';
+import { Menu, Settings, BarChart3, Trophy, Users, Sun, Moon, LogOut, Plus, User, ChevronRight } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useTheme } from '@/contexts/ThemeContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -29,19 +29,55 @@ const SidebarMoreMenu = ({ isCreative }: SidebarMoreMenuProps) => {
   const [currentAccountId, setCurrentAccountId] = useState<string | null>(null);
 
   useEffect(() => {
+    loadAccountsAndCurrentUser();
+  }, []);
+
+  const loadAccountsAndCurrentUser = async () => {
     // Load saved accounts from localStorage
     const accounts = localStorage.getItem('toonreels_saved_accounts');
     if (accounts) {
       setSavedAccounts(JSON.parse(accounts));
     }
     
-    // Get current user
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (user) {
-        setCurrentAccountId(user.id);
+    // Get current user and save to accounts if not already saved
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      setCurrentAccountId(user.id);
+      
+      // Add current account to saved accounts if not already there
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('username, avatar_url, selected_avatar')
+        .eq('id', user.id)
+        .single();
+      
+      if (profile) {
+        const currentAccount: SavedAccount = {
+          id: user.id,
+          email: user.email || '',
+          username: profile.username,
+          avatar_url: profile.avatar_url,
+          selected_avatar: profile.selected_avatar,
+        };
+        
+        const existingAccounts = accounts ? JSON.parse(accounts) : [];
+        const accountExists = existingAccounts.some((acc: SavedAccount) => acc.id === user.id);
+        
+        if (!accountExists) {
+          const updatedAccounts = [...existingAccounts, currentAccount].slice(0, MAX_ACCOUNTS);
+          localStorage.setItem('toonreels_saved_accounts', JSON.stringify(updatedAccounts));
+          setSavedAccounts(updatedAccounts);
+        } else {
+          // Update existing account info
+          const updatedAccounts = existingAccounts.map((acc: SavedAccount) => 
+            acc.id === user.id ? currentAccount : acc
+          );
+          localStorage.setItem('toonreels_saved_accounts', JSON.stringify(updatedAccounts));
+          setSavedAccounts(updatedAccounts);
+        }
       }
-    });
-  }, []);
+    }
+  };
 
   const handleLogout = async () => {
     try {
@@ -59,19 +95,38 @@ const SidebarMoreMenu = ({ isCreative }: SidebarMoreMenuProps) => {
   };
 
   const handleSwitchAccount = async (account: SavedAccount) => {
-    // For now, redirect to auth page - full account switching would require stored credentials
-    toast.info(`Switching to ${account.username}...`);
+    if (account.id === currentAccountId) {
+      toast.info('Already using this account');
+      return;
+    }
+    // Sign out current user and redirect to auth to login as different account
+    await supabase.auth.signOut();
+    toast.info(`Sign in as ${account.username}`);
     navigate('/auth');
     setOpen(false);
   };
 
-  const handleAddAccount = () => {
+  const handleAddAccount = async () => {
     if (savedAccounts.length >= MAX_ACCOUNTS) {
       toast.error(`Maximum ${MAX_ACCOUNTS} accounts allowed`);
       return;
     }
+    // Sign out and go to auth to add new account
+    await supabase.auth.signOut();
+    toast.info('Sign in to add another account');
     navigate('/auth');
     setOpen(false);
+  };
+
+  const handleRemoveAccount = (accountId: string) => {
+    if (accountId === currentAccountId) {
+      toast.error('Cannot remove current account');
+      return;
+    }
+    const updatedAccounts = savedAccounts.filter(acc => acc.id !== accountId);
+    localStorage.setItem('toonreels_saved_accounts', JSON.stringify(updatedAccounts));
+    setSavedAccounts(updatedAccounts);
+    toast.success('Account removed');
   };
 
   return (
@@ -103,29 +158,46 @@ const SidebarMoreMenu = ({ isCreative }: SidebarMoreMenuProps) => {
             {savedAccounts.length > 0 ? (
               <>
                 {savedAccounts.map((account) => (
-                  <button 
+                  <div 
                     key={account.id}
-                    onClick={() => handleSwitchAccount(account)}
                     className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${
                       account.id === currentAccountId 
-                        ? 'bg-primary/10 text-primary' 
-                        : 'text-foreground hover:bg-muted'
+                        ? 'bg-primary/10' 
+                        : 'hover:bg-muted'
                     }`}
                   >
-                    <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-sm overflow-hidden flex-shrink-0">
-                      {account.avatar_url ? (
-                        <img src={account.avatar_url} alt="" className="w-full h-full object-cover" />
-                      ) : (
-                        account.selected_avatar || <User className="h-4 w-4" />
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0 text-left">
-                      <p className="truncate">{account.username}</p>
-                      {account.id === currentAccountId && (
-                        <p className="text-xs text-primary">Current</p>
-                      )}
-                    </div>
-                  </button>
+                    <button
+                      onClick={() => handleSwitchAccount(account)}
+                      className="flex items-center gap-3 flex-1 min-w-0"
+                    >
+                      <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-lg overflow-hidden flex-shrink-0 border-2 border-border">
+                        {account.avatar_url ? (
+                          <img src={account.avatar_url} alt="" className="w-full h-full object-cover" />
+                        ) : (
+                          account.selected_avatar || <User className="h-5 w-5" />
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0 text-left">
+                        <p className={`truncate font-semibold ${account.id === currentAccountId ? 'text-primary' : 'text-foreground'}`}>
+                          {account.username}
+                        </p>
+                        {account.id === currentAccountId ? (
+                          <p className="text-xs text-primary">✓ Active</p>
+                        ) : (
+                          <p className="text-xs text-muted-foreground">Tap to switch</p>
+                        )}
+                      </div>
+                    </button>
+                    {account.id !== currentAccountId && (
+                      <button
+                        onClick={() => handleRemoveAccount(account.id)}
+                        className="p-1 text-muted-foreground hover:text-destructive transition-colors"
+                        title="Remove account"
+                      >
+                        ×
+                      </button>
+                    )}
+                  </div>
                 ))}
                 
                 {savedAccounts.length < MAX_ACCOUNTS && (
@@ -135,18 +207,24 @@ const SidebarMoreMenu = ({ isCreative }: SidebarMoreMenuProps) => {
                       onClick={handleAddAccount}
                       className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-primary hover:bg-primary/10 transition-colors"
                     >
-                      <Plus className="h-4 w-4" />
+                      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                        <Plus className="h-5 w-5" />
+                      </div>
                       <span>Add Account</span>
                     </button>
                   </>
                 )}
               </>
             ) : (
-              <div className="px-3 py-4 text-center">
-                <p className="text-sm text-muted-foreground mb-3">No accounts saved</p>
+              <div className="px-3 py-6 text-center">
+                <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-3">
+                  <Users className="h-8 w-8 text-muted-foreground" />
+                </div>
+                <p className="text-sm font-medium text-foreground mb-1">No Accounts</p>
+                <p className="text-xs text-muted-foreground mb-4">Add up to {MAX_ACCOUNTS} accounts</p>
                 <button 
                   onClick={handleAddAccount}
-                  className="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+                  className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
                 >
                   <Plus className="h-4 w-4" />
                   <span>Add Account</span>
@@ -188,10 +266,16 @@ const SidebarMoreMenu = ({ isCreative }: SidebarMoreMenuProps) => {
             {/* Switch Accounts */}
             <button 
               onClick={() => setShowAccounts(true)}
-              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-foreground hover:bg-muted transition-colors"
+              className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium text-foreground hover:bg-muted transition-colors"
             >
-              <Users className="h-4 w-4" />
-              <span>Switch Accounts</span>
+              <div className="flex items-center gap-3">
+                <Users className="h-4 w-4" />
+                <span>Switch Accounts</span>
+              </div>
+              <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                <span>{savedAccounts.length}/{MAX_ACCOUNTS}</span>
+                <ChevronRight className="h-3 w-3" />
+              </div>
             </button>
 
             {/* Divider */}

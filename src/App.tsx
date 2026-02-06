@@ -1,4 +1,3 @@
-import { lazy, Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -8,34 +7,24 @@ import { ThemeProvider } from "@/contexts/ThemeContext";
 import { useAgeVerification } from "@/hooks/useAgeVerification";
 import AgeGate from "@/components/AgeGate";
 
-
-// Eager load critical path
+// Eager load all main navigation routes for instant switching
 import Auth from "./pages/Auth";
 import Feed from "./pages/Feed";
-
-// Lazy load secondary routes for faster initial load
-const Search = lazy(() => import("./pages/Search"));
-const Upload = lazy(() => import("./pages/Upload"));
-const Messages = lazy(() => import("./pages/Messages"));
-const Profile = lazy(() => import("./pages/Profile"));
-const Settings = lazy(() => import("./pages/Settings"));
-const VideoAnalytics = lazy(() => import("./pages/VideoAnalytics"));
-const CreatorDashboard = lazy(() => import("./pages/CreatorDashboard"));
-const Milestones = lazy(() => import("./pages/Milestones"));
-const NotFound = lazy(() => import("./pages/NotFound"));
-const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
-const TermsOfService = lazy(() => import("./pages/TermsOfService"));
-const ParentDashboard = lazy(() => import("./pages/ParentDashboard"));
-const Notifications = lazy(() => import("./pages/Notifications"));
+import Search from "./pages/Search";
+import Upload from "./pages/Upload";
+import Profile from "./pages/Profile";
+import Notifications from "./pages/Notifications";
+import Settings from "./pages/Settings";
+import CreatorDashboard from "./pages/CreatorDashboard";
+import Milestones from "./pages/Milestones";
+import Messages from "./pages/Messages";
+import VideoAnalytics from "./pages/VideoAnalytics";
+import NotFound from "./pages/NotFound";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import TermsOfService from "./pages/TermsOfService";
+import ParentDashboard from "./pages/ParentDashboard";
 
 const queryClient = new QueryClient();
-
-// Minimal loading fallback
-const PageLoader = () => (
-  <div className="flex min-h-screen items-center justify-center bg-background">
-    <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-  </div>
-);
 
 // Component to handle age gate logic
 const AppContent = () => {
@@ -61,27 +50,25 @@ const AppContent = () => {
   }
 
   return (
-    <Suspense fallback={<PageLoader />}>
-      <Routes>
-        <Route path="/" element={<Auth />} />
-        <Route path="/auth" element={<Auth />} />
-        <Route path="/feed" element={<Feed />} />
-        <Route path="/search" element={<Search />} />
-        <Route path="/upload" element={<Upload />} />
-        <Route path="/messages" element={<Messages />} />
-        <Route path="/profile" element={<Profile />} />
-        <Route path="/profile/:userId" element={<Profile />} />
-        <Route path="/notifications" element={<Notifications />} />
-        <Route path="/settings" element={<Settings />} />
-        <Route path="/video-analytics/:videoId" element={<VideoAnalytics />} />
-        <Route path="/creator-dashboard" element={<CreatorDashboard />} />
-        <Route path="/milestones" element={<Milestones />} />
-        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-        <Route path="/terms-of-service" element={<TermsOfService />} />
-        <Route path="/parent-dashboard" element={<ParentDashboard />} />
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-    </Suspense>
+    <Routes>
+      <Route path="/" element={<Auth />} />
+      <Route path="/auth" element={<Auth />} />
+      <Route path="/feed" element={<Feed />} />
+      <Route path="/search" element={<Search />} />
+      <Route path="/upload" element={<Upload />} />
+      <Route path="/messages" element={<Messages />} />
+      <Route path="/profile" element={<Profile />} />
+      <Route path="/profile/:userId" element={<Profile />} />
+      <Route path="/notifications" element={<Notifications />} />
+      <Route path="/settings" element={<Settings />} />
+      <Route path="/video-analytics/:videoId" element={<VideoAnalytics />} />
+      <Route path="/creator-dashboard" element={<CreatorDashboard />} />
+      <Route path="/milestones" element={<Milestones />} />
+      <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+      <Route path="/terms-of-service" element={<TermsOfService />} />
+      <Route path="/parent-dashboard" element={<ParentDashboard />} />
+      <Route path="*" element={<NotFound />} />
+    </Routes>
   );
 };
 
