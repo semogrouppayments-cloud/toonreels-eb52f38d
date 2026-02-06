@@ -5,7 +5,6 @@ import VideoPlayer from '@/components/VideoPlayer';
 import VideoSkeleton from '@/components/VideoSkeleton';
 import CommentsSheet from '@/components/CommentsSheet';
 import ResponsiveLayout from '@/components/ResponsiveLayout';
-import FeedRightSidebar from '@/components/FeedRightSidebar';
 import RatingPrompt from '@/components/RatingPrompt';
 import ChangelogModal from '@/components/ChangelogModal';
 import ScreenTimeLock from '@/components/ScreenTimeLock';
@@ -418,12 +417,9 @@ const Feed = () => {
   if (videos.length === 0 && !isLoading) {
     return (
       <ResponsiveLayout>
-        {/* Right Sidebar for desktop */}
-        <FeedRightSidebar currentUserId={currentUserId} isCreative={isCreative} />
-        
-        <div className="min-h-screen bg-black flex flex-col lg:mr-72 xl:mr-80">
+        <div className="min-h-screen bg-black flex flex-col">
           {/* Tab header */}
-          <div className="fixed top-0 left-0 right-0 z-40 flex justify-center gap-6 py-4 bg-gradient-to-b from-black/80 to-transparent md:left-56 lg:left-64 lg:right-72 xl:right-80">
+          <div className="fixed top-0 left-0 right-0 z-40 flex justify-center gap-6 py-4 bg-gradient-to-b from-black/80 to-transparent md:left-56 lg:left-64">
             <button
               onClick={() => handleTabChange('forYou')}
               className={`text-sm font-semibold transition-colors ${
@@ -460,12 +456,9 @@ const Feed = () => {
 
   return (
     <ResponsiveLayout>
-      {/* Right Sidebar for desktop */}
-      <FeedRightSidebar currentUserId={currentUserId} isCreative={isCreative} />
-      
       <div 
         ref={containerRef}
-        className="h-screen w-full overflow-y-scroll bg-black scrollbar-hide lg:mr-72 xl:mr-80"
+        className="h-screen w-full overflow-y-scroll bg-black scrollbar-hide"
         style={{ 
           scrollSnapType: 'y mandatory',
           WebkitOverflowScrolling: 'touch',
@@ -479,7 +472,7 @@ const Feed = () => {
         onTouchEnd={handleTouchEnd}
       >
         {/* Tab header */}
-        <div className="fixed top-0 left-0 right-0 z-40 flex justify-center gap-6 py-4 bg-gradient-to-b from-black/80 to-transparent md:left-56 lg:left-64 lg:right-72 xl:right-80">
+        <div className="fixed top-0 left-0 right-0 z-40 flex justify-center gap-6 py-4 bg-gradient-to-b from-black/80 to-transparent md:left-56 lg:left-64">
           <button
             onClick={() => handleTabChange('forYou')}
             className={`text-sm font-semibold transition-colors ${
@@ -501,7 +494,7 @@ const Feed = () => {
         {/* Pull to refresh indicator */}
         {pullDistance > 0 && (
           <div 
-            className="fixed top-0 left-0 right-0 z-50 flex items-center justify-center bg-black/80 transition-all md:left-56 lg:left-64 lg:right-72 xl:right-80"
+            className="fixed top-0 left-0 right-0 z-50 flex items-center justify-center bg-black/80 transition-all md:left-56 lg:left-64"
             style={{ height: pullDistance }}
           >
             <RefreshCw 
