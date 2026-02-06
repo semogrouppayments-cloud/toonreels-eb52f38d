@@ -652,7 +652,8 @@ const Profile = () => {
           {/* Settings and Sign Out Buttons / Follow Button */}
           <div className="relative flex justify-end gap-2 p-4 z-10">
             {isOwnProfile ? (
-              <>
+              /* Own profile buttons - hidden on desktop (in sidebar More menu) */
+              <div className="flex gap-2 md:hidden">
                 <NotificationBell />
                 {isCreative && (
                   <Button
@@ -691,7 +692,7 @@ const Profile = () => {
                 >
                   <LogOut className="h-5 w-5" />
                 </Button>
-              </>
+              </div>
             ) : (
               <div className="flex items-center gap-2">
                 {/* Report unverified creator button */}

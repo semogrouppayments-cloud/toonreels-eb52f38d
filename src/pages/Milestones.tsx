@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Trophy, Heart, Users, Video, Lock, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import BottomNav from '@/components/BottomNav';
+import ResponsiveLayout from '@/components/ResponsiveLayout';
 
 interface MilestoneBadge {
   id: string;
@@ -86,13 +86,14 @@ const Milestones = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-20">
-      {/* Header */}
-      <div className="sticky top-0 z-40 bg-background/95 backdrop-blur-sm border-b border-border">
-        <div className="flex items-center gap-4 p-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
+    <ResponsiveLayout>
+      <div className="min-h-screen bg-background pb-20 md:pb-4">
+        {/* Header */}
+        <div className="sticky top-0 z-40 bg-background/95 backdrop-blur-sm border-b border-border">
+          <div className="flex items-center gap-4 p-4">
+            <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="md:hidden">
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
           <div className="flex-1">
             <h1 className="text-xl font-bold">Milestone Badges</h1>
             <p className="text-sm text-muted-foreground">{achievedCount} of {totalCount} achieved</p>
@@ -158,8 +159,8 @@ const Milestones = () => {
         </section>
       </div>
 
-      <BottomNav />
-    </div>
+      </div>
+    </ResponsiveLayout>
   );
 };
 
