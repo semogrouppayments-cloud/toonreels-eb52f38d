@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { Heart, MessageCircle, Download, Flag, Trash2, Volume2, VolumeX, Bookmark, BookmarkCheck, Play, Settings, Repeat, Maximize, Minimize, Ban, BadgeCheck, Subtitles } from 'lucide-react';
+import { Heart, MessageCircle, Download, Flag, Trash2, Volume2, VolumeX, Bookmark, BookmarkCheck, Play, Settings, Repeat, Ban, BadgeCheck, Subtitles } from 'lucide-react';
 import { toast } from 'sonner';
 import { useSignedVideoUrl } from '@/hooks/useSignedVideoUrl';
 import LikeAnimation from '@/components/LikeAnimation';
@@ -1127,22 +1127,6 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
           <span className="text-[10px] text-white/80 font-medium min-w-[32px] text-right">
             {formatTime(duration)}
           </span>
-          {/* Fullscreen button for PC/Tablet */}
-          {!isMobile && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                toggleFullscreen();
-              }}
-              className="ml-2 p-1 rounded-full bg-black/40 hover:bg-black/60 transition-colors"
-            >
-              {isFullscreen ? (
-                <Minimize className="h-4 w-4 text-white" />
-              ) : (
-                <Maximize className="h-4 w-4 text-white" />
-              )}
-            </button>
-          )}
         </div>
       </div>
       

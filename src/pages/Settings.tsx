@@ -19,7 +19,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import BottomNav from "@/components/BottomNav";
+import ResponsiveLayout from "@/components/ResponsiveLayout";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -471,7 +471,8 @@ const Settings = () => {
   if (loading) return <div className="min-h-screen bg-background flex items-center justify-center"><p>Loading...</p></div>;
 
   return (
-    <div className="min-h-screen bg-background pb-24">
+    <ResponsiveLayout>
+    <div className="min-h-screen bg-background pb-24 md:pb-4">
       <div className="max-w-4xl mx-auto p-4">
         <div className="mb-4 flex items-center gap-3">
           <Button variant="ghost" size="icon" onClick={() => navigate('/profile')} className="rounded-full"><ArrowLeft className="h-5 w-5" /></Button>
@@ -1298,8 +1299,8 @@ const Settings = () => {
         </div>
       )}
       
-      <BottomNav />
     </div>
+    </ResponsiveLayout>
   );
 };
 
