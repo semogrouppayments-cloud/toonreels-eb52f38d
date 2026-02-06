@@ -1,8 +1,9 @@
-import { Film, Search, Upload, User, Settings, BarChart3 } from 'lucide-react';
+import { Film, Search, Upload, Trophy } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import toonreelsLogo from '@/assets/toonreels-logo.png';
+import SidebarMoreMenu from './SidebarMoreMenu';
 
 // Persistent cache that survives component re-mounts
 const creativeStatusCache = new Map<string, boolean>();
@@ -94,13 +95,12 @@ const DesktopSidebar = () => {
 
   const isActive = (path: string) => location.pathname === path;
 
+  // Main nav items - Reels, Explore, Upload (creative only), Milestones
   const navItems = [
     { path: '/feed', icon: Film, label: 'Reels' },
     { path: '/search', icon: Search, label: 'Explore' },
     ...(isLoaded && isCreative ? [{ path: '/upload', icon: Upload, label: 'Upload' }] : []),
-    { path: '/profile', icon: User, label: 'Profile' },
-    ...(isLoaded && isCreative ? [{ path: '/creator-dashboard', icon: BarChart3, label: 'Dashboard' }] : []),
-    { path: '/settings', icon: Settings, label: 'Settings' },
+    { path: '/milestones', icon: Trophy, label: 'Milestones' },
   ];
 
   return (
@@ -129,9 +129,10 @@ const DesktopSidebar = () => {
         ))}
       </nav>
 
-      {/* Footer */}
-      <div className="p-4 border-t border-border">
-        <p className="text-xs text-muted-foreground text-center">© 2025 ToonlyReels</p>
+      {/* Footer with More Menu */}
+      <div className="p-3 border-t border-border space-y-2">
+        <SidebarMoreMenu isCreative={isCreative} />
+        <p className="text-xs text-muted-foreground text-center py-2">© 2025 ToonlyReels</p>
       </div>
     </aside>
   );

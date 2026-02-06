@@ -1,4 +1,4 @@
-import { Film, Search, Upload, User } from 'lucide-react';
+import { Film, Search, Upload, User, Trophy } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
@@ -123,7 +123,7 @@ const BottomNav = () => {
           }`}
         >
           <Search className="h-5 w-5" />
-          <span className="text-[10px] font-semibold">Search</span>
+          <span className="text-[10px] font-semibold">Explore</span>
         </button>
 
         {isLoaded && isCreative && (
@@ -139,6 +139,18 @@ const BottomNav = () => {
             <span className="text-[10px] font-semibold">Upload</span>
           </button>
         )}
+
+        <button
+          onClick={() => navigate('/milestones')}
+          className={`flex flex-col items-center gap-1 px-3 py-2 rounded-2xl transition-all ${
+            isActive('/milestones')
+              ? 'text-primary bg-primary/10'
+              : 'text-muted-foreground hover:text-foreground'
+          }`}
+        >
+          <Trophy className="h-5 w-5" />
+          <span className="text-[10px] font-semibold">Badges</span>
+        </button>
 
         <button
           onClick={() => navigate('/profile')}

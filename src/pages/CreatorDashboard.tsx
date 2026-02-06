@@ -3,9 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { ArrowLeft, Video, Eye, Heart, TrendingUp, Users, Calendar } from 'lucide-react';
+import { ArrowLeft, Video, Eye, Heart, TrendingUp, Users } from 'lucide-react';
 import { toast } from 'sonner';
-import BottomNav from '@/components/BottomNav';
+import ResponsiveLayout from '@/components/ResponsiveLayout';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 interface DashboardStats {
@@ -125,16 +125,17 @@ const CreatorDashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background pb-24">
-      <div className="max-w-6xl mx-auto p-4">
-        {/* Header */}
-        <div className="flex items-center gap-3 mb-6">
-          <Button
-            size="icon"
-            variant="ghost"
-            onClick={() => navigate('/profile')}
-            className="rounded-full"
-          >
+    <ResponsiveLayout>
+      <div className="min-h-screen bg-background pb-24 md:pb-8">
+        <div className="max-w-6xl mx-auto p-4">
+          {/* Header */}
+          <div className="flex items-center gap-3 mb-6">
+            <Button
+              size="icon"
+              variant="ghost"
+              onClick={() => navigate('/profile')}
+              className="rounded-full md:hidden"
+            >
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div>
@@ -303,9 +304,8 @@ const CreatorDashboard = () => {
           </div>
         </Card>
       </div>
-
-      <BottomNav />
     </div>
+    </ResponsiveLayout>
   );
 };
 
