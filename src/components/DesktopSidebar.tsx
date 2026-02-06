@@ -1,4 +1,4 @@
-import { Film, Search, Upload, Trophy } from 'lucide-react';
+import { Film, Search, Upload, Bell, User } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
@@ -13,6 +13,7 @@ const DesktopSidebar = () => {
   const navigate = useNavigate();
   const location = useLocation();
   
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [isCreative, setIsCreative] = useState<boolean>(() => {
     if (cachedUserId && creativeStatusCache.has(cachedUserId)) {
       return creativeStatusCache.get(cachedUserId)!;
@@ -34,6 +35,7 @@ const DesktopSidebar = () => {
       
       if (user) {
         cachedUserId = user.id;
+        setCurrentUserId(user.id);
         
         if (!forceRefresh && creativeStatusCache.has(user.id)) {
           setIsCreative(creativeStatusCache.get(user.id)!);
@@ -53,6 +55,7 @@ const DesktopSidebar = () => {
         setIsCreative(creative);
       } else {
         cachedUserId = null;
+        setCurrentUserId(null);
         setIsCreative(false);
       }
     } catch {
@@ -83,6 +86,7 @@ const DesktopSidebar = () => {
         creativeStatusCache.clear();
         cachedUserId = null;
         setIsCreative(false);
+        setCurrentUserId(null);
         setIsLoaded(true);
       }
     });
@@ -93,14 +97,20 @@ const DesktopSidebar = () => {
     };
   }, [checkUserType, isLoaded]);
 
-  const isActive = (path: string) => location.pathname === path;
+  const isActive = (path: string) => {
+    if (path === '/profile') {
+      return location.pathname.startsWith('/profile');
+    }
+    return location.pathname === path;
+  };
 
-  // Main nav items - Reels, Explore, Upload (creative only), Milestones
+  // Main nav items - Reels, Explore, Upload (creative only), Notifications, Profile
   const navItems = [
     { path: '/feed', icon: Film, label: 'Reels' },
     { path: '/search', icon: Search, label: 'Explore' },
     ...(isLoaded && isCreative ? [{ path: '/upload', icon: Upload, label: 'Upload' }] : []),
-    { path: '/milestones', icon: Trophy, label: 'Milestones' },
+    { path: '/notifications', icon: Bell, label: 'Notifications' },
+    { path: currentUserId ? `/profile/${currentUserId}` : '/profile', icon: User, label: 'Profile' },
   ];
 
   return (

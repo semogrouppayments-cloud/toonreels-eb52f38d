@@ -1,4 +1,4 @@
-import { Film, Search, Upload, User, Trophy } from 'lucide-react';
+import { Film, Search, Upload, Bell, User } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
@@ -11,7 +11,7 @@ const BottomNav = () => {
   const navigate = useNavigate();
   const location = useLocation();
   
-  // Initialize with cached value if available to prevent flicker
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [isCreative, setIsCreative] = useState<boolean>(() => {
     if (cachedUserId && creativeStatusCache.has(cachedUserId)) {
       return creativeStatusCache.get(cachedUserId)!;
@@ -19,7 +19,6 @@ const BottomNav = () => {
     return false;
   });
   const [isLoaded, setIsLoaded] = useState(() => {
-    // If we have a cached value, consider it loaded immediately
     return cachedUserId !== null && creativeStatusCache.has(cachedUserId);
   });
   
@@ -34,8 +33,8 @@ const BottomNav = () => {
       
       if (user) {
         cachedUserId = user.id;
+        setCurrentUserId(user.id);
         
-        // Check cache first (unless forced refresh)
         if (!forceRefresh && creativeStatusCache.has(user.id)) {
           setIsCreative(creativeStatusCache.get(user.id)!);
           setIsLoaded(true);
@@ -54,6 +53,7 @@ const BottomNav = () => {
         setIsCreative(creative);
       } else {
         cachedUserId = null;
+        setCurrentUserId(null);
         setIsCreative(false);
       }
     } catch {
@@ -70,16 +70,13 @@ const BottomNav = () => {
   useEffect(() => {
     isMounted.current = true;
     
-    // Only check once per component lifecycle, or if no cached data
     if (!hasChecked.current || !isLoaded) {
       hasChecked.current = true;
       checkUserType();
     }
     
-    // Listen for auth changes to refresh creative status
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-        // Clear cache for fresh check on login
         creativeStatusCache.clear();
         cachedUserId = null;
         checkUserType(true);
@@ -87,6 +84,7 @@ const BottomNav = () => {
         creativeStatusCache.clear();
         cachedUserId = null;
         setIsCreative(false);
+        setCurrentUserId(null);
         setIsLoaded(true);
       }
     });
@@ -97,7 +95,12 @@ const BottomNav = () => {
     };
   }, [checkUserType, isLoaded]);
 
-  const isActive = (path: string) => location.pathname === path;
+  const isActive = (path: string) => {
+    if (path === '/profile') {
+      return location.pathname.startsWith('/profile');
+    }
+    return location.pathname === path;
+  };
 
   return (
     <nav className="fixed bottom-4 left-4 right-4 bg-card/95 backdrop-blur-lg border-2 border-border rounded-3xl shadow-2xl z-50 max-w-lg mx-auto">
@@ -141,19 +144,19 @@ const BottomNav = () => {
         )}
 
         <button
-          onClick={() => navigate('/milestones')}
+          onClick={() => navigate('/notifications')}
           className={`flex flex-col items-center gap-1 px-3 py-2 rounded-2xl transition-all ${
-            isActive('/milestones')
+            isActive('/notifications')
               ? 'text-primary bg-primary/10'
               : 'text-muted-foreground hover:text-foreground'
           }`}
         >
-          <Trophy className="h-5 w-5" />
-          <span className="text-[10px] font-semibold">Badges</span>
+          <Bell className="h-5 w-5" />
+          <span className="text-[10px] font-semibold">Alerts</span>
         </button>
 
         <button
-          onClick={() => navigate('/profile')}
+          onClick={() => navigate(currentUserId ? `/profile/${currentUserId}` : '/profile')}
           className={`flex flex-col items-center gap-1 px-3 py-2 rounded-2xl transition-all ${
             isActive('/profile')
               ? 'text-primary bg-primary/10'
