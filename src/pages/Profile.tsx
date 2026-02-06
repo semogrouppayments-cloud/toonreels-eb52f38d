@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -133,8 +133,9 @@ const Profile = () => {
     }
   }, [totalViews, isOwnProfile]);
 
-  // Extract userId from search params properly for React
-  const userIdParam = searchParams.get('userId');
+  // Extract userId from URL params or search params
+  const { userId: urlUserId } = useParams<{ userId: string }>();
+  const userIdParam = urlUserId || searchParams.get('userId');
 
   useEffect(() => {
     const loadProfile = async () => {
