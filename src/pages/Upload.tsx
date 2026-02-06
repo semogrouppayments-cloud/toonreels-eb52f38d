@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Upload as UploadIcon, ArrowLeft, X, Hash, Stamp } from 'lucide-react';
-import BottomNav from '@/components/BottomNav';
+import ResponsiveLayout from '@/components/ResponsiveLayout';
 import { toast } from 'sonner';
 
 const Upload = () => {
@@ -112,7 +112,7 @@ const Upload = () => {
       video.onloadedmetadata = () => {
         const duration = video.duration;
         URL.revokeObjectURL(video.src);
-        resolve({ valid: duration <= 90, duration }); // Max 90 seconds (1:30)
+        resolve({ valid: duration <= 120, duration }); // Max 120 seconds (2 minutes)
       };
       
       video.onerror = () => {
@@ -180,10 +180,10 @@ const Upload = () => {
       return;
     }
 
-    // Check file size (max 500MB)
-    const maxSize = 500 * 1024 * 1024; // 500MB in bytes
+    // Check file size (max 250MB)
+    const maxSize = 250 * 1024 * 1024; // 250MB in bytes
     if (videoFile.size > maxSize) {
-      toast.error('Video file is too large. Maximum size is 500MB');
+      toast.error('Video file is too large. Maximum size is 250MB');
       return;
     }
 
@@ -195,10 +195,10 @@ const Upload = () => {
       return;
     }
 
-    // Validate duration (max 90 seconds)
+    // Validate duration (max 2 minutes)
     const { valid: isValidDuration, duration } = await validateVideoDuration(videoFile);
     if (!isValidDuration) {
-      toast.error(`Video is too long (${Math.floor(duration)}s). Maximum duration is 1 minute 30 seconds (90s)`);
+      toast.error(`Video is too long (${Math.floor(duration)}s). Maximum duration is 2 minutes (120s)`);
       return;
     }
 
@@ -325,7 +325,7 @@ const Upload = () => {
       if (error.message?.includes('Failed to fetch')) {
         errorMessage = 'Network error. Check your connection and try again.';
       } else if (error.message?.includes('payload')) {
-        errorMessage = 'File too large. Maximum size is 500MB.';
+        errorMessage = 'File too large. Maximum size is 250MB.';
       } else if (error.message) {
         errorMessage = error.message;
       }
@@ -338,7 +338,8 @@ const Upload = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-20">
+    <ResponsiveLayout>
+    <div className="min-h-screen bg-background pb-20 md:pb-4">
       <div className="max-w-2xl mx-auto p-4">
         <div className="mb-6 flex items-center gap-4">
           <Button
@@ -567,8 +568,8 @@ const Upload = () => {
         </Card>
       </div>
 
-      <BottomNav />
     </div>
+    </ResponsiveLayout>
   );
 };
 

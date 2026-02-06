@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Search as SearchIcon, TrendingUp, Hash } from 'lucide-react';
-import BottomNav from '@/components/BottomNav';
+import ResponsiveLayout from '@/components/ResponsiveLayout';
 import VideoPreviewCard from '@/components/VideoPreviewCard';
 import TopCreativesSection from '@/components/TopCreativesSection';
 
@@ -307,7 +307,8 @@ const Search = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-24">
+    <ResponsiveLayout>
+    <div className="min-h-screen bg-background pb-24 md:pb-4">
       {/* Header with Logo */}
       <div className="sticky top-0 z-40 bg-background/95 backdrop-blur-sm border-b border-border">
         <div className="p-4">
@@ -624,8 +625,8 @@ const Search = () => {
         )}
       </div>
 
-      <BottomNav />
     </div>
+    </ResponsiveLayout>
   );
 };
 

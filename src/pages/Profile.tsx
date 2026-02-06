@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { LogOut, Settings, Video, Camera, Edit, BarChart3, Bookmark, Eye, Heart, Trash2, BadgeCheck, Trophy, Flag } from 'lucide-react';
-import BottomNav from '@/components/BottomNav';
+import ResponsiveLayout from '@/components/ResponsiveLayout';
 import NotificationBell from '@/components/NotificationBell';
 import { toast } from 'sonner';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
@@ -594,6 +594,7 @@ const Profile = () => {
   if (!profile) return <ProfileSkeleton />;
 
   return (
+    <ResponsiveLayout>
     <>
       {/* Milestone Confetti */}
       {milestoneToShow && (
@@ -605,7 +606,7 @@ const Profile = () => {
       )}
       
       <div 
-        className="min-h-screen bg-background pb-20"
+        className="min-h-screen bg-background pb-20 md:pb-4"
         onTouchStart={handleSwipeStart}
         onTouchEnd={handleSwipeEnd}
       >
@@ -1255,9 +1256,9 @@ const Profile = () => {
         </DialogContent>
       </Dialog>
 
-      <BottomNav />
       </div>
     </>
+    </ResponsiveLayout>
   );
 };
 
