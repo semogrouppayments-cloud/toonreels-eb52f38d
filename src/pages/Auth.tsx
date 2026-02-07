@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,6 +9,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Play, Sparkles, Eye, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { z } from 'zod';
+import SaveLoginDialog from '@/components/SaveLoginDialog';
 
 
 // Validation schemas
@@ -32,6 +33,7 @@ const signInSchema = z.object({
 
 const Auth = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [isSignUp, setIsSignUp] = useState(false);
   const [loading, setLoading] = useState(false);
   const [checkingSession, setCheckingSession] = useState(true);
@@ -40,6 +42,24 @@ const Auth = () => {
   const [username, setUsername] = useState('');
   const [userType, setUserType] = useState<'viewer' | 'creative'>('viewer');
   const [errors, setErrors] = useState<{ email?: string; password?: string; username?: string }>({});
+  
+  // Save Login Dialog state
+  const [showSaveLoginDialog, setShowSaveLoginDialog] = useState(false);
+  const [loggedInUser, setLoggedInUser] = useState<{
+    id: string;
+    email: string;
+    username: string;
+    avatarUrl: string | null;
+    selectedAvatar: string | null;
+  } | null>(null);
+
+  // Pre-fill email if coming from account switch
+  useEffect(() => {
+    const prefillEmail = searchParams.get('email');
+    if (prefillEmail) {
+      setEmail(prefillEmail);
+    }
+  }, [searchParams]);
 
   // Check for existing session on mount - remember login
   useEffect(() => {
@@ -56,13 +76,16 @@ const Auth = () => {
 
     // Listen for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (session && event === 'SIGNED_IN') {
-        navigate('/feed', { replace: true });
+      if (session && event === 'SIGNED_IN' && !showSaveLoginDialog) {
+        // Don't auto-navigate if we're showing save dialog
+        if (!loggedInUser) {
+          navigate('/feed', { replace: true });
+        }
       }
     });
 
     return () => subscription.unsubscribe();
-  }, [navigate]);
+  }, [navigate, showSaveLoginDialog, loggedInUser]);
 
   const validateForm = () => {
     setErrors({});
@@ -87,6 +110,13 @@ const Auth = () => {
     }
   };
 
+  const checkIfAccountNeedsSavePrompt = (userId: string) => {
+    const savedAccounts = JSON.parse(localStorage.getItem('toonreels_saved_accounts') || '[]');
+    const existingAccount = savedAccounts.find((acc: any) => acc.id === userId);
+    // Show prompt if account doesn't exist or doesn't have login saved
+    return !existingAccount || !existingAccount.loginSaved;
+  };
+
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -98,7 +128,7 @@ const Auth = () => {
 
     try {
       if (isSignUp) {
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
@@ -111,18 +141,52 @@ const Auth = () => {
         });
 
         if (error) throw error;
-        const roleLabel = userType === 'creative' ? '🎨 Creator' : '👀 Viewer';
-        toast.success(`Account created as ${roleLabel}! Redirecting...`);
-        setTimeout(() => navigate('/feed'), 1000);
+        
+        if (data.user) {
+          const roleLabel = userType === 'creative' ? '🎨 Creator' : '👀 Viewer';
+          toast.success(`Account created as ${roleLabel}!`);
+          
+          // Show save login dialog for new accounts
+          setLoggedInUser({
+            id: data.user.id,
+            email: data.user.email || email,
+            username: username,
+            avatarUrl: null,
+            selectedAvatar: null,
+          });
+          setShowSaveLoginDialog(true);
+        }
       } else {
-        const { error } = await supabase.auth.signInWithPassword({
+        const { data, error } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
 
         if (error) throw error;
-        toast.success('Welcome back!');
-        navigate('/feed');
+        
+        if (data.user) {
+          // Fetch profile info
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('username, avatar_url, selected_avatar')
+            .eq('id', data.user.id)
+            .single();
+          
+          // Check if we should show save login dialog
+          if (checkIfAccountNeedsSavePrompt(data.user.id)) {
+            setLoggedInUser({
+              id: data.user.id,
+              email: data.user.email || email,
+              username: profile?.username || 'User',
+              avatarUrl: profile?.avatar_url || null,
+              selectedAvatar: profile?.selected_avatar || null,
+            });
+            setShowSaveLoginDialog(true);
+          } else {
+            toast.success('Welcome back!');
+            navigate('/feed');
+          }
+        }
       }
     } catch (error: any) {
       if (error.message?.includes('User already registered')) {
@@ -135,6 +199,11 @@ const Auth = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSaveLoginComplete = () => {
+    toast.success('Welcome back!');
+    navigate('/feed');
   };
 
   // Show loading while checking session
@@ -281,6 +350,20 @@ const Auth = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Save Login Dialog */}
+      {loggedInUser && (
+        <SaveLoginDialog
+          open={showSaveLoginDialog}
+          onOpenChange={setShowSaveLoginDialog}
+          userId={loggedInUser.id}
+          email={loggedInUser.email}
+          username={loggedInUser.username}
+          avatarUrl={loggedInUser.avatarUrl}
+          selectedAvatar={loggedInUser.selectedAvatar}
+          onComplete={handleSaveLoginComplete}
+        />
+      )}
     </div>
   );
 };
