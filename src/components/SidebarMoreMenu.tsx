@@ -5,6 +5,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { useTheme } from '@/contexts/ThemeContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import QuickSwitchPinDialog from './QuickSwitchPinDialog';
 
 interface SavedAccount {
   id: string;
@@ -12,6 +13,8 @@ interface SavedAccount {
   username: string;
   avatar_url: string | null;
   selected_avatar: string | null;
+  loginSaved?: boolean;
+  pinHash?: string;
 }
 
 interface SidebarMoreMenuProps {
@@ -27,6 +30,10 @@ const SidebarMoreMenu = ({ isCreative }: SidebarMoreMenuProps) => {
   const [showAccounts, setShowAccounts] = useState(false);
   const [savedAccounts, setSavedAccounts] = useState<SavedAccount[]>([]);
   const [currentAccountId, setCurrentAccountId] = useState<string | null>(null);
+  
+  // Quick switch PIN dialog
+  const [showPinDialog, setShowPinDialog] = useState(false);
+  const [selectedAccountForSwitch, setSelectedAccountForSwitch] = useState<SavedAccount | null>(null);
 
   useEffect(() => {
     loadAccountsAndCurrentUser();
@@ -52,23 +59,26 @@ const SidebarMoreMenu = ({ isCreative }: SidebarMoreMenuProps) => {
         .single();
       
       if (profile) {
+        const existingAccounts = accounts ? JSON.parse(accounts) : [];
+        const existingAccount = existingAccounts.find((acc: SavedAccount) => acc.id === user.id);
+        
         const currentAccount: SavedAccount = {
           id: user.id,
           email: user.email || '',
           username: profile.username,
           avatar_url: profile.avatar_url,
           selected_avatar: profile.selected_avatar,
+          // Preserve loginSaved and pinHash if they exist
+          loginSaved: existingAccount?.loginSaved || false,
+          pinHash: existingAccount?.pinHash,
         };
         
-        const existingAccounts = accounts ? JSON.parse(accounts) : [];
-        const accountExists = existingAccounts.some((acc: SavedAccount) => acc.id === user.id);
-        
-        if (!accountExists) {
+        if (!existingAccount) {
           const updatedAccounts = [...existingAccounts, currentAccount].slice(0, MAX_ACCOUNTS);
           localStorage.setItem('toonreels_saved_accounts', JSON.stringify(updatedAccounts));
           setSavedAccounts(updatedAccounts);
         } else {
-          // Update existing account info
+          // Update existing account info but preserve login settings
           const updatedAccounts = existingAccounts.map((acc: SavedAccount) => 
             acc.id === user.id ? currentAccount : acc
           );
@@ -99,11 +109,40 @@ const SidebarMoreMenu = ({ isCreative }: SidebarMoreMenuProps) => {
       toast.info('Already using this account');
       return;
     }
-    // Sign out current user and redirect to auth to login as different account
+
+    // If account has saved login with PIN, show PIN dialog
+    if (account.loginSaved && account.pinHash) {
+      setSelectedAccountForSwitch(account);
+      setShowPinDialog(true);
+      setOpen(false);
+    } else {
+      // Sign out current user and redirect to auth with email prefilled
+      await supabase.auth.signOut();
+      toast.info(`Sign in as ${account.username}`);
+      navigate(`/auth?email=${encodeURIComponent(account.email)}`);
+      setOpen(false);
+    }
+  };
+
+  const handlePinSuccess = async (email: string) => {
+    setShowPinDialog(false);
+    setSelectedAccountForSwitch(null);
+    
+    // Sign out current user and redirect to auth with email prefilled
+    // The PIN verification just confirms they know the PIN - they still need to enter password
+    // For true seamless switching, we'd need to store tokens (not recommended for security)
     await supabase.auth.signOut();
-    toast.info(`Sign in as ${account.username}`);
-    navigate('/auth');
-    setOpen(false);
+    toast.success('PIN verified! Enter your password to complete switch.');
+    navigate(`/auth?email=${encodeURIComponent(email)}`);
+  };
+
+  const handleUsePassword = async () => {
+    setShowPinDialog(false);
+    if (selectedAccountForSwitch) {
+      await supabase.auth.signOut();
+      navigate(`/auth?email=${encodeURIComponent(selectedAccountForSwitch.email)}`);
+    }
+    setSelectedAccountForSwitch(null);
   };
 
   const handleAddAccount = async () => {
@@ -130,6 +169,7 @@ const SidebarMoreMenu = ({ isCreative }: SidebarMoreMenuProps) => {
   };
 
   return (
+    <>
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <button className="w-full flex items-center gap-4 px-4 py-3 rounded-xl text-base font-semibold text-muted-foreground hover:bg-muted hover:text-foreground transition-all">
@@ -314,6 +354,16 @@ const SidebarMoreMenu = ({ isCreative }: SidebarMoreMenuProps) => {
         )}
       </PopoverContent>
     </Popover>
+
+    {/* Quick Switch PIN Dialog */}
+    <QuickSwitchPinDialog
+      open={showPinDialog}
+      onOpenChange={setShowPinDialog}
+      account={selectedAccountForSwitch}
+      onSuccess={handlePinSuccess}
+      onUsePassword={handleUsePassword}
+    />
+    </>
   );
 };
 
