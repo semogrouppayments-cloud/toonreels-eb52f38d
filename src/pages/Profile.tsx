@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { LogOut, Settings, Video, Camera, Edit, BarChart3, Bookmark, Eye, Heart, Trash2, BadgeCheck, Trophy, Flag } from 'lucide-react';
+import ToonlyAI from '@/components/ToonlyAI';
 import ResponsiveLayout from '@/components/ResponsiveLayout';
 import NotificationBell from '@/components/NotificationBell';
 import { toast } from 'sonner';
@@ -1257,6 +1258,9 @@ const Profile = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* ToonlyAI Assistant - only on own profile */}
+      {isOwnProfile && <ToonlyAI />}
 
       </div>
     </>
