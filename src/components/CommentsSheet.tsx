@@ -25,6 +25,8 @@ interface Comment {
   is_liked: boolean;
   profiles: {
     username: string;
+    avatar_url: string | null;
+    selected_avatar: string | null;
   };
 }
 
@@ -70,12 +72,12 @@ const CommentsSheet = ({ videoId, isOpen, onClose, currentUserId }: CommentsShee
   };
 
   const fetchComments = async () => {
-    // Fetch comments
+    // Fetch comments with profile info including avatar
     const { data: commentsData } = await supabase
       .from('comments')
       .select(`
         *,
-        profiles(username)
+        profiles(username, avatar_url, selected_avatar)
       `)
       .eq('video_id', videoId)
       .order('created_at', { ascending: false });
@@ -252,9 +254,17 @@ const CommentsSheet = ({ videoId, isOpen, onClose, currentUserId }: CommentsShee
               return (
                 <div key={comment.id} className="space-y-2">
                   <div className="flex gap-3">
-                    <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center font-bold text-sm flex-shrink-0 text-primary-foreground">
-                      {comment.profiles.username[0].toUpperCase()}
-                    </div>
+                    {comment.profiles.avatar_url ? (
+                      <img 
+                        src={comment.profiles.avatar_url} 
+                        alt={comment.profiles.username}
+                        className="h-8 w-8 rounded-full object-cover flex-shrink-0"
+                      />
+                    ) : (
+                      <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center font-bold text-sm flex-shrink-0 text-primary-foreground">
+                        {comment.profiles.selected_avatar || comment.profiles.username[0].toUpperCase()}
+                      </div>
+                    )}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
                         <span className="font-semibold text-sm">{comment.profiles.username}</span>
@@ -331,9 +341,17 @@ const CommentsSheet = ({ videoId, isOpen, onClose, currentUserId }: CommentsShee
                   {/* Replies - only shown when expanded */}
                   {isExpanded && replies.map((reply) => (
                     <div key={reply.id} className="ml-12 flex gap-3">
-                      <div className="h-6 w-6 rounded-full bg-accent flex items-center justify-center font-bold text-xs flex-shrink-0">
-                        {reply.profiles.username[0].toUpperCase()}
-                      </div>
+                      {reply.profiles.avatar_url ? (
+                        <img 
+                          src={reply.profiles.avatar_url} 
+                          alt={reply.profiles.username}
+                          className="h-6 w-6 rounded-full object-cover flex-shrink-0"
+                        />
+                      ) : (
+                        <div className="h-6 w-6 rounded-full bg-accent flex items-center justify-center font-bold text-xs flex-shrink-0">
+                          {reply.profiles.selected_avatar || reply.profiles.username[0].toUpperCase()}
+                        </div>
+                      )}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
                           <span className="font-semibold text-xs">{reply.profiles.username}</span>

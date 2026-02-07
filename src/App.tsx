@@ -35,11 +35,15 @@ const AppContent = () => {
   const legalPages = ["/privacy-policy", "/terms-of-service"];
   const isLegalPage = legalPages.includes(location.pathname);
 
-  // Show loading while checking verification status
+  // Show app logo while checking verification status
   if (isVerified === null) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+        <img 
+          src="https://storage.googleapis.com/gpt-engineer-file-uploads/YhjAWGaWarSE2KQXMcw8kze1WNk2/uploads/1770415691079-ToonlyReels_Logo_copy.png" 
+          alt="ToonlyReels" 
+          className="h-20 w-20 object-contain"
+        />
       </div>
     );
   }
