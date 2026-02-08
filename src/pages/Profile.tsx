@@ -6,6 +6,8 @@ import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { LogOut, Settings, Video, Camera, Edit, BarChart3, Bookmark, Eye, Heart, Trash2, BadgeCheck, Trophy, Flag } from 'lucide-react';
 import ToonlyAI from '@/components/ToonlyAI';
+import SocialLinksDisplay from '@/components/SocialLinksDisplay';
+import SocialLinksEditor from '@/components/SocialLinksEditor';
 import ResponsiveLayout from '@/components/ResponsiveLayout';
 import NotificationBell from '@/components/NotificationBell';
 import { toast } from 'sonner';
@@ -45,6 +47,11 @@ interface Profile {
   avatar_url: string;
   cover_photo_url?: string;
   is_verified?: boolean;
+  tiktok_url?: string | null;
+  instagram_url?: string | null;
+  facebook_url?: string | null;
+  social_links_order?: string[];
+  social_links_visible?: string[];
 }
 
 interface Video {
@@ -96,6 +103,7 @@ const Profile = () => {
   const [verificationStatus, setVerificationStatus] = useState<string | null>(null);
   const [showFollowersList, setShowFollowersList] = useState(false);
   const [followers, setFollowers] = useState<{ id: string; username: string; avatar_url: string | null }[]>([]);
+  const [showSocialLinksEditor, setShowSocialLinksEditor] = useState(false);
 
   // Check for milestones when stats load
   useEffect(() => {
@@ -873,6 +881,29 @@ const Profile = () => {
                     )}
                   </div>
                 )}
+
+                {/* Social Links - Show for creatives */}
+                {profile.user_type === 'creative' && (
+                  <div className="flex items-center gap-2 mt-2">
+                    <SocialLinksDisplay
+                      tiktokUrl={profile.tiktok_url}
+                      instagramUrl={profile.instagram_url}
+                      facebookUrl={profile.facebook_url}
+                      linksOrder={profile.social_links_order}
+                      linksVisible={profile.social_links_visible}
+                    />
+                    {isOwnProfile && (
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        className="h-6 text-[10px] rounded-full px-2"
+                        onClick={() => setShowSocialLinksEditor(true)}
+                      >
+                        {(profile.tiktok_url || profile.instagram_url || profile.facebook_url) ? 'Edit' : '+ Links'}
+                      </Button>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
 
@@ -1256,6 +1287,25 @@ const Profile = () => {
               ))
             )}
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Social Links Editor Dialog */}
+      <Dialog open={showSocialLinksEditor} onOpenChange={setShowSocialLinksEditor}>
+        <DialogContent className="sm:max-w-[425px]">
+          <SocialLinksEditor
+            userId={currentUserId}
+            tiktokUrl={profile.tiktok_url}
+            instagramUrl={profile.instagram_url}
+            facebookUrl={profile.facebook_url}
+            linksOrder={profile.social_links_order}
+            linksVisible={profile.social_links_visible}
+            onSave={() => {
+              setShowSocialLinksEditor(false);
+              fetchProfileData(currentUserId);
+            }}
+            onClose={() => setShowSocialLinksEditor(false)}
+          />
         </DialogContent>
       </Dialog>
 

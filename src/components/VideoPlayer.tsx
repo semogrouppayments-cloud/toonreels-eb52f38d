@@ -118,8 +118,11 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
 
   const isOwnVideo = currentUserId === video.creator_id;
 
-  // Initial data fetch
+  // Initial data fetch - only fetch when active to reduce network calls
   useEffect(() => {
+    // Only fetch data when video becomes active to save resources
+    if (!isActive) return;
+    
     checkIfFollowing();
     checkIfLiked();
     checkIfSaved();
@@ -127,17 +130,34 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
     fetchCommentsCount();
     fetchSavesCount();
     fetchSubtitleSettings();
-    fetchTrendingTags();
-  }, [video.id, currentUserId]);
+  }, [video.id, currentUserId, isActive]);
 
-  // Fetch trending tags to show fire emoji
+  // Fetch trending tags only once and cache them
+  useEffect(() => {
+    // Use sessionStorage cache to avoid refetching on every video
+    const cached = sessionStorage.getItem('toonreels_trending_tags');
+    if (cached) {
+      try {
+        const { tags, timestamp } = JSON.parse(cached);
+        // Cache valid for 5 minutes
+        if (Date.now() - timestamp < 5 * 60 * 1000) {
+          setTrendingTags(tags);
+          return;
+        }
+      } catch {}
+    }
+    
+    fetchTrendingTags();
+  }, []);
+
+  // Fetch trending tags to show fire emoji - moved outside of main useEffect
   const fetchTrendingTags = async () => {
     const { data: recentVideos } = await supabase
       .from('videos')
       .select('tags, views_count')
       .not('tags', 'is', null)
       .order('created_at', { ascending: false })
-      .limit(100);
+      .limit(50); // Reduced from 100 to 50
 
     if (!recentVideos) return;
 
@@ -156,6 +176,12 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
       .map(([tag]) => tag);
 
     setTrendingTags(topTags);
+    
+    // Cache the result
+    sessionStorage.setItem('toonreels_trending_tags', JSON.stringify({
+      tags: topTags,
+      timestamp: Date.now()
+    }));
   };
 
   // Fetch user subtitle settings

@@ -24,7 +24,17 @@ import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
 import ParentDashboard from "./pages/ParentDashboard";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // 5 minutes - reduce refetches
+      gcTime: 10 * 60 * 1000, // 10 minutes garbage collection
+      retry: 1, // Reduce retry attempts to prevent freezing
+      refetchOnWindowFocus: false, // Disable refetch on focus to reduce network calls
+      refetchOnReconnect: false,
+    },
+  },
+});
 
 // Component to handle age gate logic
 const AppContent = () => {

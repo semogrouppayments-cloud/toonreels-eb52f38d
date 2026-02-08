@@ -477,10 +477,15 @@ export type Database = {
           bio: string | null
           cover_photo_url: string | null
           created_at: string
+          facebook_url: string | null
           id: string
+          instagram_url: string | null
           is_premium: boolean | null
           is_verified: boolean | null
           selected_avatar: string | null
+          social_links_order: string[] | null
+          social_links_visible: string[] | null
+          tiktok_url: string | null
           updated_at: string
           user_type: Database["public"]["Enums"]["user_type"]
           username: string
@@ -491,10 +496,15 @@ export type Database = {
           bio?: string | null
           cover_photo_url?: string | null
           created_at?: string
+          facebook_url?: string | null
           id: string
+          instagram_url?: string | null
           is_premium?: boolean | null
           is_verified?: boolean | null
           selected_avatar?: string | null
+          social_links_order?: string[] | null
+          social_links_visible?: string[] | null
+          tiktok_url?: string | null
           updated_at?: string
           user_type?: Database["public"]["Enums"]["user_type"]
           username: string
@@ -505,10 +515,15 @@ export type Database = {
           bio?: string | null
           cover_photo_url?: string | null
           created_at?: string
+          facebook_url?: string | null
           id?: string
+          instagram_url?: string | null
           is_premium?: boolean | null
           is_verified?: boolean | null
           selected_avatar?: string | null
+          social_links_order?: string[] | null
+          social_links_visible?: string[] | null
+          tiktok_url?: string | null
           updated_at?: string
           user_type?: Database["public"]["Enums"]["user_type"]
           username?: string
