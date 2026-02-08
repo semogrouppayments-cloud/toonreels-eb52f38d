@@ -505,28 +505,42 @@ const Feed = () => {
           </div>
         )}
 
-        {videos.map((video, index) => (
-          <div 
-            key={video.id} 
-            className="h-screen w-full flex-shrink-0"
-            style={{ 
-              scrollSnapAlign: 'start',
-              willChange: 'transform',
-              transform: 'translateZ(0)',
-              contain: 'layout style paint'
-            }}
-          >
-            <VideoPlayer
-              video={video}
-              currentUserId={currentUserId}
-              isPremium={isPremium}
-              isActive={index === activeIndex}
-              onCommentsClick={() => setSelectedVideoId(video.id)}
-              onDelete={video.creator_id === currentUserId ? () => handleDeleteVideo(video.id) : undefined}
-              onPositiveAction={trackPositiveAction}
-            />
-          </div>
-        ))}
+        {videos.map((video, index) => {
+          // Only render videos within a window around the active index for better performance
+          const shouldRender = Math.abs(index - activeIndex) <= 2;
+          
+          return (
+            <div 
+              key={video.id} 
+              className="h-screen w-full flex-shrink-0"
+              style={{ 
+                scrollSnapAlign: 'start',
+                willChange: index === activeIndex ? 'transform' : 'auto',
+                transform: 'translateZ(0)',
+                contain: 'layout style paint',
+                contentVisibility: shouldRender ? 'visible' : 'auto',
+                containIntrinsicSize: '0 100vh'
+              }}
+            >
+              {shouldRender ? (
+                <VideoPlayer
+                  video={video}
+                  currentUserId={currentUserId}
+                  isPremium={isPremium}
+                  isActive={index === activeIndex}
+                  onCommentsClick={() => setSelectedVideoId(video.id)}
+                  onDelete={video.creator_id === currentUserId ? () => handleDeleteVideo(video.id) : undefined}
+                  onPositiveAction={trackPositiveAction}
+                />
+              ) : (
+                // Placeholder for videos outside the render window
+                <div className="h-full w-full bg-black flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-full bg-muted animate-pulse" />
+                </div>
+              )}
+            </div>
+          );
+        })}
         
         {/* Loading more indicator */}
         {isLoadingMore && (
