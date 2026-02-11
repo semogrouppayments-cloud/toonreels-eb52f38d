@@ -50,6 +50,7 @@ interface Profile {
   tiktok_url?: string | null;
   instagram_url?: string | null;
   facebook_url?: string | null;
+  youtube_url?: string | null;
   social_links_order?: string[];
   social_links_visible?: string[];
 }
@@ -889,6 +890,7 @@ const Profile = () => {
                       tiktokUrl={profile.tiktok_url}
                       instagramUrl={profile.instagram_url}
                       facebookUrl={profile.facebook_url}
+                      youtubeUrl={profile.youtube_url}
                       linksOrder={profile.social_links_order}
                       linksVisible={profile.social_links_visible}
                     />
@@ -899,7 +901,7 @@ const Profile = () => {
                         className="h-6 text-[10px] rounded-full px-2"
                         onClick={() => setShowSocialLinksEditor(true)}
                       >
-                        {(profile.tiktok_url || profile.instagram_url || profile.facebook_url) ? 'Edit' : '+ Links'}
+                        {(profile.tiktok_url || profile.instagram_url || profile.facebook_url || profile.youtube_url) ? 'Edit' : '+ Links'}
                       </Button>
                     )}
                   </div>
@@ -1298,6 +1300,7 @@ const Profile = () => {
             tiktokUrl={profile.tiktok_url}
             instagramUrl={profile.instagram_url}
             facebookUrl={profile.facebook_url}
+            youtubeUrl={profile.youtube_url}
             linksOrder={profile.social_links_order}
             linksVisible={profile.social_links_visible}
             onSave={() => {

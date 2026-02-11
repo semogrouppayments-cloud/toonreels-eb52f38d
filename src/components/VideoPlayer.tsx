@@ -232,8 +232,7 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
       return;
     }
 
-    // Video is active - attempt to play with debounce to prevent rapid fire
-    let playTimeout: NodeJS.Timeout;
+    // Video is active - attempt to play immediately
     let isCancelled = false;
     
     const attemptPlay = async () => {
@@ -248,46 +247,38 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
           videoEl.load();
         }
         
-        // Wait for video to be ready with a more reliable check
-        if (videoEl.readyState < 3) {
-          await new Promise<void>((resolve, reject) => {
+        // On mobile, don't wait for full buffer - play as soon as possible
+        if (videoEl.readyState < 2) {
+          await new Promise<void>((resolve) => {
             const timeoutId = setTimeout(() => {
-              videoEl.removeEventListener('canplaythrough', onCanPlay);
-              videoEl.removeEventListener('error', onError);
+              videoEl.removeEventListener('canplay', onReady);
+              videoEl.removeEventListener('loadeddata', onReady);
               resolve(); // Continue anyway after timeout
-            }, 3000);
+            }, 2000);
             
-            const onCanPlay = () => {
+            const onReady = () => {
               clearTimeout(timeoutId);
-              videoEl.removeEventListener('canplaythrough', onCanPlay);
-              videoEl.removeEventListener('error', onError);
+              videoEl.removeEventListener('canplay', onReady);
+              videoEl.removeEventListener('loadeddata', onReady);
               resolve();
             };
             
-            const onError = () => {
-              clearTimeout(timeoutId);
-              videoEl.removeEventListener('canplaythrough', onCanPlay);
-              videoEl.removeEventListener('error', onError);
-              reject(new Error('Video load error'));
-            };
-            
-            videoEl.addEventListener('canplaythrough', onCanPlay);
-            videoEl.addEventListener('error', onError);
+            videoEl.addEventListener('canplay', onReady);
+            videoEl.addEventListener('loadeddata', onReady);
           });
         }
         
         if (isCancelled) return;
         
         // Reset video position for fresh start only if at the end
-        if (videoEl.currentTime >= videoEl.duration - 0.5) {
+        if (videoEl.duration && videoEl.currentTime >= videoEl.duration - 0.5) {
           videoEl.currentTime = 0;
         }
         
-        // First try to play muted (always works on mobile)
+        // First play muted (always works on mobile)
         videoEl.muted = true;
         setIsMuted(true);
         
-        // Use a play promise with proper handling
         const playPromise = videoEl.play();
         if (playPromise !== undefined) {
           await playPromise;
@@ -305,14 +296,15 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
           analyticsTrackedRef.current = false;
         }
         
-        // After successful muted play, try to unmute with delay
+        // After successful play, unmute quickly
         if (currentAttempt === playAttemptRef.current && !isCancelled) {
-          setTimeout(() => {
+          // Use requestAnimationFrame for faster unmute
+          requestAnimationFrame(() => {
             if (videoEl && currentAttempt === playAttemptRef.current && isActive && !isCancelled) {
               videoEl.muted = false;
               setIsMuted(false);
             }
-          }, 300);
+          });
         }
       } catch (err) {
         console.log('Autoplay failed, waiting for user interaction');
@@ -321,12 +313,11 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
       }
     };
 
-    // Small delay to prevent rapid play attempts during scrolling
-    playTimeout = setTimeout(attemptPlay, 150);
+    // Play immediately - no delay for active video
+    attemptPlay();
     
     return () => {
       isCancelled = true;
-      clearTimeout(playTimeout);
     };
   }, [isActive, signedUrl]);
 
@@ -983,8 +974,7 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
             playsInline
             webkit-playsinline="true"
             x5-playsinline="true"
-            preload="auto"
-            crossOrigin="anonymous"
+            preload={isActive ? 'auto' : 'metadata'}
             autoPlay={false}
             style={{ 
               maxHeight: isFullscreen && !isMobile ? '100vh' : 'calc(100vh - 80px)',
