@@ -26,11 +26,18 @@ const FacebookIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
+const YouTubeIcon = ({ className }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="currentColor">
+    <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+  </svg>
+);
+
 interface SocialLinksEditorProps {
   userId: string;
   tiktokUrl?: string | null;
   instagramUrl?: string | null;
   facebookUrl?: string | null;
+  youtubeUrl?: string | null;
   linksOrder?: string[];
   linksVisible?: string[];
   onSave?: () => void;
@@ -42,14 +49,16 @@ export default function SocialLinksEditor({
   tiktokUrl: initialTiktok = '',
   instagramUrl: initialInstagram = '',
   facebookUrl: initialFacebook = '',
-  linksOrder: initialOrder = ['tiktok', 'instagram', 'facebook'],
-  linksVisible: initialVisible = ['tiktok', 'instagram', 'facebook'],
+  youtubeUrl: initialYoutube = '',
+  linksOrder: initialOrder = ['tiktok', 'instagram', 'facebook', 'youtube'],
+  linksVisible: initialVisible = ['tiktok', 'instagram', 'facebook', 'youtube'],
   onSave,
   onClose
 }: SocialLinksEditorProps) {
   const [tiktok, setTiktok] = useState(initialTiktok || '');
   const [instagram, setInstagram] = useState(initialInstagram || '');
   const [facebook, setFacebook] = useState(initialFacebook || '');
+  const [youtube, setYoutube] = useState(initialYoutube || '');
   const [order, setOrder] = useState<string[]>(initialOrder);
   const [visible, setVisible] = useState<string[]>(initialVisible);
   const [isSaving, setIsSaving] = useState(false);
@@ -59,6 +68,7 @@ export default function SocialLinksEditor({
     { id: 'tiktok', label: 'TikTok', icon: TikTokIcon, value: tiktok, setValue: setTiktok, placeholder: 'https://tiktok.com/@username' },
     { id: 'instagram', label: 'Instagram', icon: InstagramIcon, value: instagram, setValue: setInstagram, placeholder: 'https://instagram.com/username' },
     { id: 'facebook', label: 'Facebook', icon: FacebookIcon, value: facebook, setValue: setFacebook, placeholder: 'https://facebook.com/page' },
+    { id: 'youtube', label: 'YouTube', icon: YouTubeIcon, value: youtube, setValue: setYoutube, placeholder: 'https://youtube.com/@channel' },
   ];
 
   // Sort platforms by order
@@ -122,6 +132,10 @@ export default function SocialLinksEditor({
       toast.error('Please enter a valid Facebook URL');
       return;
     }
+    if (youtube && !validateUrl(youtube, 'youtube')) {
+      toast.error('Please enter a valid YouTube URL');
+      return;
+    }
 
     setIsSaving(true);
     try {
@@ -131,6 +145,7 @@ export default function SocialLinksEditor({
           tiktok_url: tiktok || null,
           instagram_url: instagram || null,
           facebook_url: facebook || null,
+          youtube_url: youtube || null,
           social_links_order: order,
           social_links_visible: visible
         })

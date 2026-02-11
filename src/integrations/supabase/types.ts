@@ -489,6 +489,7 @@ export type Database = {
           updated_at: string
           user_type: Database["public"]["Enums"]["user_type"]
           username: string
+          youtube_url: string | null
         }
         Insert: {
           age_range?: string | null
@@ -508,6 +509,7 @@ export type Database = {
           updated_at?: string
           user_type?: Database["public"]["Enums"]["user_type"]
           username: string
+          youtube_url?: string | null
         }
         Update: {
           age_range?: string | null
@@ -527,6 +529,7 @@ export type Database = {
           updated_at?: string
           user_type?: Database["public"]["Enums"]["user_type"]
           username?: string
+          youtube_url?: string | null
         }
         Relationships: []
       }
