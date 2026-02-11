@@ -23,6 +23,7 @@ import NotFound from "./pages/NotFound";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
 import ParentDashboard from "./pages/ParentDashboard";
+import Install from "./pages/Install";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -42,7 +43,7 @@ const AppContent = () => {
   const location = useLocation();
 
   // Allow access to legal pages without verification
-  const legalPages = ["/privacy-policy", "/terms-of-service"];
+  const legalPages = ["/privacy-policy", "/terms-of-service", "/install"];
   const isLegalPage = legalPages.includes(location.pathname);
 
   // Show app logo while checking verification status
@@ -81,6 +82,7 @@ const AppContent = () => {
       <Route path="/privacy-policy" element={<PrivacyPolicy />} />
       <Route path="/terms-of-service" element={<TermsOfService />} />
       <Route path="/parent-dashboard" element={<ParentDashboard />} />
+      <Route path="/install" element={<Install />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
