@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { X, Heart, MessageCircle, Bookmark, Share2, BadgeCheck } from 'lucide-react';
+import { X, Heart, MessageCircle, Bookmark, Share2, BadgeCheck, Trash2 } from 'lucide-react';
 import VideoPlayer from '@/components/VideoPlayer';
 import CommentsSheet from '@/components/CommentsSheet';
 import { supabase } from '@/integrations/supabase/client';
@@ -138,7 +138,7 @@ const DesktopCommentsPanel = ({ video, currentUserId }: { video: Video; currentU
   };
 
   return (
-    <div className="flex flex-col h-full bg-card rounded-r-3xl overflow-hidden">
+    <div className="flex flex-col h-full bg-background overflow-hidden">
       {/* Creator info header */}
       <div className="p-4 border-b border-border">
         <div className="flex items-center gap-3">
@@ -181,7 +181,7 @@ const DesktopCommentsPanel = ({ video, currentUserId }: { video: Video; currentU
             <p className="text-sm text-muted-foreground text-center py-8">No comments yet. Be the first! 💬</p>
           )}
           {comments.map(comment => (
-            <div key={comment.id} className="flex gap-2.5">
+            <div key={comment.id} className="flex gap-2.5 group">
               <Avatar className="h-8 w-8 flex-shrink-0">
                 {comment.profiles.selected_avatar ? (
                   <AvatarFallback className="text-lg">{comment.profiles.selected_avatar}</AvatarFallback>
@@ -196,6 +196,18 @@ const DesktopCommentsPanel = ({ video, currentUserId }: { video: Video; currentU
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-bold text-foreground">{comment.profiles.username}</span>
                   <span className="text-[10px] text-muted-foreground">{formatTime(comment.created_at)}</span>
+                  {comment.user_id === currentUserId && (
+                    <button
+                      onClick={async () => {
+                        await supabase.from('comments').delete().eq('id', comment.id).eq('user_id', currentUserId);
+                        fetchComments();
+                        toast.success('Comment deleted');
+                      }}
+                      className="ml-auto opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  )}
                 </div>
                 <p className="text-sm text-foreground/90 mt-0.5">{comment.content}</p>
               </div>
@@ -267,10 +279,10 @@ const ExploreReelViewer = ({ videos, startIndex, sectionTitle, onClose }: Explor
     return () => { document.body.style.overflow = ''; };
   }, []);
 
-  // Desktop/Tablet: Facebook Reels style layout
+  // Desktop/Tablet: Full-screen layout with comments panel
   if (!isMobile) {
     return (
-      <div className="fixed inset-0 z-[60] bg-black/90 flex items-center justify-center">
+      <div className="fixed inset-0 z-[60] bg-black flex">
         {/* Close button */}
         <button
           onClick={onClose}
@@ -284,12 +296,11 @@ const ExploreReelViewer = ({ videos, startIndex, sectionTitle, onClose }: Explor
           <span className="text-white font-semibold text-sm bg-black/40 px-3 py-1.5 rounded-full">{sectionTitle}</span>
         </div>
 
-        {/* Main container - centered card with video + comments */}
-        <div className="flex h-[85vh] max-h-[700px] w-[900px] max-w-[90vw] rounded-3xl overflow-hidden shadow-2xl">
-          {/* Video side */}
+        {/* Video side - takes full height, rounded container */}
+        <div className="flex-1 h-full flex items-center justify-center p-4">
           <div
             ref={containerRef}
-            className="w-[55%] h-full overflow-y-scroll snap-y snap-mandatory bg-black"
+            className="h-full w-full max-w-[480px] overflow-y-scroll snap-y snap-mandatory bg-black rounded-2xl"
             style={{ scrollSnapType: 'y mandatory' }}
           >
             {videos.map((video, index) => {
@@ -297,7 +308,7 @@ const ExploreReelViewer = ({ videos, startIndex, sectionTitle, onClose }: Explor
               return (
                 <div
                   key={video.id}
-                  className="h-full w-full snap-start snap-always"
+                  className="w-full snap-start snap-always"
                   style={{ scrollSnapAlign: 'start', height: '100%' }}
                 >
                   {shouldRender ? (
@@ -315,15 +326,15 @@ const ExploreReelViewer = ({ videos, startIndex, sectionTitle, onClose }: Explor
               );
             })}
           </div>
+        </div>
 
-          {/* Comments side */}
-          <div className="w-[45%] h-full">
-            <DesktopCommentsPanel
-              key={videos[activeIndex]?.id}
-              video={videos[activeIndex]}
-              currentUserId={currentUserId}
-            />
-          </div>
+        {/* Comments side panel */}
+        <div className="w-[360px] h-full border-l border-border/20">
+          <DesktopCommentsPanel
+            key={videos[activeIndex]?.id}
+            video={videos[activeIndex]}
+            currentUserId={currentUserId}
+          />
         </div>
       </div>
     );
