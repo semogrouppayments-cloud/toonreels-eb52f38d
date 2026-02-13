@@ -968,8 +968,8 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
             preload={isActive ? 'auto' : 'metadata'}
             autoPlay={false}
             style={{ 
-              maxHeight: isFullscreen && !isMobile ? '100vh' : 'calc(100vh - 80px)',
-              marginBottom: isFullscreen && !isMobile ? '0' : '80px'
+              maxHeight: isFullscreen && !isMobile ? '100vh' : 'calc(100vh - 56px)',
+              marginBottom: isFullscreen && !isMobile ? '0' : '56px'
             }}
           />
         
@@ -1105,7 +1105,7 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
       {/* Progress Bar */}
       <div 
         className="absolute left-0 right-0 z-20 px-3"
-        style={{ bottom: '110px' }}
+        style={{ bottom: '86px' }}
       >
         <div className="flex items-center gap-2">
           <span className="text-[10px] text-white/80 font-medium min-w-[32px]">
@@ -1137,7 +1137,7 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
       </div>
       
       {/* Video Info */}
-      <div className="absolute left-2 right-14 text-white z-10" style={{ bottom: '150px' }}>
+      <div className="absolute left-2 right-14 text-white z-10" style={{ bottom: '120px' }}>
         <div className="flex items-center gap-1.5 mb-0.5">
           <div 
             className="flex items-center gap-1 cursor-pointer hover:opacity-80 transition-opacity"
@@ -1236,7 +1236,7 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
       </div>
 
       {/* Action Buttons */}
-      <div className="absolute right-1 flex flex-col gap-2 z-10" style={{ bottom: '150px' }}>
+      <div className="absolute right-1 flex flex-col gap-2 z-10" style={{ bottom: '120px' }}>
         {/* Like */}
         <button
           onClick={(e) => handleActionClick(e, handleLike)}
