@@ -117,19 +117,21 @@ const VideoPreviewCard = ({
         </div>
       )}
 
-      {/* Video Preview - Always mounted for preloading but hidden when not active */}
-      <video
-        ref={videoRef}
-        src={videoUrl}
-        muted
-        loop
-        playsInline
-        preload="metadata"
-        onCanPlay={handleVideoLoad}
-        className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 ${
-          showVideo && videoLoaded ? 'opacity-100' : 'opacity-0'
-        }`}
-      />
+      {/* Video Preview - Only load when hovering/visible to save bandwidth */}
+      {(isHovering || isVisible) && (
+        <video
+          ref={videoRef}
+          src={videoUrl}
+          muted
+          loop
+          playsInline
+          preload="none"
+          onCanPlay={handleVideoLoad}
+          className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 ${
+            showVideo && videoLoaded ? 'opacity-100' : 'opacity-0'
+          }`}
+        />
+      )}
 
       {/* Play button overlay - only show when not previewing */}
       {!showVideo && (

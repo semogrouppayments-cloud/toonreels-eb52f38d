@@ -1176,20 +1176,24 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
             </button>
           )}
         </div>
-        {/* Title */}
+        {/* Title with See more */}
         <p 
-          className={`text-xs font-semibold leading-tight mb-0.5 cursor-pointer ${!isExpanded ? 'line-clamp-1' : ''}`}
+          className={`text-xs font-semibold leading-tight mb-0.5 cursor-pointer`}
           onClick={(e) => {
             e.stopPropagation();
             setIsExpanded(!isExpanded);
           }}
         >
-          {video.title}
+          {!isExpanded && video.title.length > 60 ? (
+            <>{video.title.slice(0, 60)}... <span className="text-white/60 font-normal">See more</span></>
+          ) : (
+            video.title
+          )}
         </p>
         {/* Hashtags under title - blue and clickable with trending indicator */}
         {video.tags && video.tags.length > 0 && (
           <div className="flex flex-wrap gap-1.5 mb-0.5">
-            {video.tags.slice(0, 4).map((tag, i) => {
+            {(isExpanded ? video.tags : video.tags.slice(0, 3)).map((tag, i) => {
               const isTrending = trendingTags.includes(tag);
               return (
                 <span 
@@ -1200,11 +1204,19 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
                     navigate(`/search?tag=${encodeURIComponent(tag)}`);
                   }}
                 >
-                  #{tag.length > 15 ? tag.slice(0, 15) : tag}
+                  #{tag.length > 15 ? tag.slice(0, 15) + '…' : tag}
                   {isTrending && <span className="text-[8px]">🔥</span>}
                 </span>
               );
             })}
+            {!isExpanded && video.tags.length > 3 && (
+              <span 
+                className="text-[10px] text-white/60 cursor-pointer"
+                onClick={(e) => { e.stopPropagation(); setIsExpanded(true); }}
+              >
+                ...See more
+              </span>
+            )}
           </div>
         )}
         {/* Description - shown when expanded */}
@@ -1212,6 +1224,14 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
           <p className="text-[10px] opacity-80 leading-tight mt-1">
             {video.description}
           </p>
+        )}
+        {isExpanded && (
+          <span 
+            className="text-[10px] text-white/60 cursor-pointer mt-0.5 inline-block"
+            onClick={(e) => { e.stopPropagation(); setIsExpanded(false); }}
+          >
+            Show less
+          </span>
         )}
       </div>
 

@@ -1,4 +1,4 @@
-import { Film, Search, Upload, Bell, User } from 'lucide-react';
+import { Film, Search, Upload, Bell, User, Sparkles } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
@@ -189,8 +189,20 @@ const DesktopSidebar = () => {
         ))}
       </nav>
 
-      {/* Footer with More Menu */}
-      <div className="p-3 border-t border-border space-y-2">
+      {/* Footer with ToonlyAI + More Menu */}
+      <div className="p-3 border-t border-border space-y-1">
+        <button
+          onClick={() => navigate(currentUserId ? `/profile/${currentUserId}` : '/profile')}
+          className={`w-full flex items-center gap-4 px-4 py-3 rounded-xl text-base font-semibold transition-all ${
+            false
+              ? 'bg-primary text-primary-foreground'
+              : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+          }`}
+          title="ToonlyAI - open your profile to chat"
+        >
+          <Sparkles className="h-5 w-5 text-primary" />
+          <span>ToonlyAI</span>
+        </button>
         <SidebarMoreMenu isCreative={isCreative} />
         <p className="text-xs text-muted-foreground text-center py-2">© 2025 ToonlyReels</p>
       </div>
