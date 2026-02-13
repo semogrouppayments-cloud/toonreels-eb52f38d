@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -15,6 +16,7 @@ const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/toonlyai-cha
 
 const ToonlyAI = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const location = useLocation();
   const [messages, setMessages] = useState<Message[]>([
     { role: 'assistant', content: "Hi there! 👋 I'm ToonlyAI, your friendly helper! Ask me anything about ToonlyReels - how to upload videos, customize your profile, find cool content, or just chat about animation! 🎬✨" }
   ]);
@@ -22,6 +24,17 @@ const ToonlyAI = () => {
   const [isLoading, setIsLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Hide on auth/legal pages
+  const hiddenPages = ['/', '/auth', '/privacy-policy', '/terms-of-service', '/install'];
+  const shouldHide = hiddenPages.includes(location.pathname);
+
+  // Listen for sidebar toggle event
+  useEffect(() => {
+    const handler = () => setIsOpen(prev => !prev);
+    window.addEventListener('toggle-toonlyai', handler);
+    return () => window.removeEventListener('toggle-toonlyai', handler);
+  }, []);
 
   // Scroll to bottom when messages change
   useEffect(() => {
@@ -124,6 +137,8 @@ const ToonlyAI = () => {
       handleSend();
     }
   };
+
+  if (shouldHide) return null;
 
   return (
     <>
