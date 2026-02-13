@@ -296,19 +296,20 @@ const ExploreReelViewer = ({ videos, startIndex, sectionTitle, onClose }: Explor
           <span className="text-white font-semibold text-sm bg-black/40 px-3 py-1.5 rounded-full">{sectionTitle}</span>
         </div>
 
-        {/* Video side - takes full height, rounded container */}
-        <div className="flex-1 h-full flex items-center justify-center p-4">
+        {/* Video side - centered, rounded container filling height */}
+        <div className="flex-1 h-full flex items-center justify-center p-4 pr-0">
           <div
             ref={containerRef}
-            className="h-full w-full max-w-[480px] overflow-y-scroll snap-y snap-mandatory bg-black rounded-2xl"
-            style={{ scrollSnapType: 'y mandatory' }}
+            className="h-full w-full max-w-[480px] overflow-y-scroll snap-y snap-mandatory rounded-2xl"
+            style={{ scrollSnapType: 'y mandatory', scrollbarWidth: 'none', msOverflowStyle: 'none' }}
           >
+            <style>{`div::-webkit-scrollbar { display: none; }`}</style>
             {videos.map((video, index) => {
               const shouldRender = Math.abs(index - activeIndex) <= 1;
               return (
                 <div
                   key={video.id}
-                  className="w-full snap-start snap-always"
+                  className="w-full snap-start snap-always relative overflow-hidden"
                   style={{ scrollSnapAlign: 'start', height: '100%' }}
                 >
                   {shouldRender ? (
@@ -328,8 +329,8 @@ const ExploreReelViewer = ({ videos, startIndex, sectionTitle, onClose }: Explor
           </div>
         </div>
 
-        {/* Comments side panel */}
-        <div className="w-[360px] h-full border-l border-border/20">
+        {/* Comments side panel - no border line */}
+        <div className="w-[360px] h-full">
           <DesktopCommentsPanel
             key={videos[activeIndex]?.id}
             video={videos[activeIndex]}

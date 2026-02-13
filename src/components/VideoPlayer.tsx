@@ -254,7 +254,7 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
               videoEl.removeEventListener('canplay', onReady);
               videoEl.removeEventListener('loadeddata', onReady);
               resolve(); // Continue anyway after timeout
-            }, 2000);
+            }, 1000);
             
             const onReady = () => {
               clearTimeout(timeoutId);
@@ -965,7 +965,7 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
             playsInline
             webkit-playsinline="true"
             x5-playsinline="true"
-            preload={isActive ? 'auto' : 'none'}
+            preload={isActive ? 'auto' : 'metadata'}
             autoPlay={false}
             style={{ 
               maxHeight: isFullscreen && !isMobile ? '100vh' : 'calc(100vh - 80px)',

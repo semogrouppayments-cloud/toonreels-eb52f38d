@@ -17,7 +17,7 @@ const DownloadProgressOverlay = ({
     <div className="fixed inset-0 bg-black/70 z-[100] flex items-center justify-center p-4">
       <div className="bg-card rounded-2xl p-6 w-full max-w-sm shadow-lg border border-border">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="font-bold text-lg text-card-foreground">Downloading Video</h3>
+          <h3 className="font-bold text-lg text-card-foreground">Downloading Reel</h3>
           <Button
             size="icon"
             variant="ghost"

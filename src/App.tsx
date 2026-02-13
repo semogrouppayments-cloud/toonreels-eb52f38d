@@ -50,11 +50,11 @@ const AppContent = () => {
   // Show app logo while checking verification status
   if (isVerified === null) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
+      <div className="flex min-h-screen items-center justify-center" style={{ backgroundColor: '#333333' }}>
         <img 
-          src="https://storage.googleapis.com/gpt-engineer-file-uploads/YhjAWGaWarSE2KQXMcw8kze1WNk2/uploads/1770415691079-ToonlyReels_Logo_copy.png" 
+          src="/toonlyreels-splash-logo.png" 
           alt="ToonlyReels" 
-          className="h-20 w-20 object-contain"
+          className="h-28 w-28 object-contain rounded-2xl"
         />
       </div>
     );

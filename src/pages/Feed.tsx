@@ -262,20 +262,22 @@ const Feed = () => {
     }
   };
 
-  // Preload video URLs for smoother playback
+  // Preload next video for smoother playback
   const preloadVideo = useCallback((videoUrl: string) => {
     if (preloadedVideosRef.current.has(videoUrl)) return;
-    
-    const link = document.createElement('link');
-    link.rel = 'preload';
-    link.as = 'video';
-    link.href = videoUrl;
-    document.head.appendChild(link);
-    
     preloadedVideosRef.current.add(videoUrl);
     
-    // Cleanup old preloads to avoid memory issues
-    if (preloadedVideosRef.current.size > 10) {
+    // Use a hidden video element for reliable preloading on mobile PWA
+    const vid = document.createElement('video');
+    vid.preload = 'metadata';
+    vid.src = videoUrl;
+    vid.load();
+    
+    // Cleanup after a short load
+    setTimeout(() => vid.src = '', 3000);
+    
+    // Keep cache small
+    if (preloadedVideosRef.current.size > 5) {
       const firstKey = preloadedVideosRef.current.values().next().value;
       preloadedVideosRef.current.delete(firstKey);
     }
@@ -533,10 +535,7 @@ const Feed = () => {
                   onPositiveAction={trackPositiveAction}
                 />
               ) : (
-                // Placeholder for videos outside the render window
-                <div className="h-full w-full bg-black flex items-center justify-center">
-                  <div className="w-8 h-8 rounded-full bg-muted animate-pulse" />
-                </div>
+                <div className="h-full w-full bg-black" />
               )}
             </div>
           );
