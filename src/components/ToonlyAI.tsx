@@ -25,8 +25,8 @@ const ToonlyAI = () => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Hide on auth/legal pages
-  const hiddenPages = ['/', '/auth', '/privacy-policy', '/terms-of-service', '/install'];
+  // Hide on auth/legal pages and reel/feed screen
+  const hiddenPages = ['/', '/auth', '/privacy-policy', '/terms-of-service', '/install', '/feed'];
   const shouldHide = hiddenPages.includes(location.pathname);
 
   // Listen for sidebar toggle event
