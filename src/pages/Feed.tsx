@@ -507,7 +507,7 @@ const Feed = () => {
 
         {videos.map((video, index) => {
           // Only render videos within a window around the active index for better performance
-          const shouldRender = Math.abs(index - activeIndex) <= 2;
+          const shouldRender = Math.abs(index - activeIndex) <= 1;
           
           return (
             <div 

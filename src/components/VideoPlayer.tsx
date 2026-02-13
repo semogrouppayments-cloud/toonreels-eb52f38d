@@ -3,7 +3,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Heart, MessageCircle, Download, Flag, Trash2, Volume2, VolumeX, Bookmark, BookmarkCheck, Play, Settings, Repeat, Ban, BadgeCheck, Subtitles } from 'lucide-react';
 import { toast } from 'sonner';
-import { useSignedVideoUrl } from '@/hooks/useSignedVideoUrl';
 import LikeAnimation from '@/components/LikeAnimation';
 import { useNavigate } from 'react-router-dom';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
@@ -102,7 +101,6 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
   const [isDraggingSubtitle, setIsDraggingSubtitle] = useState(false);
   const subtitleDragStart = useRef<{ x: number; y: number; posX: number; posY: number } | null>(null);
   
-  const { signedUrl, loading, error } = useSignedVideoUrl(video.video_url);
   const lastTapRef = useRef<number>(0);
   const animationIdRef = useRef<number>(0);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -118,18 +116,20 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
 
   const isOwnVideo = currentUserId === video.creator_id;
 
-  // Initial data fetch - only fetch when active to reduce network calls
+  // Initial data fetch - only fetch when active, batch all queries in parallel
   useEffect(() => {
-    // Only fetch data when video becomes active to save resources
-    if (!isActive) return;
+    if (!isActive || !currentUserId) return;
     
-    checkIfFollowing();
-    checkIfLiked();
-    checkIfSaved();
-    checkIfBlocked();
-    fetchCommentsCount();
-    fetchSavesCount();
-    fetchSubtitleSettings();
+    // Fire all checks in parallel - no sequential awaits
+    Promise.allSettled([
+      checkIfFollowing(),
+      checkIfLiked(),
+      checkIfSaved(),
+      checkIfBlocked(),
+      fetchCommentsCount(),
+      fetchSavesCount(),
+      fetchSubtitleSettings(),
+    ]);
   }, [video.id, currentUserId, isActive]);
 
   // Fetch trending tags only once and cache them
@@ -242,8 +242,8 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
       
       try {
         // Ensure video source is set
-        if (!videoEl.src && signedUrl) {
-          videoEl.src = signedUrl;
+        if (!videoEl.src && video.video_url) {
+          videoEl.src = video.video_url;
           videoEl.load();
         }
         
@@ -319,7 +319,7 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
     return () => {
       isCancelled = true;
     };
-  }, [isActive, signedUrl]);
+  }, [isActive, video.video_url]);
 
   // Handle video events for better mobile playback
   useEffect(() => {
@@ -337,7 +337,7 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
     };
     const handleError = () => {
       // On error, try reloading the video
-      if (signedUrl && isActive) {
+      if (video.video_url && isActive) {
         videoEl.load();
         videoEl.play().catch(() => {});
       }
@@ -387,7 +387,7 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
       videoEl.removeEventListener('durationchange', handleDurationChange);
       videoEl.removeEventListener('progress', handleProgress);
     };
-  }, [isActive, signedUrl]);
+  }, [isActive, video.video_url]);
 
   // Reset tracking when video changes
   useEffect(() => {
@@ -956,32 +956,22 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
         onTouchStart={handleSwipeStart}
         onTouchEnd={handleSwipeEnd}
       >
-        {loading ? (
-          <div className="flex items-center justify-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-2 border-white border-t-transparent" />
-          </div>
-        ) : error ? (
-          <div className="flex items-center justify-center">
-            <span className="text-white text-sm">Failed to load</span>
-          </div>
-        ) : (
           <video
             ref={videoRef}
-            src={signedUrl || ''}
+            src={video.video_url}
             className="w-full h-full object-contain"
             loop={isLooping}
             muted={isMuted}
             playsInline
             webkit-playsinline="true"
             x5-playsinline="true"
-            preload={isActive ? 'auto' : 'metadata'}
+            preload={isActive ? 'auto' : 'none'}
             autoPlay={false}
             style={{ 
               maxHeight: isFullscreen && !isMobile ? '100vh' : 'calc(100vh - 80px)',
               marginBottom: isFullscreen && !isMobile ? '0' : '80px'
             }}
           />
-        )}
         
         {/* Buffering indicator */}
         {isBuffering && isActive && (
