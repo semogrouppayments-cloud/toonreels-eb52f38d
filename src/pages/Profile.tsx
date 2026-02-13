@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { LogOut, Settings, Video, Camera, Edit, BarChart3, Bookmark, Eye, Heart, Trash2, BadgeCheck, Trophy, Flag } from 'lucide-react';
-import ToonlyAI from '@/components/ToonlyAI';
+
 import SocialLinksDisplay from '@/components/SocialLinksDisplay';
 import SocialLinksEditor from '@/components/SocialLinksEditor';
 import ResponsiveLayout from '@/components/ResponsiveLayout';
@@ -457,13 +457,16 @@ const Profile = () => {
         .from('avatars')
         .getPublicUrl(fileName);
 
+      const cacheBustedUrl = `${publicUrl}?t=${Date.now()}`;
+
       await supabase
         .from('profiles')
         .update({ cover_photo_url: publicUrl })
         .eq('id', user.id);
 
+      // Instantly update local state so cover photo appears immediately
+      setProfile(prev => prev ? { ...prev, cover_photo_url: cacheBustedUrl } : prev);
       toast.success('Cover photo updated!');
-      fetchProfileData(user.id);
     } catch (error) {
       toast.error('Failed to upload cover photo');
     }
@@ -1313,8 +1316,7 @@ const Profile = () => {
         </DialogContent>
       </Dialog>
 
-      {/* ToonlyAI Assistant - only on own profile */}
-      {isOwnProfile && <ToonlyAI />}
+      {/* ToonlyAI is now global - rendered in App.tsx */}
 
       </div>
     </>

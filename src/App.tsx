@@ -24,6 +24,7 @@ import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
 import ParentDashboard from "./pages/ParentDashboard";
 import Install from "./pages/Install";
+import ToonlyAI from "./components/ToonlyAI";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -65,26 +66,29 @@ const AppContent = () => {
   }
 
   return (
-    <Routes>
-      <Route path="/" element={<Auth />} />
-      <Route path="/auth" element={<Auth />} />
-      <Route path="/feed" element={<Feed />} />
-      <Route path="/search" element={<Search />} />
-      <Route path="/upload" element={<Upload />} />
-      <Route path="/messages" element={<Messages />} />
-      <Route path="/profile" element={<Profile />} />
-      <Route path="/profile/:userId" element={<Profile />} />
-      <Route path="/notifications" element={<Notifications />} />
-      <Route path="/settings" element={<Settings />} />
-      <Route path="/video-analytics/:videoId" element={<VideoAnalytics />} />
-      <Route path="/creator-dashboard" element={<CreatorDashboard />} />
-      <Route path="/milestones" element={<Milestones />} />
-      <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-      <Route path="/terms-of-service" element={<TermsOfService />} />
-      <Route path="/parent-dashboard" element={<ParentDashboard />} />
-      <Route path="/install" element={<Install />} />
-      <Route path="*" element={<NotFound />} />
-    </Routes>
+    <>
+      <Routes>
+        <Route path="/" element={<Auth />} />
+        <Route path="/auth" element={<Auth />} />
+        <Route path="/feed" element={<Feed />} />
+        <Route path="/search" element={<Search />} />
+        <Route path="/upload" element={<Upload />} />
+        <Route path="/messages" element={<Messages />} />
+        <Route path="/profile" element={<Profile />} />
+        <Route path="/profile/:userId" element={<Profile />} />
+        <Route path="/notifications" element={<Notifications />} />
+        <Route path="/settings" element={<Settings />} />
+        <Route path="/video-analytics/:videoId" element={<VideoAnalytics />} />
+        <Route path="/creator-dashboard" element={<CreatorDashboard />} />
+        <Route path="/milestones" element={<Milestones />} />
+        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+        <Route path="/terms-of-service" element={<TermsOfService />} />
+        <Route path="/parent-dashboard" element={<ParentDashboard />} />
+        <Route path="/install" element={<Install />} />
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+      <ToonlyAI />
+    </>
   );
 };
 

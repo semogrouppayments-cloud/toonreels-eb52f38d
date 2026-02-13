@@ -192,13 +192,12 @@ const DesktopSidebar = () => {
       {/* Footer with ToonlyAI + More Menu */}
       <div className="p-3 border-t border-border space-y-1">
         <button
-          onClick={() => navigate(currentUserId ? `/profile/${currentUserId}` : '/profile')}
-          className={`w-full flex items-center gap-4 px-4 py-3 rounded-xl text-base font-semibold transition-all ${
-            false
-              ? 'bg-primary text-primary-foreground'
-              : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-          }`}
-          title="ToonlyAI - open your profile to chat"
+          onClick={() => {
+            // Dispatch custom event to toggle ToonlyAI chat bubble
+            window.dispatchEvent(new CustomEvent('toggle-toonlyai'));
+          }}
+          className="w-full flex items-center gap-4 px-4 py-3 rounded-xl text-base font-semibold transition-all text-muted-foreground hover:bg-muted hover:text-foreground"
+          title="Open ToonlyAI chat"
         >
           <Sparkles className="h-5 w-5 text-primary" />
           <span>ToonlyAI</span>
