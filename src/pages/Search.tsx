@@ -8,6 +8,7 @@ import { Search as SearchIcon, TrendingUp, Hash } from 'lucide-react';
 import ResponsiveLayout from '@/components/ResponsiveLayout';
 import VideoPreviewCard from '@/components/VideoPreviewCard';
 import TopCreativesSection from '@/components/TopCreativesSection';
+import ExploreReelViewer from '@/components/ExploreReelViewer';
 
 const CATEGORIES = [
   { id: 'all', label: 'All', emoji: '🎬' },
@@ -30,9 +31,11 @@ interface Video {
   views_count: number;
   tags: string[] | null;
   creator_id: string;
+  subtitles?: any;
   profiles: {
     username: string;
     avatar_url: string;
+    is_verified: boolean;
   };
 }
 
@@ -61,6 +64,13 @@ const Search = () => {
   const [creatorResults, setCreatorResults] = useState<CreatorResult[]>([]);
   const [showCreatorResults, setShowCreatorResults] = useState(false);
   const [currentUserType, setCurrentUserType] = useState<'viewer' | 'creative' | null>(null);
+
+  // Reel viewer state
+  const [reelViewer, setReelViewer] = useState<{
+    videos: Video[];
+    startIndex: number;
+    title: string;
+  } | null>(null);
 
   // Fetch current user type
   useEffect(() => {
@@ -160,7 +170,7 @@ const Search = () => {
       .from('videos')
       .select(`
         *,
-        profiles(username, avatar_url)
+        profiles(username, avatar_url, is_verified)
       `)
       .order('views_count', { ascending: false })
       .limit(6);
@@ -208,7 +218,7 @@ const Search = () => {
       .from('videos')
       .select(`
         *,
-        profiles(username, avatar_url)
+        profiles(username, avatar_url, is_verified)
       `)
       .order('created_at', { ascending: false });
 
@@ -234,7 +244,7 @@ const Search = () => {
       .from('videos')
       .select(`
         *,
-        profiles(username, avatar_url)
+        profiles(username, avatar_url, is_verified)
       `)
       .contains('tags', [searchTerm])
       .order('created_at', { ascending: false });
@@ -267,7 +277,7 @@ const Search = () => {
       .from('videos')
       .select(`
         *,
-        profiles(username, avatar_url)
+        profiles(username, avatar_url, is_verified)
       `)
       .or(
         `title.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%,profiles.username.ilike.%${searchTerm}%`
@@ -281,7 +291,7 @@ const Search = () => {
         .from('videos')
         .select(`
           *,
-          profiles(username, avatar_url)
+          profiles(username, avatar_url, is_verified)
         `)
         .contains('tags', [searchTerm])
         .order('created_at', { ascending: false });
@@ -295,9 +305,13 @@ const Search = () => {
     setIsLoading(false);
   };
 
-  const handleVideoClick = (videoId: string) => {
-    // Navigate to feed with specific video
-    navigate(`/feed?video=${videoId}`);
+  const handleVideoClick = (videoId: string, sectionVideos: Video[], sectionTitle: string) => {
+    const index = sectionVideos.findIndex(v => v.id === videoId);
+    setReelViewer({
+      videos: sectionVideos,
+      startIndex: index >= 0 ? index : 0,
+      title: sectionTitle,
+    });
   };
 
   const formatCount = (count: number): string => {
@@ -413,9 +427,8 @@ const Search = () => {
           <h2 className="text-lg font-bold mb-3 flex items-center gap-2">
             🔥 Trending Now
           </h2>
-          {/* Horizontal scroll on laptop, grid on mobile */}
           <div className="hidden lg:flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
-            {trendingVideos.slice(0, 6).map((video) => (
+            {trendingVideos.slice(0, 6).map((video, i) => (
               <div key={video.id} className="flex-shrink-0 w-32">
                 <VideoPreviewCard
                   title={video.title}
@@ -423,7 +436,7 @@ const Search = () => {
                   videoUrl={video.video_url}
                   viewsCount={video.views_count}
                   likesCount={video.likes_count}
-                  onClick={() => handleVideoClick(video.id)}
+                  onClick={() => handleVideoClick(video.id, trendingVideos.slice(0, 6), '🔥 Trending Now')}
                   formatCount={formatCount}
                   compact
                   showStatsTopRight
@@ -431,7 +444,6 @@ const Search = () => {
               </div>
             ))}
           </div>
-          {/* Grid on mobile */}
           <div className="lg:hidden grid grid-cols-3 gap-2">
             {trendingVideos.slice(0, 3).map((video) => (
               <VideoPreviewCard
@@ -441,7 +453,7 @@ const Search = () => {
                 videoUrl={video.video_url}
                 viewsCount={video.views_count}
                 likesCount={video.likes_count}
-                onClick={() => handleVideoClick(video.id)}
+                onClick={() => handleVideoClick(video.id, trendingVideos.slice(0, 6), '🔥 Trending Now')}
                 formatCount={formatCount}
               />
             ))}
@@ -450,7 +462,9 @@ const Search = () => {
       )}
 
       {/* Trending Hashtags Section */}
-      {!hasSearched && selectedCategory === 'all' && trendingHashtags.length > 0 && (
+      {!hasSearched && selectedCategory === 'all' && trendingHashtags.length > 0 && (() => {
+        const hashtagVideos = trendingVideos.filter(v => v.tags && v.tags.length > 0);
+        return (
         <div className="p-4 border-b border-border">
           <h2 className="text-lg font-bold mb-3 flex items-center gap-2">
             <TrendingUp className="h-5 w-5 text-primary" />
@@ -477,9 +491,8 @@ const Search = () => {
               </button>
             ))}
           </div>
-          {/* Videos from trending hashtags - horizontal scroll on laptop */}
           <div className="hidden lg:flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
-            {trendingVideos.filter(v => v.tags && v.tags.length > 0).slice(0, 8).map((video) => (
+            {hashtagVideos.slice(0, 8).map((video) => (
               <div key={video.id} className="flex-shrink-0 w-32">
                 <VideoPreviewCard
                   title={video.title}
@@ -487,7 +500,7 @@ const Search = () => {
                   videoUrl={video.video_url}
                   viewsCount={video.views_count}
                   likesCount={video.likes_count}
-                  onClick={() => handleVideoClick(video.id)}
+                  onClick={() => handleVideoClick(video.id, hashtagVideos.slice(0, 8), 'Trending Hashtags')}
                   formatCount={formatCount}
                   compact
                   showStatsTopRight
@@ -495,9 +508,8 @@ const Search = () => {
               </div>
             ))}
           </div>
-          {/* Grid on mobile */}
           <div className="lg:hidden grid grid-cols-3 gap-2">
-            {trendingVideos.filter(v => v.tags && v.tags.length > 0).slice(0, 3).map((video) => (
+            {hashtagVideos.slice(0, 3).map((video) => (
               <VideoPreviewCard
                 key={video.id}
                 title={video.title}
@@ -505,22 +517,22 @@ const Search = () => {
                 videoUrl={video.video_url}
                 viewsCount={video.views_count}
                 likesCount={video.likes_count}
-                onClick={() => handleVideoClick(video.id)}
+                onClick={() => handleVideoClick(video.id, hashtagVideos.slice(0, 8), 'Trending Hashtags')}
                 formatCount={formatCount}
                 showStatsTopRight
               />
             ))}
           </div>
         </div>
-      )}
+        );
+      })()}
 
-      {/* Videos under Top Creatives - matching size */}
+      {/* Popular Animations */}
       {!hasSearched && selectedCategory === 'all' && trendingVideos.length > 0 && (
         <div className="p-4 border-b border-border">
           <h2 className="text-lg font-bold mb-3 flex items-center gap-2">
             🎬 Popular Animations
           </h2>
-          {/* Horizontal scroll on laptop */}
           <div className="hidden lg:flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
             {trendingVideos.slice(0, 8).map((video) => (
               <div key={video.id} className="flex-shrink-0 w-32">
@@ -530,7 +542,7 @@ const Search = () => {
                   videoUrl={video.video_url}
                   viewsCount={video.views_count}
                   likesCount={video.likes_count}
-                  onClick={() => handleVideoClick(video.id)}
+                  onClick={() => handleVideoClick(video.id, trendingVideos.slice(0, 8), '🎬 Popular Animations')}
                   formatCount={formatCount}
                   compact
                   showStatsTopRight
@@ -538,7 +550,6 @@ const Search = () => {
               </div>
             ))}
           </div>
-          {/* Grid on mobile */}
           <div className="lg:hidden grid grid-cols-3 gap-2">
             {trendingVideos.slice(0, 3).map((video) => (
               <VideoPreviewCard
@@ -548,7 +559,7 @@ const Search = () => {
                 videoUrl={video.video_url}
                 viewsCount={video.views_count}
                 likesCount={video.likes_count}
-                onClick={() => handleVideoClick(video.id)}
+                onClick={() => handleVideoClick(video.id, trendingVideos.slice(0, 8), '🎬 Popular Animations')}
                 formatCount={formatCount}
                 showStatsTopRight
               />
@@ -562,7 +573,7 @@ const Search = () => {
         <TopCreativesSection formatCount={formatCount} />
       )}
 
-      {/* Results - matching size with other sections */}
+      {/* Results */}
       <div className="p-4">
         {isLoading ? (
           <div className="hidden lg:flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
@@ -578,7 +589,6 @@ const Search = () => {
           </div>
         ) : (
           <>
-            {/* Horizontal scroll on laptop - matching w-32 size */}
             <div className="hidden lg:flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
               {videos.map((video) => (
                 <div key={video.id} className="flex-shrink-0 w-32 relative">
@@ -588,7 +598,7 @@ const Search = () => {
                     videoUrl={video.video_url}
                     viewsCount={video.views_count}
                     likesCount={video.likes_count}
-                    onClick={() => handleVideoClick(video.id)}
+                    onClick={() => handleVideoClick(video.id, videos, hasSearched ? 'Search Results' : selectedCategory === 'all' ? 'All Videos' : selectedCategory)}
                     formatCount={formatCount}
                     compact
                     showStatsTopRight
@@ -596,7 +606,6 @@ const Search = () => {
                 </div>
               ))}
             </div>
-            {/* Grid on mobile */}
             <div className="lg:hidden grid grid-cols-3 gap-2">
               {videos.map((video) => (
                 <div key={video.id} className="relative">
@@ -606,7 +615,7 @@ const Search = () => {
                     videoUrl={video.video_url}
                     viewsCount={video.views_count}
                     likesCount={video.likes_count}
-                    onClick={() => handleVideoClick(video.id)}
+                    onClick={() => handleVideoClick(video.id, videos, hasSearched ? 'Search Results' : selectedCategory === 'all' ? 'All Videos' : selectedCategory)}
                     formatCount={formatCount}
                     showStatsTopRight
                   />
@@ -615,7 +624,6 @@ const Search = () => {
             </div>
           </>
         )}
-        {/* Loading skeleton for mobile */}
         {isLoading && (
           <div className="lg:hidden grid grid-cols-3 gap-2">
             {[...Array(6)].map((_, i) => (
@@ -626,6 +634,17 @@ const Search = () => {
       </div>
 
     </div>
+
+    {/* Explore Reel Viewer */}
+    {reelViewer && (
+      <ExploreReelViewer
+        videos={reelViewer.videos}
+        startIndex={reelViewer.startIndex}
+        sectionTitle={reelViewer.title}
+        onClose={() => setReelViewer(null)}
+      />
+    )}
+
     </ResponsiveLayout>
   );
 };

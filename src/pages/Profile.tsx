@@ -628,9 +628,10 @@ const Profile = () => {
           {profile?.cover_photo_url && (
             <>
               <img 
-                src={profile.cover_photo_url} 
+                src={`${profile.cover_photo_url}?t=${Date.now()}`}
                 alt="Cover" 
                 className="absolute inset-0 w-full h-full object-cover"
+                onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-black/20" />
             </>
