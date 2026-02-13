@@ -210,9 +210,12 @@ const TermsOfService = () => {
               </div>
             </section>
 
-            <div className="pt-4 border-t border-border">
+            <div className="pt-4 border-t border-border space-y-1">
               <p className="text-xs text-center text-muted-foreground/70">
                 © 2026 ToonlyReels by SEMO Group. All rights reserved.
+              </p>
+              <p className="text-xs text-center text-muted-foreground/70">
+                App by: Sekete Films Production
               </p>
             </div>
           </div>

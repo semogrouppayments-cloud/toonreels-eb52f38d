@@ -25,9 +25,9 @@ const ToonlyAI = () => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Hide on auth/legal pages and reel/feed screen
-  const hiddenPages = ['/', '/auth', '/privacy-policy', '/terms-of-service', '/install', '/feed'];
-  const shouldHide = hiddenPages.includes(location.pathname);
+  // Only show on profile pages
+  const isProfilePage = location.pathname.startsWith('/profile');
+  const shouldHide = !isProfilePage;
 
   // Listen for sidebar toggle event
   useEffect(() => {
@@ -145,7 +145,7 @@ const ToonlyAI = () => {
       {/* Floating button */}
       <Button
         onClick={() => setIsOpen(true)}
-        className={`fixed bottom-20 right-4 md:bottom-6 h-14 w-14 rounded-full shadow-lg z-40 bg-gradient-to-br from-primary to-primary/80 hover:scale-105 transition-transform ${isOpen ? 'hidden' : ''}`}
+        className={`fixed bottom-24 right-4 md:bottom-6 h-14 w-14 rounded-full shadow-lg z-40 bg-gradient-to-br from-primary to-primary/80 hover:scale-105 transition-transform ${isOpen ? 'hidden' : ''}`}
         size="icon"
       >
         <Sparkles className="h-6 w-6" />
