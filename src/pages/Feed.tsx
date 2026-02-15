@@ -262,22 +262,24 @@ const Feed = () => {
     }
   };
 
-  // Preload next video for smoother playback
+  // Preload next video - lightweight approach for mobile
   const preloadVideo = useCallback((videoUrl: string) => {
     if (preloadedVideosRef.current.has(videoUrl)) return;
     preloadedVideosRef.current.add(videoUrl);
     
-    // Use a hidden video element for reliable preloading on mobile PWA
-    const vid = document.createElement('video');
-    vid.preload = 'metadata';
-    vid.src = videoUrl;
-    vid.load();
+    // Use link preload for lighter resource usage on mobile
+    const link = document.createElement('link');
+    link.rel = 'preload';
+    link.as = 'fetch';
+    link.href = videoUrl;
+    link.crossOrigin = 'anonymous';
+    document.head.appendChild(link);
     
-    // Cleanup after a short load
-    setTimeout(() => vid.src = '', 3000);
+    // Remove after 5s to keep DOM clean
+    setTimeout(() => link.remove(), 5000);
     
     // Keep cache small
-    if (preloadedVideosRef.current.size > 5) {
+    if (preloadedVideosRef.current.size > 3) {
       const firstKey = preloadedVideosRef.current.values().next().value;
       preloadedVideosRef.current.delete(firstKey);
     }
