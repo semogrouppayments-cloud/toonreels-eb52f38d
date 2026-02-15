@@ -329,18 +329,26 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
     const handleWaiting = () => setIsBuffering(true);
     const handlePlaying = () => setIsBuffering(false);
     const handleCanPlay = () => setIsBuffering(false);
+    let stallRecoveryTimer: ReturnType<typeof setTimeout> | null = null;
     const handleStalled = () => {
-      // Video stalled - try to recover
-      if (isActive && videoEl.paused) {
-        videoEl.play().catch(() => {});
-      }
+      if (!isActive) return;
+      // Give it a moment, then force recovery
+      stallRecoveryTimer = setTimeout(() => {
+        if (videoEl.paused || videoEl.readyState < 2) {
+          const currentPos = videoEl.currentTime;
+          videoEl.src = video.video_url;
+          videoEl.currentTime = currentPos;
+          videoEl.play().catch(() => {});
+        }
+      }, 1500);
     };
     const handleError = () => {
-      // On error, try reloading the video
-      if (video.video_url && isActive) {
-        videoEl.load();
-        videoEl.play().catch(() => {});
-      }
+      if (!isActive) return;
+      // On error, reload from current position
+      const currentPos = videoEl.currentTime || 0;
+      videoEl.src = video.video_url;
+      videoEl.currentTime = currentPos;
+      videoEl.play().catch(() => {});
     };
 
     const handleTimeUpdate = () => {
@@ -377,6 +385,7 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
     videoEl.addEventListener('progress', handleProgress);
 
     return () => {
+      if (stallRecoveryTimer) clearTimeout(stallRecoveryTimer);
       videoEl.removeEventListener('waiting', handleWaiting);
       videoEl.removeEventListener('playing', handlePlaying);
       videoEl.removeEventListener('canplay', handleCanPlay);
@@ -968,8 +977,8 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
             preload={isActive ? 'auto' : 'metadata'}
             autoPlay={false}
             style={{ 
-              maxHeight: isFullscreen && !isMobile ? '100vh' : 'calc(100vh - 56px)',
-              marginBottom: isFullscreen && !isMobile ? '0' : '56px'
+              maxHeight: '100vh',
+              marginBottom: '0'
             }}
           />
         
@@ -1105,7 +1114,7 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
       {/* Progress Bar */}
       <div 
         className="absolute left-0 right-0 z-20 px-3"
-        style={{ bottom: '86px' }}
+        style={{ bottom: isMobile ? '72px' : '86px' }}
       >
         <div className="flex items-center gap-2">
           <span className="text-[10px] text-white/80 font-medium min-w-[32px]">
@@ -1137,7 +1146,7 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
       </div>
       
       {/* Video Info */}
-      <div className="absolute left-2 right-14 text-white z-10" style={{ bottom: '120px' }}>
+      <div className="absolute left-2 right-14 text-white z-10" style={{ bottom: isMobile ? '90px' : '120px' }}>
         <div className="flex items-center gap-1.5 mb-0.5">
           <div 
             className="flex items-center gap-1 cursor-pointer hover:opacity-80 transition-opacity"
@@ -1236,7 +1245,7 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
       </div>
 
       {/* Action Buttons */}
-      <div className="absolute right-1 flex flex-col gap-2 z-10" style={{ bottom: '120px' }}>
+      <div className="absolute right-1 flex flex-col gap-2 z-10" style={{ bottom: isMobile ? '90px' : '120px' }}>
         {/* Like */}
         <button
           onClick={(e) => handleActionClick(e, handleLike)}
