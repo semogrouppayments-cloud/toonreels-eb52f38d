@@ -113,6 +113,7 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
   const touchStartYRef = useRef<number>(0);
   const downloadControllerRef = useRef<WatermarkController | null>(null);
   const subtitleRef = useRef<HTMLDivElement>(null);
+  const stallCountRef = useRef<number>(0);
 
   const isOwnVideo = currentUserId === video.creator_id;
 
@@ -327,35 +328,58 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
     if (!videoEl) return;
 
     const handleWaiting = () => setIsBuffering(true);
-    const handlePlaying = () => setIsBuffering(false);
+    const handlePlaying = () => {
+      setIsBuffering(false);
+      stallCountRef.current = 0; // Reset stall count on successful play
+    };
     const handleCanPlay = () => setIsBuffering(false);
     let stallRecoveryTimer: ReturnType<typeof setTimeout> | null = null;
+    
     const handleStalled = () => {
       if (!isActive) return;
-      // Give it a moment, then force recovery
+      stallCountRef.current++;
+      
+      // Progressive recovery: wait longer on repeated stalls to avoid thrashing
+      const delay = Math.min(1500 * stallCountRef.current, 5000);
+      
       stallRecoveryTimer = setTimeout(() => {
+        if (!videoEl || !isActive) return;
         if (videoEl.paused || videoEl.readyState < 2) {
           const currentPos = videoEl.currentTime;
-          videoEl.src = video.video_url;
-          videoEl.currentTime = currentPos;
-          videoEl.play().catch(() => {});
+          // Don't reset src - just try to play from current position
+          if (videoEl.paused) {
+            videoEl.play().catch(() => {
+              // If play fails, only then reload src
+              if (stallCountRef.current <= 3) {
+                videoEl.load();
+                videoEl.currentTime = currentPos;
+                videoEl.play().catch(() => {});
+              }
+            });
+          }
         }
-      }, 1500);
+      }, delay);
     };
+    
     const handleError = () => {
       if (!isActive) return;
-      // On error, reload from current position
       const currentPos = videoEl.currentTime || 0;
-      videoEl.src = video.video_url;
+      // Reload and resume
+      videoEl.load();
       videoEl.currentTime = currentPos;
       videoEl.play().catch(() => {});
     };
 
+    // Throttled timeupdate to reduce re-renders on mobile
+    let lastTimeUpdate = 0;
     const handleTimeUpdate = () => {
+      const now = Date.now();
+      if (now - lastTimeUpdate < 250) return; // Max 4 updates/sec instead of 15+
+      lastTimeUpdate = now;
+      
       const time = videoEl.currentTime;
       setCurrentTime(time);
       
-      // Update current subtitle based on time
       if (video.subtitles && subtitlesEnabled) {
         const activeSubtitle = video.subtitles.find(
           (sub) => time >= sub.start && time <= sub.end
@@ -1114,7 +1138,7 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
       {/* Progress Bar */}
       <div 
         className="absolute left-0 right-0 z-20 px-3"
-        style={{ bottom: isMobile ? '72px' : '86px' }}
+        style={{ bottom: isMobile ? '80px' : '86px' }}
       >
         <div className="flex items-center gap-2">
           <span className="text-[10px] text-white/80 font-medium min-w-[32px]">
@@ -1146,7 +1170,7 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
       </div>
       
       {/* Video Info */}
-      <div className="absolute left-2 right-14 text-white z-10" style={{ bottom: isMobile ? '90px' : '120px' }}>
+      <div className="absolute left-2 right-14 text-white z-10" style={{ bottom: isMobile ? '100px' : '120px' }}>
         <div className="flex items-center gap-1.5 mb-0.5">
           <div 
             className="flex items-center gap-1 cursor-pointer hover:opacity-80 transition-opacity"
@@ -1245,7 +1269,7 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
       </div>
 
       {/* Action Buttons */}
-      <div className="absolute right-1 flex flex-col gap-2 z-10" style={{ bottom: isMobile ? '90px' : '120px' }}>
+      <div className="absolute right-1 flex flex-col gap-2 z-10" style={{ bottom: isMobile ? '100px' : '120px' }}>
         {/* Like */}
         <button
           onClick={(e) => handleActionClick(e, handleLike)}

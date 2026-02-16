@@ -1,4 +1,4 @@
-import { Film, Search, Upload, Bell, User, Sparkles } from 'lucide-react';
+import { Film, Search, Upload, Bell, User, Settings } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
@@ -147,13 +147,14 @@ const DesktopSidebar = () => {
     return location.pathname === path;
   };
 
-  // Main nav items - Reels, Explore, Upload (creative only), Notifications, Profile
+  // Main nav items - Reels, Explore, Upload (creative only), Notifications, Profile, Settings
   const navItems = [
     { path: '/feed', icon: Film, label: 'Reels', badge: 0 },
     { path: '/search', icon: Search, label: 'Explore', badge: 0 },
     ...(isLoaded && isCreative ? [{ path: '/upload', icon: Upload, label: 'Upload', badge: 0 }] : []),
     { path: '/notifications', icon: Bell, label: 'Notifications', badge: unreadCount },
     { path: currentUserId ? `/profile/${currentUserId}` : '/profile', icon: User, label: 'Profile', badge: 0 },
+    { path: '/settings', icon: Settings, label: 'Settings', badge: 0 },
   ];
 
   return (
@@ -189,19 +190,8 @@ const DesktopSidebar = () => {
         ))}
       </nav>
 
-      {/* Footer with ToonlyAI + More Menu */}
+      {/* Footer with More Menu */}
       <div className="p-3 border-t border-border space-y-1">
-        <button
-          onClick={() => {
-            // Dispatch custom event to toggle ToonlyAI chat bubble
-            window.dispatchEvent(new CustomEvent('toggle-toonlyai'));
-          }}
-          className="w-full flex items-center gap-4 px-4 py-3 rounded-xl text-base font-semibold transition-all text-muted-foreground hover:bg-muted hover:text-foreground"
-          title="Open ToonlyAI chat"
-        >
-          <Sparkles className="h-5 w-5 text-primary" />
-          <span>ToonlyAI</span>
-        </button>
         <SidebarMoreMenu isCreative={isCreative} />
         <p className="text-xs text-muted-foreground text-center py-2">© 2025 ToonlyReels</p>
       </div>
