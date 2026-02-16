@@ -65,11 +65,14 @@ const Feed = () => {
   const [isCreative, setIsCreative] = useState(false);
   const [selectedVideoId, setSelectedVideoId] = useState<string | null>(null);
   const [activeIndex, setActiveIndex] = useState(0);
+  const activeIndexRef = useRef(0);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [pullDistance, setPullDistance] = useState(0);
   const [page, setPage] = useState(0);
+  const hasMoreRef = useRef(true);
   const [hasMore, setHasMore] = useState(true);
+  const isLoadingMoreRef = useRef(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [blockedUserIds, setBlockedUserIds] = useState<string[]>([]);
   const [followingIds, setFollowingIds] = useState<string[]>([]);
@@ -81,6 +84,7 @@ const Feed = () => {
   const isPulling = useRef(false);
   const isSwipingVertically = useRef(false);
   const preloadedVideosRef = useRef<Set<string>>(new Set());
+  const videosRef = useRef<Video[]>([]);
 
   // Screen time tracking
   const { isLocked, lockReason, timeUsed, timeLimit, unlock } = useScreenTime(currentUserId);
@@ -201,6 +205,7 @@ const Feed = () => {
     }));
     
     if (transformedVideos.length < PAGE_SIZE) {
+      hasMoreRef.current = false;
       setHasMore(false);
     }
 
@@ -208,11 +213,15 @@ const Feed = () => {
     const shuffledVideos = shuffleArray(transformedVideos);
     
     if (reset) {
+      videosRef.current = shuffledVideos;
       setVideos(shuffledVideos);
       setPage(0);
+      hasMoreRef.current = transformedVideos.length === PAGE_SIZE;
       setHasMore(transformedVideos.length === PAGE_SIZE);
     } else {
-      setVideos(prev => [...prev, ...shuffledVideos]);
+      const merged = [...videosRef.current, ...shuffledVideos];
+      videosRef.current = merged;
+      setVideos(merged);
     }
   };
 
@@ -228,8 +237,10 @@ const Feed = () => {
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
+    activeIndexRef.current = 0;
     setActiveIndex(0);
     setPage(0);
+    hasMoreRef.current = true;
     setHasMore(true);
     await fetchVideos(0, true);
     setIsRefreshing(false);
@@ -241,12 +252,14 @@ const Feed = () => {
   };
 
   const loadMoreVideos = async () => {
-    if (isLoadingMore || !hasMore) return;
+    if (isLoadingMoreRef.current || !hasMoreRef.current) return;
     
+    isLoadingMoreRef.current = true;
     setIsLoadingMore(true);
     const nextPage = page + 1;
     await fetchVideos(nextPage, false);
     setPage(nextPage);
+    isLoadingMoreRef.current = false;
     setIsLoadingMore(false);
   };
 
@@ -255,7 +268,9 @@ const Feed = () => {
       try {
         await supabase.from('videos').delete().eq('id', videoId);
         toast.success('Video deleted');
-        setVideos(prev => prev.filter(v => v.id !== videoId));
+        const filtered = videosRef.current.filter(v => v.id !== videoId);
+        videosRef.current = filtered;
+        setVideos(filtered);
       } catch (error) {
         toast.error('Failed to delete video');
       }
@@ -285,32 +300,34 @@ const Feed = () => {
     }
   }, []);
 
-  // Handle scroll snap to detect active video and load more
+  // Handle scroll snap to detect active video and load more - uses refs to avoid dependency churn
   const handleScroll = useCallback(() => {
     if (!containerRef.current) return;
     const scrollTop = containerRef.current.scrollTop;
     const height = window.innerHeight;
     const newIndex = Math.round(scrollTop / height);
+    const vids = videosRef.current;
     
-    if (newIndex !== activeIndex && newIndex >= 0 && newIndex < videos.length) {
+    if (newIndex !== activeIndexRef.current && newIndex >= 0 && newIndex < vids.length) {
       // Haptic feedback when snapping to new video
       triggerScrollHaptic();
+      activeIndexRef.current = newIndex;
       setActiveIndex(newIndex);
       
-      // Preload next and previous videos
-      if (videos[newIndex + 1]) {
-        preloadVideo(videos[newIndex + 1].video_url);
+      // Preload next videos
+      if (vids[newIndex + 1]) {
+        preloadVideo(vids[newIndex + 1].video_url);
       }
-      if (videos[newIndex + 2]) {
-        preloadVideo(videos[newIndex + 2].video_url);
+      if (vids[newIndex + 2]) {
+        preloadVideo(vids[newIndex + 2].video_url);
       }
     }
     
-    // Load more when near the end (3 videos before last)
-    if (newIndex >= videos.length - 3 && hasMore && !isLoadingMore) {
+    // Load more when near the end (3 videos before last) - use refs to avoid stale closures
+    if (newIndex >= vids.length - 3 && hasMoreRef.current && !isLoadingMoreRef.current) {
       loadMoreVideos();
     }
-  }, [activeIndex, videos, hasMore, isLoadingMore, triggerScrollHaptic, preloadVideo]);
+  }, [triggerScrollHaptic, preloadVideo, loadMoreVideos]);
 
   // Swipe gesture handlers with acceleration
   const handleTouchStart = (e: React.TouchEvent) => {
@@ -408,9 +425,12 @@ const Feed = () => {
   const handleTabChange = async (tab: 'forYou' | 'following') => {
     if (tab === activeTab) return;
     setActiveTab(tab);
+    activeIndexRef.current = 0;
     setActiveIndex(0);
     setPage(0);
+    hasMoreRef.current = true;
     setHasMore(true);
+    videosRef.current = [];
     setVideos([]);
     if (containerRef.current) {
       containerRef.current.scrollTo({ top: 0 });
