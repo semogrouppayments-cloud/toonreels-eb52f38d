@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { Heart, MessageCircle, Download, Flag, Trash2, Volume2, VolumeX, Bookmark, BookmarkCheck, Play, Settings, Repeat, Ban, BadgeCheck, Subtitles } from 'lucide-react';
+import { Heart, MessageCircle, Download, Flag, Trash2, Volume2, VolumeX, Bookmark, BookmarkCheck, Settings, Repeat, Ban, BadgeCheck, Subtitles } from 'lucide-react';
 import { toast } from 'sonner';
 import LikeAnimation from '@/components/LikeAnimation';
 import { useNavigate } from 'react-router-dom';
@@ -1052,14 +1052,7 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
           </div>
         )}
         
-        {/* Play/Pause indicator */}
-        {!isPlaying && isActive && !isBuffering && (
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <div className="bg-black/50 rounded-full p-4">
-              <Play className="h-12 w-12 text-white fill-white" />
-            </div>
-          </div>
-        )}
+        {/* Play/Pause indicator - only show when user manually paused via tap */}
       </div>
       
       {/* Subtitle Display - Draggable */}
