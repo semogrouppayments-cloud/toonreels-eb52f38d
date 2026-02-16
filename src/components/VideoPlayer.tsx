@@ -85,6 +85,9 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [bufferedPercent, setBufferedPercent] = useState(0);
+  const isBufferingRef = useRef(false);
+  const currentTimeRef = useRef(0);
+  const bufferedPercentRef = useRef(0);
   const [videoQuality, setVideoQuality] = useState<'HD' | 'SD'>('HD');
   const [playbackSpeed, setPlaybackSpeed] = useState<number>(1);
   const [showSettingsMenu, setShowSettingsMenu] = useState(false);
@@ -327,12 +330,25 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
     const videoEl = videoRef.current;
     if (!videoEl) return;
 
-    const handleWaiting = () => setIsBuffering(true);
-    const handlePlaying = () => {
-      setIsBuffering(false);
-      stallCountRef.current = 0; // Reset stall count on successful play
+    const handleWaiting = () => {
+      if (!isBufferingRef.current) {
+        isBufferingRef.current = true;
+        setIsBuffering(true);
+      }
     };
-    const handleCanPlay = () => setIsBuffering(false);
+    const handlePlaying = () => {
+      if (isBufferingRef.current) {
+        isBufferingRef.current = false;
+        setIsBuffering(false);
+      }
+      stallCountRef.current = 0;
+    };
+    const handleCanPlay = () => {
+      if (isBufferingRef.current) {
+        isBufferingRef.current = false;
+        setIsBuffering(false);
+      }
+    };
     let stallRecoveryTimer: ReturnType<typeof setTimeout> | null = null;
     
     const handleStalled = () => {
@@ -380,31 +396,44 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
       videoEl.play().catch(() => {});
     };
 
-    // Throttled timeupdate to reduce re-renders on mobile
+    // Heavily throttled timeupdate - only setState when value visibly changes
     let lastTimeUpdate = 0;
+    let rafId: number | null = null;
     const handleTimeUpdate = () => {
       const now = Date.now();
-      if (now - lastTimeUpdate < 250) return; // Max 4 updates/sec instead of 15+
+      if (now - lastTimeUpdate < 500) return; // Max 2 updates/sec on mobile
       lastTimeUpdate = now;
       
-      const time = videoEl.currentTime;
-      setCurrentTime(time);
-      
-      if (video.subtitles && subtitlesEnabled) {
-        const activeSubtitle = video.subtitles.find(
-          (sub) => time >= sub.start && time <= sub.end
-        );
-        setCurrentSubtitle(activeSubtitle?.text || '');
-      } else {
-        setCurrentSubtitle('');
-      }
+      if (rafId) return;
+      rafId = requestAnimationFrame(() => {
+        rafId = null;
+        const time = videoEl.currentTime;
+        // Only re-render if time changed by >0.4s (visible on progress bar)
+        if (Math.abs(time - currentTimeRef.current) > 0.4) {
+          currentTimeRef.current = time;
+          setCurrentTime(time);
+        }
+        
+        if (video.subtitles && subtitlesEnabled) {
+          const activeSubtitle = video.subtitles.find(
+            (sub) => time >= sub.start && time <= sub.end
+          );
+          const newText = activeSubtitle?.text || '';
+          setCurrentSubtitle(prev => prev === newText ? prev : newText);
+        }
+      });
     };
     const handleLoadedMetadata = () => setDuration(videoEl.duration);
     const handleDurationChange = () => setDuration(videoEl.duration);
+    // Throttle progress events - only update if buffered changed significantly
     const handleProgress = () => {
       if (videoEl.buffered.length > 0 && videoEl.duration > 0) {
         const bufferedEnd = videoEl.buffered.end(videoEl.buffered.length - 1);
-        setBufferedPercent((bufferedEnd / videoEl.duration) * 100);
+        const newPercent = (bufferedEnd / videoEl.duration) * 100;
+        if (Math.abs(newPercent - bufferedPercentRef.current) > 3) {
+          bufferedPercentRef.current = newPercent;
+          setBufferedPercent(newPercent);
+        }
       }
     };
 
