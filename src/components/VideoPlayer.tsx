@@ -339,32 +339,42 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
       if (!isActive) return;
       stallCountRef.current++;
       
-      // Progressive recovery: wait longer on repeated stalls to avoid thrashing
-      const delay = Math.min(1500 * stallCountRef.current, 5000);
+      // Progressive backoff: escalate recovery strategy
+      const count = stallCountRef.current;
+      const delay = Math.min(800 * count, 4000);
       
+      if (stallRecoveryTimer) clearTimeout(stallRecoveryTimer);
       stallRecoveryTimer = setTimeout(() => {
         if (!videoEl || !isActive) return;
+        
+        // Strategy 1: Just nudge playback (lightest)
+        if (count <= 2 && !videoEl.paused) {
+          // Seek forward by a tiny amount to unstick the buffer
+          videoEl.currentTime = videoEl.currentTime + 0.01;
+          return;
+        }
+        
+        // Strategy 2: Try play() if paused
         if (videoEl.paused || videoEl.readyState < 2) {
-          const currentPos = videoEl.currentTime;
-          // Don't reset src - just try to play from current position
-          if (videoEl.paused) {
-            videoEl.play().catch(() => {
-              // If play fails, only then reload src
-              if (stallCountRef.current <= 3) {
-                videoEl.load();
-                videoEl.currentTime = currentPos;
-                videoEl.play().catch(() => {});
-              }
-            });
-          }
+          videoEl.play().catch(() => {
+            // Strategy 3: Full reload only as last resort (count <= 4)
+            if (count <= 4) {
+              const pos = videoEl.currentTime;
+              videoEl.load();
+              videoEl.currentTime = pos;
+              videoEl.play().catch(() => {});
+            }
+          });
         }
       }, delay);
     };
     
     const handleError = () => {
       if (!isActive) return;
+      // Only recover if we haven't exhausted retries
+      if (stallCountRef.current > 5) return;
+      stallCountRef.current++;
       const currentPos = videoEl.currentTime || 0;
-      // Reload and resume
       videoEl.load();
       videoEl.currentTime = currentPos;
       videoEl.play().catch(() => {});
@@ -1138,7 +1148,7 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
       {/* Progress Bar */}
       <div 
         className="absolute left-0 right-0 z-20 px-3"
-        style={{ bottom: isMobile ? '80px' : '86px' }}
+        style={{ bottom: isMobile ? '100px' : '86px' }}
       >
         <div className="flex items-center gap-2">
           <span className="text-[10px] text-white/80 font-medium min-w-[32px]">
@@ -1170,7 +1180,7 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
       </div>
       
       {/* Video Info */}
-      <div className="absolute left-2 right-14 text-white z-10" style={{ bottom: isMobile ? '100px' : '120px' }}>
+      <div className="absolute left-2 right-14 text-white z-10" style={{ bottom: isMobile ? '120px' : '120px' }}>
         <div className="flex items-center gap-1.5 mb-0.5">
           <div 
             className="flex items-center gap-1 cursor-pointer hover:opacity-80 transition-opacity"
@@ -1269,7 +1279,7 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
       </div>
 
       {/* Action Buttons */}
-      <div className="absolute right-1 flex flex-col gap-2 z-10" style={{ bottom: isMobile ? '100px' : '120px' }}>
+      <div className="absolute right-1 flex flex-col gap-2 z-10" style={{ bottom: isMobile ? '120px' : '120px' }}>
         {/* Like */}
         <button
           onClick={(e) => handleActionClick(e, handleLike)}
