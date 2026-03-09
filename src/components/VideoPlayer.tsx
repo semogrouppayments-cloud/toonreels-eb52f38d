@@ -103,6 +103,7 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
   const [currentSubtitle, setCurrentSubtitle] = useState<string>('');
   const [subtitlePosition, setSubtitlePosition] = useState({ x: 0, y: 180 });
   const [isDraggingSubtitle, setIsDraggingSubtitle] = useState(false);
+  const [showStarsDialog, setShowStarsDialog] = useState(false);
   const subtitleDragStart = useRef<{ x: number; y: number; posX: number; posY: number } | null>(null);
   
   const lastTapRef = useRef<number>(0);
