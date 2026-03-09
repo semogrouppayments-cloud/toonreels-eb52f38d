@@ -584,7 +584,7 @@ const Search = () => {
         ) : videos.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-muted-foreground">
-              {hasSearched ? 'No videos found for your search' : 'No videos in this category yet'}
+              {hasSearched ? 'No toonz found for your search' : 'No toonz in this category yet'}
             </p>
           </div>
         ) : (
