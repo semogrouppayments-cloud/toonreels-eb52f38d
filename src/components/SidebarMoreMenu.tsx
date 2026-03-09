@@ -294,6 +294,15 @@ const SidebarMoreMenu = ({ isCreative }: SidebarMoreMenuProps) => {
               <span>Milestones</span>
             </button>
 
+            {/* Stars Dashboard */}
+            <button 
+              onClick={() => handleNavigate('/stars-dashboard')}
+              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-foreground hover:bg-muted transition-colors"
+            >
+              <Star className="h-4 w-4 text-yellow-500" />
+              <span>Stars</span>
+            </button>
+
             {/* Switch Accounts */}
             <button 
               onClick={() => setShowAccounts(true)}
