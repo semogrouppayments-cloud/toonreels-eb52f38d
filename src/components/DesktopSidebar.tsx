@@ -149,7 +149,7 @@ const DesktopSidebar = () => {
 
   // Main nav items - Reels, Explore, Upload (creative only), Notifications, Profile, Settings
   const navItems = [
-    { path: '/feed', icon: Film, label: 'Reels', badge: 0 },
+    { path: '/feed', icon: Film, label: 'Toonz', badge: 0 },
     { path: '/search', icon: Search, label: 'Explore', badge: 0 },
     ...(isLoaded && isCreative ? [{ path: '/upload', icon: Upload, label: 'Upload', badge: 0 }] : []),
     { path: '/notifications', icon: Bell, label: 'Notifications', badge: unreadCount },

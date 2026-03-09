@@ -334,7 +334,7 @@ const Search = () => {
               <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 type="text"
-                placeholder="Search creators, videos, #hashtags..."
+                placeholder="Search creators, toonz, #hashtags..."
                 value={searchQuery}
                 onChange={(e) => {
                   setSearchQuery(e.target.value);
@@ -584,7 +584,7 @@ const Search = () => {
         ) : videos.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-muted-foreground">
-              {hasSearched ? 'No videos found for your search' : 'No videos in this category yet'}
+              {hasSearched ? 'No toonz found for your search' : 'No toonz in this category yet'}
             </p>
           </div>
         ) : (
@@ -598,7 +598,7 @@ const Search = () => {
                     videoUrl={video.video_url}
                     viewsCount={video.views_count}
                     likesCount={video.likes_count}
-                    onClick={() => handleVideoClick(video.id, videos, hasSearched ? 'Search Results' : selectedCategory === 'all' ? 'All Videos' : selectedCategory)}
+                    onClick={() => handleVideoClick(video.id, videos, hasSearched ? 'Search Results' : selectedCategory === 'all' ? 'All Toonz' : selectedCategory)}
                     formatCount={formatCount}
                     compact
                     showStatsTopRight
@@ -615,7 +615,7 @@ const Search = () => {
                     videoUrl={video.video_url}
                     viewsCount={video.views_count}
                     likesCount={video.likes_count}
-                    onClick={() => handleVideoClick(video.id, videos, hasSearched ? 'Search Results' : selectedCategory === 'all' ? 'All Videos' : selectedCategory)}
+                    onClick={() => handleVideoClick(video.id, videos, hasSearched ? 'Search Results' : selectedCategory === 'all' ? 'All Toonz' : selectedCategory)}
                     formatCount={formatCount}
                     showStatsTopRight
                   />
