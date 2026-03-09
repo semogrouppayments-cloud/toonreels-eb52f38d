@@ -1031,17 +1031,19 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
           <video
             ref={videoRef}
             src={video.video_url}
-            className="w-full h-full object-contain"
+            className="w-full h-full object-cover md:object-contain"
             loop={isLooping}
             muted={isMuted}
             playsInline
             webkit-playsinline="true"
             x5-playsinline="true"
+            x5-video-player-type="h5"
             preload={isActive ? 'auto' : 'metadata'}
             autoPlay={false}
             style={{ 
               maxHeight: '100vh',
-              marginBottom: '0'
+              marginBottom: '0',
+              WebkitTransform: 'translateZ(0)',
             }}
           />
         
