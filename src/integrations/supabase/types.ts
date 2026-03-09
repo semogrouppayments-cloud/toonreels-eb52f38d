@@ -156,6 +156,48 @@ export type Database = {
         }
         Relationships: []
       }
+      creator_monetization: {
+        Row: {
+          created_at: string | null
+          eligibility_checked_at: string | null
+          id: string
+          is_eligible: boolean | null
+          pending_balance: number | null
+          revenue_split_creator: number | null
+          revenue_split_platform: number | null
+          total_stars_earned: number | null
+          total_withdrawn: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          eligibility_checked_at?: string | null
+          id?: string
+          is_eligible?: boolean | null
+          pending_balance?: number | null
+          revenue_split_creator?: number | null
+          revenue_split_platform?: number | null
+          total_stars_earned?: number | null
+          total_withdrawn?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          eligibility_checked_at?: string | null
+          id?: string
+          is_eligible?: boolean | null
+          pending_balance?: number | null
+          revenue_split_creator?: number | null
+          revenue_split_platform?: number | null
+          total_stars_earned?: number | null
+          total_withdrawn?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       creator_verifications: {
         Row: {
           business_document_url: string | null
@@ -590,6 +632,98 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "saved_videos_video_id_fkey"
+            columns: ["video_id"]
+            isOneToOne: false
+            referencedRelation: "videos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      star_balances: {
+        Row: {
+          balance: number
+          id: string
+          total_earned: number
+          total_spent: number
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          balance?: number
+          id?: string
+          total_earned?: number
+          total_spent?: number
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          balance?: number
+          id?: string
+          total_earned?: number
+          total_spent?: number
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      star_packs: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          price_cents: number
+          stars_amount: number
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          price_cents: number
+          stars_amount: number
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          price_cents?: number
+          stars_amount?: number
+        }
+        Relationships: []
+      }
+      star_transactions: {
+        Row: {
+          amount: number
+          created_at: string | null
+          from_user_id: string | null
+          id: string
+          to_user_id: string | null
+          type: string
+          video_id: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          from_user_id?: string | null
+          id?: string
+          to_user_id?: string | null
+          type: string
+          video_id?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          from_user_id?: string | null
+          id?: string
+          to_user_id?: string | null
+          type?: string
+          video_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "star_transactions_video_id_fkey"
             columns: ["video_id"]
             isOneToOne: false
             referencedRelation: "videos"
