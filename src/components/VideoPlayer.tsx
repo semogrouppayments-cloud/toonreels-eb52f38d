@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { Heart, MessageCircle, Download, Flag, Trash2, Volume2, VolumeX, Bookmark, BookmarkCheck, Settings, Repeat, Ban, BadgeCheck, Subtitles } from 'lucide-react';
+import { Heart, MessageCircle, Download, Flag, Trash2, Volume2, VolumeX, Bookmark, BookmarkCheck, Settings, Repeat, Ban, BadgeCheck, Subtitles, Star } from 'lucide-react';
 import { toast } from 'sonner';
 import LikeAnimation from '@/components/LikeAnimation';
 import { useNavigate } from 'react-router-dom';
