@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { Heart, MessageCircle, Download, Flag, Trash2, Volume2, VolumeX, Bookmark, BookmarkCheck, Settings, Repeat, Ban, BadgeCheck, Subtitles } from 'lucide-react';
+import { Heart, MessageCircle, Download, Flag, Trash2, Volume2, VolumeX, Bookmark, BookmarkCheck, Settings, Repeat, Ban, BadgeCheck, Subtitles, Star } from 'lucide-react';
 import { toast } from 'sonner';
 import LikeAnimation from '@/components/LikeAnimation';
 import { useNavigate } from 'react-router-dom';
@@ -29,6 +29,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import SendStarsDialog from '@/components/SendStarsDialog';
 
 interface SubtitleSegment {
   id: number;
@@ -102,6 +103,7 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
   const [currentSubtitle, setCurrentSubtitle] = useState<string>('');
   const [subtitlePosition, setSubtitlePosition] = useState({ x: 0, y: 180 });
   const [isDraggingSubtitle, setIsDraggingSubtitle] = useState(false);
+  const [showStarsDialog, setShowStarsDialog] = useState(false);
   const subtitleDragStart = useRef<{ x: number; y: number; posX: number; posY: number } | null>(null);
   
   const lastTapRef = useRef<number>(0);
@@ -1326,6 +1328,19 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
           <span className="text-[9px] text-white font-medium">{commentsCount}</span>
         </button>
 
+        {/* Send Stars - only for non-owners */}
+        {!isOwnVideo && (
+          <button
+            onClick={(e) => handleActionClick(e, () => setShowStarsDialog(true))}
+            className="flex flex-col items-center"
+          >
+            <div className="rounded-full h-9 w-9 flex items-center justify-center text-yellow-500">
+              <Star className="h-5 w-5 fill-current" />
+            </div>
+            <span className="text-[9px] text-white font-medium">Stars</span>
+          </button>
+        )}
+
         {/* Save - only for non-owners */}
         {!isOwnVideo && (
           <button
@@ -1461,6 +1476,16 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
           onCancel={handleCancelDownload}
         />
       )}
+
+      {/* Send Stars Dialog */}
+      <SendStarsDialog
+        open={showStarsDialog}
+        onOpenChange={setShowStarsDialog}
+        creatorId={video.creator_id}
+        creatorUsername={video.profiles.username}
+        videoId={video.id}
+        currentUserId={currentUserId}
+      />
     </div>
     </>
   );
