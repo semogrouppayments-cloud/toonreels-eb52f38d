@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Menu, BarChart3, Trophy, Users, Sun, Moon, LogOut, Plus, User, ChevronRight } from 'lucide-react';
+import { Menu, BarChart3, Trophy, Users, Sun, Moon, LogOut, Plus, User, ChevronRight, Star } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useTheme } from '@/contexts/ThemeContext';
 import { supabase } from '@/integrations/supabase/client';
