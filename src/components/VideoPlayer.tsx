@@ -1476,6 +1476,16 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
           onCancel={handleCancelDownload}
         />
       )}
+
+      {/* Send Stars Dialog */}
+      <SendStarsDialog
+        open={showStarsDialog}
+        onOpenChange={setShowStarsDialog}
+        creatorId={video.creator_id}
+        creatorUsername={video.profiles.username}
+        videoId={video.id}
+        currentUserId={currentUserId}
+      />
     </div>
     </>
   );

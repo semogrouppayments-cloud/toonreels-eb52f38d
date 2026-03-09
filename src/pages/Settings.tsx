@@ -796,9 +796,9 @@ const Settings = () => {
                     <Select value={videoQuality} onValueChange={setVideoQuality}>
                       <SelectTrigger className="h-8 text-sm"><SelectValue /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="auto">Auto</SelectItem>
-                        <SelectItem value="high">High</SelectItem>
-                        <SelectItem value="medium">Medium</SelectItem>
+                        <SelectItem value="auto">Auto (Recommended)</SelectItem>
+                        <SelectItem value="high">HD (720p+)</SelectItem>
+                        <SelectItem value="medium">SD (480p)</SelectItem>
                       </SelectContent>
                     </Select>
                     <Button onClick={savePlaybackSettings} size="sm" className="h-7 text-xs">Save</Button>
