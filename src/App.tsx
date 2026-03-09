@@ -24,6 +24,7 @@ import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
 import ParentDashboard from "./pages/ParentDashboard";
 import Install from "./pages/Install";
+import StarsDashboard from "./pages/StarsDashboard";
 import ToonlyAI from "./components/ToonlyAI";
 
 const queryClient = new QueryClient({
