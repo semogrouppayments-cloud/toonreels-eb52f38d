@@ -29,6 +29,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import SendStarsDialog from '@/components/SendStarsDialog';
 
 interface SubtitleSegment {
   id: number;
