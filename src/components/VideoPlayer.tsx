@@ -1328,6 +1328,19 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
           <span className="text-[9px] text-white font-medium">{commentsCount}</span>
         </button>
 
+        {/* Send Stars - only for non-owners */}
+        {!isOwnVideo && (
+          <button
+            onClick={(e) => handleActionClick(e, () => setShowStarsDialog(true))}
+            className="flex flex-col items-center"
+          >
+            <div className="rounded-full h-9 w-9 flex items-center justify-center text-yellow-500">
+              <Star className="h-5 w-5 fill-current" />
+            </div>
+            <span className="text-[9px] text-white font-medium">Stars</span>
+          </button>
+        )}
+
         {/* Save - only for non-owners */}
         {!isOwnVideo && (
           <button
