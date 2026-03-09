@@ -615,7 +615,7 @@ const Search = () => {
                     videoUrl={video.video_url}
                     viewsCount={video.views_count}
                     likesCount={video.likes_count}
-                    onClick={() => handleVideoClick(video.id, videos, hasSearched ? 'Search Results' : selectedCategory === 'all' ? 'All Videos' : selectedCategory)}
+                    onClick={() => handleVideoClick(video.id, videos, hasSearched ? 'Search Results' : selectedCategory === 'all' ? 'All Toonz' : selectedCategory)}
                     formatCount={formatCount}
                     showStatsTopRight
                   />

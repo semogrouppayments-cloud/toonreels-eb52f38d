@@ -114,7 +114,7 @@ const BottomNav = () => {
           }`}
         >
           <Film className="h-5 w-5" />
-          <span className="text-[10px] font-semibold">Reels</span>
+          <span className="text-[10px] font-semibold">Toonz</span>
         </button>
 
         <button
