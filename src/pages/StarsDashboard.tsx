@@ -72,7 +72,7 @@ const StarsDashboard = () => {
     setMonetization(monRes.data as any);
     setTransactions((txRes.data as any[]) || []);
     setFollowers(follRes.count || 0);
-    setTotalViews((vidRes.data as any[])?.reduce((sum: number, v: any) => sum + (v.views_count || 0), 0) || 0);
+    setTotalWatchHours(watchHours);
     setIsLoading(false);
   };
 
