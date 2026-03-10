@@ -182,7 +182,7 @@ const StarsDashboard = () => {
                   <div className="flex items-start gap-2">
                     <Info className="h-4 w-4 text-muted-foreground mt-0.5" />
                     <p className="text-xs text-muted-foreground">
-                      Reach {ELIGIBILITY_FOLLOWERS.toLocaleString()} followers and {ELIGIBILITY_VIEWS.toLocaleString()} total views to start earning from Stars.
+                      Reach {ELIGIBILITY_FOLLOWERS.toLocaleString()} followers and {ELIGIBILITY_WATCH_HOURS.toLocaleString()} watch hours to start earning from Stars.
                     </p>
                   </div>
                 </div>
