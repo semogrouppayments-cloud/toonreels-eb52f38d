@@ -54,7 +54,6 @@ const StarsDashboard = () => {
       supabase.from('star_transactions').select('*').eq('to_user_id', uid).order('created_at', { ascending: false }).limit(20),
       supabase.from('follows').select('id', { count: 'exact' }).eq('following_id', uid),
       supabase.from('videos').select('id').eq('creator_id', uid),
-      null as any, // placeholder, will fetch below
     ]);
 
     const videoIds = (vidRes.data as any[])?.map((v: any) => v.id) || [];
