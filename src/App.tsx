@@ -89,6 +89,8 @@ const AppContent = () => {
         <Route path="/parent-dashboard" element={<ParentDashboard />} />
         <Route path="/install" element={<Install />} />
         <Route path="/stars-dashboard" element={<StarsDashboard />} />
+        <Route path="/toonly-studio" element={<ToonlyStudio />} />
+        <Route path="/leaderboard" element={<Leaderboard />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
       <ToonlyAI />

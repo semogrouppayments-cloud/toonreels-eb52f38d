@@ -163,7 +163,8 @@ const SendStarsDialog = ({ open, onOpenChange, creatorId, creatorUsername, video
       });
 
       setBalance(prev => prev - selectedAmount);
-      toast.success(`Sent ${selectedAmount} ⭐ to @${creatorUsername}!`);
+      setGiftAnimationAmount(selectedAmount);
+      setShowGiftAnimation(true);
       onOpenChange(false);
     } catch {
       toast.error('Failed to send stars');
