@@ -77,7 +77,7 @@ const StarsDashboard = () => {
   };
 
   const checkEligibility = async () => {
-    const eligible = followers >= ELIGIBILITY_FOLLOWERS && totalViews >= ELIGIBILITY_VIEWS;
+    const eligible = followers >= ELIGIBILITY_FOLLOWERS && totalWatchHours >= ELIGIBILITY_WATCH_HOURS;
     
     const { data: existing } = await supabase
       .from('creator_monetization')
