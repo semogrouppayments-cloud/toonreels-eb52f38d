@@ -25,6 +25,8 @@ import TermsOfService from "./pages/TermsOfService";
 import ParentDashboard from "./pages/ParentDashboard";
 import Install from "./pages/Install";
 import StarsDashboard from "./pages/StarsDashboard";
+import ToonlyStudio from "./pages/ToonlyStudio";
+import Leaderboard from "./pages/Leaderboard";
 import ToonlyAI from "./components/ToonlyAI";
 
 const queryClient = new QueryClient({
