@@ -197,10 +197,10 @@ const StarsDashboard = () => {
 
                 <div>
                   <div className="flex justify-between text-sm mb-1">
-                    <span className="text-muted-foreground">Total Views</span>
-                    <span className="font-medium">{totalViews.toLocaleString()} / {ELIGIBILITY_VIEWS.toLocaleString()}</span>
+                    <span className="text-muted-foreground">Watch Hours</span>
+                    <span className="font-medium">{totalWatchHours.toLocaleString()} / {ELIGIBILITY_WATCH_HOURS.toLocaleString()}</span>
                   </div>
-                  <Progress value={viewsProgress} className="h-2" />
+                  <Progress value={watchHoursProgress} className="h-2" />
                 </div>
 
                 <Button onClick={checkEligibility} className="w-full" size="sm">
