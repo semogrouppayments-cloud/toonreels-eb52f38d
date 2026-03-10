@@ -48,13 +48,25 @@ const StarsDashboard = () => {
     const uid = session.user.id;
     setUserId(uid);
 
-    const [balRes, monRes, txRes, follRes, vidRes] = await Promise.all([
+    const [balRes, monRes, txRes, follRes, vidRes, analyticsRes] = await Promise.all([
       supabase.from('star_balances').select('balance').eq('user_id', uid).maybeSingle(),
       supabase.from('creator_monetization').select('*').eq('user_id', uid).maybeSingle(),
       supabase.from('star_transactions').select('*').eq('to_user_id', uid).order('created_at', { ascending: false }).limit(20),
       supabase.from('follows').select('id', { count: 'exact' }).eq('following_id', uid),
-      supabase.from('videos').select('views_count').eq('creator_id', uid),
+      supabase.from('videos').select('id').eq('creator_id', uid),
+      null as any, // placeholder, will fetch below
     ]);
+
+    const videoIds = (vidRes.data as any[])?.map((v: any) => v.id) || [];
+    let watchHours = 0;
+    if (videoIds.length > 0) {
+      const { data: analytics } = await supabase
+        .from('video_analytics')
+        .select('watch_duration')
+        .in('video_id', videoIds);
+      const totalSec = (analytics as any[])?.reduce((s: number, a: any) => s + (a.watch_duration || 0), 0) || 0;
+      watchHours = Math.round(totalSec / 3600);
+    }
 
     setStarBalance((balRes.data as any)?.balance || 0);
     setMonetization(monRes.data as any);
