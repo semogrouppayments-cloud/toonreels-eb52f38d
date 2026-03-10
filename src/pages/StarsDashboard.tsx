@@ -48,7 +48,7 @@ const StarsDashboard = () => {
     const uid = session.user.id;
     setUserId(uid);
 
-    const [balRes, monRes, txRes, follRes, vidRes, analyticsRes] = await Promise.all([
+    const [balRes, monRes, txRes, follRes, vidRes] = await Promise.all([
       supabase.from('star_balances').select('balance').eq('user_id', uid).maybeSingle(),
       supabase.from('creator_monetization').select('*').eq('user_id', uid).maybeSingle(),
       supabase.from('star_transactions').select('*').eq('to_user_id', uid).order('created_at', { ascending: false }).limit(20),
