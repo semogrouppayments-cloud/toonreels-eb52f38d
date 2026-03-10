@@ -221,7 +221,7 @@ const StarsDashboard = () => {
               </div>
               <div className="flex gap-3">
                 <span className="text-lg">📊</span>
-                <p>Reach {ELIGIBILITY_FOLLOWERS.toLocaleString()} followers + {ELIGIBILITY_VIEWS.toLocaleString()} views to unlock monetization.</p>
+                <p>Reach {ELIGIBILITY_FOLLOWERS.toLocaleString()} followers + {ELIGIBILITY_WATCH_HOURS.toLocaleString()} watch hours to unlock monetization.</p>
               </div>
               <div className="flex gap-3">
                 <span className="text-lg">💰</span>
