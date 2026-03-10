@@ -24,8 +24,8 @@ interface Transaction {
   created_at: string;
 }
 
-const ELIGIBILITY_FOLLOWERS = 1000;
-const ELIGIBILITY_VIEWS = 10000;
+const ELIGIBILITY_FOLLOWERS = 5000;
+const ELIGIBILITY_WATCH_HOURS = 1000000;
 
 const StarsDashboard = () => {
   const navigate = useNavigate();
