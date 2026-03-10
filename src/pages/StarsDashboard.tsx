@@ -34,7 +34,7 @@ const StarsDashboard = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [starBalance, setStarBalance] = useState(0);
   const [followers, setFollowers] = useState(0);
-  const [totalViews, setTotalViews] = useState(0);
+  const [totalWatchHours, setTotalWatchHours] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
