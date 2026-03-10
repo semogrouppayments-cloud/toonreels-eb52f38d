@@ -107,7 +107,7 @@ const StarsDashboard = () => {
   };
 
   const followerProgress = Math.min((followers / ELIGIBILITY_FOLLOWERS) * 100, 100);
-  const viewsProgress = Math.min((totalViews / ELIGIBILITY_VIEWS) * 100, 100);
+  const watchHoursProgress = Math.min((totalWatchHours / ELIGIBILITY_WATCH_HOURS) * 100, 100);
 
   if (isLoading) {
     return (
