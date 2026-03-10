@@ -274,14 +274,14 @@ const SidebarMoreMenu = ({ isCreative }: SidebarMoreMenuProps) => {
           </div>
         ) : (
           <div className="space-y-1">
-            {/* Dashboard - Only for Creatives */}
+            {/* ToonlyStudio - Only for Creatives */}
             {isCreative && (
               <button 
-                onClick={() => handleNavigate('/creator-dashboard')}
+                onClick={() => handleNavigate('/toonly-studio')}
                 className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-foreground hover:bg-muted transition-colors"
               >
                 <BarChart3 className="h-4 w-4" />
-                <span>Dashboard</span>
+                <span>ToonlyStudio</span>
               </button>
             )}
 

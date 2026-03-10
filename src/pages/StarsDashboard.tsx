@@ -24,8 +24,8 @@ interface Transaction {
   created_at: string;
 }
 
-const ELIGIBILITY_FOLLOWERS = 1000;
-const ELIGIBILITY_VIEWS = 10000;
+const ELIGIBILITY_FOLLOWERS = 5000;
+const ELIGIBILITY_WATCH_HOURS = 1000000;
 
 const StarsDashboard = () => {
   const navigate = useNavigate();
@@ -34,7 +34,7 @@ const StarsDashboard = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [starBalance, setStarBalance] = useState(0);
   const [followers, setFollowers] = useState(0);
-  const [totalViews, setTotalViews] = useState(0);
+  const [totalWatchHours, setTotalWatchHours] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -53,19 +53,30 @@ const StarsDashboard = () => {
       supabase.from('creator_monetization').select('*').eq('user_id', uid).maybeSingle(),
       supabase.from('star_transactions').select('*').eq('to_user_id', uid).order('created_at', { ascending: false }).limit(20),
       supabase.from('follows').select('id', { count: 'exact' }).eq('following_id', uid),
-      supabase.from('videos').select('views_count').eq('creator_id', uid),
+      supabase.from('videos').select('id').eq('creator_id', uid),
     ]);
+
+    const videoIds = (vidRes.data as any[])?.map((v: any) => v.id) || [];
+    let watchHours = 0;
+    if (videoIds.length > 0) {
+      const { data: analytics } = await supabase
+        .from('video_analytics')
+        .select('watch_duration')
+        .in('video_id', videoIds);
+      const totalSec = (analytics as any[])?.reduce((s: number, a: any) => s + (a.watch_duration || 0), 0) || 0;
+      watchHours = Math.round(totalSec / 3600);
+    }
 
     setStarBalance((balRes.data as any)?.balance || 0);
     setMonetization(monRes.data as any);
     setTransactions((txRes.data as any[]) || []);
     setFollowers(follRes.count || 0);
-    setTotalViews((vidRes.data as any[])?.reduce((sum: number, v: any) => sum + (v.views_count || 0), 0) || 0);
+    setTotalWatchHours(watchHours);
     setIsLoading(false);
   };
 
   const checkEligibility = async () => {
-    const eligible = followers >= ELIGIBILITY_FOLLOWERS && totalViews >= ELIGIBILITY_VIEWS;
+    const eligible = followers >= ELIGIBILITY_FOLLOWERS && totalWatchHours >= ELIGIBILITY_WATCH_HOURS;
     
     const { data: existing } = await supabase
       .from('creator_monetization')
@@ -95,7 +106,7 @@ const StarsDashboard = () => {
   };
 
   const followerProgress = Math.min((followers / ELIGIBILITY_FOLLOWERS) * 100, 100);
-  const viewsProgress = Math.min((totalViews / ELIGIBILITY_VIEWS) * 100, 100);
+  const watchHoursProgress = Math.min((totalWatchHours / ELIGIBILITY_WATCH_HOURS) * 100, 100);
 
   if (isLoading) {
     return (
@@ -170,7 +181,7 @@ const StarsDashboard = () => {
                   <div className="flex items-start gap-2">
                     <Info className="h-4 w-4 text-muted-foreground mt-0.5" />
                     <p className="text-xs text-muted-foreground">
-                      Reach {ELIGIBILITY_FOLLOWERS.toLocaleString()} followers and {ELIGIBILITY_VIEWS.toLocaleString()} total views to start earning from Stars.
+                      Reach {ELIGIBILITY_FOLLOWERS.toLocaleString()} followers and {ELIGIBILITY_WATCH_HOURS.toLocaleString()} watch hours to start earning from Stars.
                     </p>
                   </div>
                 </div>
@@ -185,10 +196,10 @@ const StarsDashboard = () => {
 
                 <div>
                   <div className="flex justify-between text-sm mb-1">
-                    <span className="text-muted-foreground">Total Views</span>
-                    <span className="font-medium">{totalViews.toLocaleString()} / {ELIGIBILITY_VIEWS.toLocaleString()}</span>
+                    <span className="text-muted-foreground">Watch Hours</span>
+                    <span className="font-medium">{totalWatchHours.toLocaleString()} / {ELIGIBILITY_WATCH_HOURS.toLocaleString()}</span>
                   </div>
-                  <Progress value={viewsProgress} className="h-2" />
+                  <Progress value={watchHoursProgress} className="h-2" />
                 </div>
 
                 <Button onClick={checkEligibility} className="w-full" size="sm">
@@ -209,7 +220,7 @@ const StarsDashboard = () => {
               </div>
               <div className="flex gap-3">
                 <span className="text-lg">📊</span>
-                <p>Reach {ELIGIBILITY_FOLLOWERS.toLocaleString()} followers + {ELIGIBILITY_VIEWS.toLocaleString()} views to unlock monetization.</p>
+                <p>Reach {ELIGIBILITY_FOLLOWERS.toLocaleString()} followers + {ELIGIBILITY_WATCH_HOURS.toLocaleString()} watch hours to unlock monetization.</p>
               </div>
               <div className="flex gap-3">
                 <span className="text-lg">💰</span>

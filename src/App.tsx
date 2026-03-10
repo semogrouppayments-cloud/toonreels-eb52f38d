@@ -25,6 +25,8 @@ import TermsOfService from "./pages/TermsOfService";
 import ParentDashboard from "./pages/ParentDashboard";
 import Install from "./pages/Install";
 import StarsDashboard from "./pages/StarsDashboard";
+import ToonlyStudio from "./pages/ToonlyStudio";
+import Leaderboard from "./pages/Leaderboard";
 import ToonlyAI from "./components/ToonlyAI";
 
 const queryClient = new QueryClient({
@@ -87,6 +89,8 @@ const AppContent = () => {
         <Route path="/parent-dashboard" element={<ParentDashboard />} />
         <Route path="/install" element={<Install />} />
         <Route path="/stars-dashboard" element={<StarsDashboard />} />
+        <Route path="/toonly-studio" element={<ToonlyStudio />} />
+        <Route path="/leaderboard" element={<Leaderboard />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
       <ToonlyAI />

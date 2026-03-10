@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Star, Sparkles } from 'lucide-react';
+import StarGiftAnimation from './StarGiftAnimation';
 
 interface SendStarsDialogProps {
   open: boolean;
@@ -21,6 +22,8 @@ const SendStarsDialog = ({ open, onOpenChange, creatorId, creatorUsername, video
   const [selectedAmount, setSelectedAmount] = useState(5);
   const [sending, setSending] = useState(false);
   const [showBuySection, setShowBuySection] = useState(false);
+  const [showGiftAnimation, setShowGiftAnimation] = useState(false);
+  const [giftAnimationAmount, setGiftAnimationAmount] = useState(0);
   const [starPacks, setStarPacks] = useState<Array<{ id: string; name: string; stars_amount: number; price_cents: number }>>([]);
 
   useEffect(() => {
@@ -160,7 +163,8 @@ const SendStarsDialog = ({ open, onOpenChange, creatorId, creatorUsername, video
       });
 
       setBalance(prev => prev - selectedAmount);
-      toast.success(`Sent ${selectedAmount} ⭐ to @${creatorUsername}!`);
+      setGiftAnimationAmount(selectedAmount);
+      setShowGiftAnimation(true);
       onOpenChange(false);
     } catch {
       toast.error('Failed to send stars');
@@ -170,91 +174,94 @@ const SendStarsDialog = ({ open, onOpenChange, creatorId, creatorUsername, video
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-sm mx-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-base">
-            <Sparkles className="h-5 w-5 text-yellow-500" />
-            Send Stars to @{creatorUsername}
-          </DialogTitle>
-        </DialogHeader>
+    <>
+      {showGiftAnimation && (
+        <StarGiftAnimation
+          amount={giftAnimationAmount}
+          onComplete={() => {
+            setShowGiftAnimation(false);
+            toast.success(`Sent ${giftAnimationAmount} ⭐ to @${creatorUsername}!`);
+          }}
+        />
+      )}
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-sm mx-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-base">
+              <Sparkles className="h-5 w-5 text-yellow-500" />
+              Send Stars to @{creatorUsername}
+            </DialogTitle>
+          </DialogHeader>
 
-        <div className="space-y-4">
-          {/* Balance */}
-          <div className="flex items-center justify-between bg-muted/50 rounded-lg p-3">
-            <span className="text-sm text-muted-foreground">Your Stars</span>
-            <span className="font-bold text-lg flex items-center gap-1">
-              <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
-              {balance}
-            </span>
-          </div>
+          <div className="space-y-4">
+            {/* Balance */}
+            <div className="flex items-center justify-between bg-muted/50 rounded-lg p-3">
+              <span className="text-sm text-muted-foreground">Your Stars</span>
+              <span className="font-bold text-lg flex items-center gap-1">
+                <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
+                {balance}
+              </span>
+            </div>
 
-          {!showBuySection ? (
-            <>
-              {/* Amount selection */}
-              <div className="grid grid-cols-3 gap-2">
-                {STAR_AMOUNTS.map(amount => (
-                  <button
-                    key={amount}
-                    onClick={() => setSelectedAmount(amount)}
-                    className={`p-2 rounded-lg border text-center transition-all ${
-                      selectedAmount === amount
-                        ? 'border-primary bg-primary/10 text-primary font-bold'
-                        : 'border-border hover:border-primary/50'
-                    }`}
-                  >
-                    <Star className="h-4 w-4 text-yellow-500 fill-yellow-500 mx-auto mb-0.5" />
-                    <span className="text-sm font-medium">{amount}</span>
-                  </button>
-                ))}
-              </div>
+            {!showBuySection ? (
+              <>
+                <div className="grid grid-cols-3 gap-2">
+                  {STAR_AMOUNTS.map(amount => (
+                    <button
+                      key={amount}
+                      onClick={() => setSelectedAmount(amount)}
+                      className={`p-2 rounded-lg border text-center transition-all ${
+                        selectedAmount === amount
+                          ? 'border-primary bg-primary/10 text-primary font-bold'
+                          : 'border-border hover:border-primary/50'
+                      }`}
+                    >
+                      <Star className="h-4 w-4 text-yellow-500 fill-yellow-500 mx-auto mb-0.5" />
+                      <span className="text-sm font-medium">{amount}</span>
+                    </button>
+                  ))}
+                </div>
 
-              <Button 
-                onClick={handleSendStars} 
-                disabled={sending}
-                className="w-full"
-              >
-                {sending ? 'Sending...' : `Send ${selectedAmount} ⭐ Stars`}
-              </Button>
+                <Button onClick={handleSendStars} disabled={sending} className="w-full">
+                  {sending ? 'Sending...' : `Send ${selectedAmount} ⭐ Stars`}
+                </Button>
 
-              <button 
-                onClick={() => setShowBuySection(true)}
-                className="w-full text-xs text-primary hover:underline"
-              >
-                Need more stars? Buy here
-              </button>
-            </>
-          ) : (
-            <>
-              <p className="text-sm font-medium">Buy Star Packs</p>
-              <div className="space-y-2">
-                {starPacks.map(pack => (
-                  <button
-                    key={pack.id}
-                    onClick={() => handleBuyStars(pack.id, pack.stars_amount)}
-                    className="w-full flex items-center justify-between p-3 rounded-lg border border-border hover:border-primary/50 transition-all"
-                  >
-                    <div className="flex items-center gap-2">
-                      <Star className="h-5 w-5 text-yellow-500 fill-yellow-500" />
-                      <div className="text-left">
-                        <p className="text-sm font-medium">{pack.name}</p>
-                        <p className="text-xs text-muted-foreground">{pack.stars_amount} stars</p>
+                <button onClick={() => setShowBuySection(true)} className="w-full text-xs text-primary hover:underline">
+                  Need more stars? Buy here
+                </button>
+              </>
+            ) : (
+              <>
+                <p className="text-sm font-medium">Buy Star Packs</p>
+                <div className="space-y-2">
+                  {starPacks.map(pack => (
+                    <button
+                      key={pack.id}
+                      onClick={() => handleBuyStars(pack.id, pack.stars_amount)}
+                      className="w-full flex items-center justify-between p-3 rounded-lg border border-border hover:border-primary/50 transition-all"
+                    >
+                      <div className="flex items-center gap-2">
+                        <Star className="h-5 w-5 text-yellow-500 fill-yellow-500" />
+                        <div className="text-left">
+                          <p className="text-sm font-medium">{pack.name}</p>
+                          <p className="text-xs text-muted-foreground">{pack.stars_amount} stars</p>
+                        </div>
                       </div>
-                    </div>
-                    <span className="text-sm font-bold text-primary">
-                      ${(pack.price_cents / 100).toFixed(2)}
-                    </span>
-                  </button>
-                ))}
-              </div>
-              <Button variant="outline" onClick={() => setShowBuySection(false)} className="w-full">
-                Back
-              </Button>
-            </>
-          )}
-        </div>
-      </DialogContent>
-    </Dialog>
+                      <span className="text-sm font-bold text-primary">
+                        ${(pack.price_cents / 100).toFixed(2)}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+                <Button variant="outline" onClick={() => setShowBuySection(false)} className="w-full">
+                  Back
+                </Button>
+              </>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };
 
