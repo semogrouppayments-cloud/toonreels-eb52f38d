@@ -22,6 +22,8 @@ const SendStarsDialog = ({ open, onOpenChange, creatorId, creatorUsername, video
   const [selectedAmount, setSelectedAmount] = useState(5);
   const [sending, setSending] = useState(false);
   const [showBuySection, setShowBuySection] = useState(false);
+  const [showGiftAnimation, setShowGiftAnimation] = useState(false);
+  const [giftAnimationAmount, setGiftAnimationAmount] = useState(0);
   const [starPacks, setStarPacks] = useState<Array<{ id: string; name: string; stars_amount: number; price_cents: number }>>([]);
 
   useEffect(() => {
