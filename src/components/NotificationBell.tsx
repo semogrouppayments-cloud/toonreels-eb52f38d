@@ -291,6 +291,8 @@ const NotificationBell = () => {
         return '👤';
       case 'new_video':
         return '🎬';
+      case 'star_gift':
+        return '⭐';
       default:
         return '🔔';
     }
