@@ -120,6 +120,8 @@ const Notifications = () => {
         return `${username} started following you`;
       case 'new_video':
         return `${username} uploaded a new video${notification.video?.title ? ` "${notification.video.title}"` : ''}`;
+      case 'star_gift':
+        return `${username} sent you stars! ⭐`;
       default:
         return 'New notification';
     }
