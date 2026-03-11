@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import ResponsiveLayout from '@/components/ResponsiveLayout';
 import { Button } from '@/components/ui/button';
@@ -12,6 +12,28 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+
+// Milestones logic
+interface MilestoneBadge {
+  id: string;
+  type: 'likes' | 'followers' | 'uploads' | 'views';
+  value: number;
+  label: string;
+  icon: React.ReactNode;
+  achieved: boolean;
+  color: string;
+}
+
+const MILESTONES_STORAGE_KEY = 'toonlyreels_achieved_milestones';
+
+const getAchievedMilestones = (): Record<string, number[]> => {
+  try {
+    const stored = localStorage.getItem(MILESTONES_STORAGE_KEY);
+    return stored ? JSON.parse(stored) : { likes: [], followers: [], uploads: [], views: [] };
+  } catch {
+    return { likes: [], followers: [], uploads: [], views: [] };
+  }
+};
 
 interface VideoItem {
   id: string;
@@ -40,10 +62,18 @@ interface Transaction {
 }
 
 const ELIGIBILITY_FOLLOWERS = 5000;
-const ELIGIBILITY_WATCH_HOURS = 1000000; // 1 million watch hours
+const ELIGIBILITY_WATCH_HOURS = 1000000;
 
 const ToonlyStudio = () => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialTab = searchParams.get('tab') || 'overview';
+  const [activeTab, setActiveTab] = useState(initialTab);
+  
+  // Track navigation history within studio
+  const [tabHistory, setTabHistory] = useState<string[]>([initialTab]);
+  const [viewingVideoAnalytics, setViewingVideoAnalytics] = useState(false);
+
   const [userId, setUserId] = useState('');
   const [videos, setVideos] = useState<VideoItem[]>([]);
   const [totalViews, setTotalViews] = useState(0);
@@ -55,9 +85,34 @@ const ToonlyStudio = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Milestones state
+  const [achievedMilestones, setAchievedMilestones] = useState<Record<string, number[]>>({ likes: [], followers: [], uploads: [], views: [] });
+
   useEffect(() => {
     loadStudioData();
+    setAchievedMilestones(getAchievedMilestones());
   }, []);
+
+  // Sync tab to URL
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab);
+    setSearchParams({ tab });
+    setTabHistory(prev => [...prev, tab]);
+  };
+
+  // Custom back handler: go to previous tab, or exit studio
+  const handleBack = () => {
+    if (tabHistory.length > 1) {
+      const newHistory = [...tabHistory];
+      newHistory.pop(); // remove current
+      const prevTab = newHistory[newHistory.length - 1];
+      setActiveTab(prevTab);
+      setSearchParams({ tab: prevTab });
+      setTabHistory(newHistory);
+    } else {
+      navigate('/feed');
+    }
+  };
 
   const loadStudioData = async () => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -66,7 +121,6 @@ const ToonlyStudio = () => {
     const uid = session.user.id;
     setUserId(uid);
 
-    // Check creative role
     const { data: roles } = await supabase
       .from('user_roles')
       .select('role')
@@ -98,7 +152,6 @@ const ToonlyStudio = () => {
     setMonetization(monRes.data as any);
     setTransactions((txRes.data as any[]) || []);
 
-    // Calculate total watch hours from analytics
     const totalSeconds = (analyticsRes.data as any[])?.reduce((s: number, a: any) => s + (a.watch_duration || 0), 0) || 0;
     setTotalWatchHours(Math.round(totalSeconds / 3600));
 
@@ -134,13 +187,40 @@ const ToonlyStudio = () => {
   const followerProgress = Math.min((followers / ELIGIBILITY_FOLLOWERS) * 100, 100);
   const watchHoursProgress = Math.min((totalWatchHours / ELIGIBILITY_WATCH_HOURS) * 100, 100);
 
-  // Chart data - top 5 videos
   const chartData = videos.slice(0, 5).map(v => ({
     title: v.title.length > 12 ? v.title.substring(0, 12) + '…' : v.title,
     views: v.views_count,
     likes: v.likes_count,
     engagement: v.views_count > 0 ? Math.round((v.likes_count / v.views_count) * 100) : 0,
   }));
+
+  // Milestones data
+  const allMilestones: MilestoneBadge[] = [
+    { id: 'likes-1000', type: 'likes', value: 1000, label: '1K Likes', icon: <Heart className="w-5 h-5" />, achieved: achievedMilestones.likes?.includes(1000), color: 'from-red-500 to-pink-500' },
+    { id: 'likes-10000', type: 'likes', value: 10000, label: '10K Likes', icon: <Heart className="w-5 h-5" />, achieved: achievedMilestones.likes?.includes(10000), color: 'from-red-500 to-pink-500' },
+    { id: 'likes-50000', type: 'likes', value: 50000, label: '50K Likes', icon: <Heart className="w-5 h-5" />, achieved: achievedMilestones.likes?.includes(50000), color: 'from-red-500 to-pink-500' },
+    { id: 'likes-100000', type: 'likes', value: 100000, label: '100K Likes', icon: <Heart className="w-5 h-5" />, achieved: achievedMilestones.likes?.includes(100000), color: 'from-red-500 to-pink-500' },
+    { id: 'likes-500000', type: 'likes', value: 500000, label: '500K Likes', icon: <Heart className="w-5 h-5" />, achieved: achievedMilestones.likes?.includes(500000), color: 'from-red-500 to-pink-500' },
+    { id: 'likes-20000000', type: 'likes', value: 20000000, label: '20M Likes', icon: <Heart className="w-5 h-5" />, achieved: achievedMilestones.likes?.includes(20000000), color: 'from-red-500 to-pink-500' },
+    { id: 'views-1000', type: 'views', value: 1000, label: '1K Views', icon: <Eye className="w-5 h-5" />, achieved: achievedMilestones.views?.includes(1000), color: 'from-amber-500 to-yellow-500' },
+    { id: 'views-10000', type: 'views', value: 10000, label: '10K Views', icon: <Eye className="w-5 h-5" />, achieved: achievedMilestones.views?.includes(10000), color: 'from-amber-500 to-yellow-500' },
+    { id: 'views-100000', type: 'views', value: 100000, label: '100K Views', icon: <Eye className="w-5 h-5" />, achieved: achievedMilestones.views?.includes(100000), color: 'from-amber-500 to-yellow-500' },
+    { id: 'views-500000', type: 'views', value: 500000, label: '500K Views', icon: <Eye className="w-5 h-5" />, achieved: achievedMilestones.views?.includes(500000), color: 'from-amber-500 to-yellow-500' },
+    { id: 'followers-1000', type: 'followers', value: 1000, label: '1K Followers', icon: <Users className="w-5 h-5" />, achieved: achievedMilestones.followers?.includes(1000), color: 'from-blue-500 to-purple-500' },
+    { id: 'followers-10000', type: 'followers', value: 10000, label: '10K Followers', icon: <Users className="w-5 h-5" />, achieved: achievedMilestones.followers?.includes(10000), color: 'from-blue-500 to-purple-500' },
+    { id: 'followers-100000', type: 'followers', value: 100000, label: '100K Followers', icon: <Users className="w-5 h-5" />, achieved: achievedMilestones.followers?.includes(100000), color: 'from-blue-500 to-purple-500' },
+    { id: 'followers-500000', type: 'followers', value: 500000, label: '500K Followers', icon: <Users className="w-5 h-5" />, achieved: achievedMilestones.followers?.includes(500000), color: 'from-blue-500 to-purple-500' },
+    { id: 'uploads-500', type: 'uploads', value: 500, label: '500 Toonz', icon: <Video className="w-5 h-5" />, achieved: achievedMilestones.uploads?.includes(500), color: 'from-green-500 to-emerald-500' },
+    { id: 'uploads-1000', type: 'uploads', value: 1000, label: '1K Toonz', icon: <Video className="w-5 h-5" />, achieved: achievedMilestones.uploads?.includes(1000), color: 'from-green-500 to-emerald-500' },
+  ];
+
+  const achievedCount = allMilestones.filter(m => m.achieved).length;
+  const groupedMilestones = {
+    likes: allMilestones.filter(m => m.type === 'likes'),
+    views: allMilestones.filter(m => m.type === 'views'),
+    followers: allMilestones.filter(m => m.type === 'followers'),
+    uploads: allMilestones.filter(m => m.type === 'uploads'),
+  };
 
   if (loading) {
     return (
@@ -158,7 +238,7 @@ const ToonlyStudio = () => {
         {/* Header */}
         <div className="sticky top-0 z-20 bg-background/80 backdrop-blur-md border-b border-border px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="h-8 w-8 md:hidden">
+            <Button variant="ghost" size="icon" onClick={handleBack} className="h-8 w-8 md:hidden">
               <ArrowLeft className="h-4 w-4" />
             </Button>
             <div>
@@ -176,18 +256,18 @@ const ToonlyStudio = () => {
         </div>
 
         <div className="max-w-6xl mx-auto p-4 space-y-4">
-          {/* ===== OVERVIEW TAB SYSTEM ===== */}
-          <Tabs defaultValue="overview" className="w-full">
-            <TabsList className="w-full grid grid-cols-4">
+          <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
+            <TabsList className="w-full grid grid-cols-6">
               <TabsTrigger value="overview" className="text-xs">Overview</TabsTrigger>
               <TabsTrigger value="content" className="text-xs">Content</TabsTrigger>
               <TabsTrigger value="analytics" className="text-xs">Analytics</TabsTrigger>
               <TabsTrigger value="monetize" className="text-xs">Monetize</TabsTrigger>
+              <TabsTrigger value="milestones" className="text-xs">Milestones</TabsTrigger>
+              <TabsTrigger value="stars" className="text-xs">Stars</TabsTrigger>
             </TabsList>
 
             {/* ===== OVERVIEW ===== */}
             <TabsContent value="overview" className="mt-4 space-y-4">
-              {/* Key Stats Grid */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 <Card className="p-4">
                   <div className="flex items-center gap-2 mb-1">
@@ -219,7 +299,6 @@ const ToonlyStudio = () => {
                 </Card>
               </div>
 
-              {/* Watch Hours */}
               <Card className="p-4">
                 <div className="flex items-center gap-2 mb-1">
                   <Clock className="h-4 w-4 text-primary" />
@@ -228,7 +307,6 @@ const ToonlyStudio = () => {
                 <p className="text-2xl font-black">{totalWatchHours.toLocaleString()}</p>
               </Card>
 
-              {/* Stars Balance */}
               <div className="bg-gradient-to-br from-yellow-500/20 to-orange-500/20 rounded-2xl p-4 border border-yellow-500/30">
                 <div className="flex items-center justify-between">
                   <div>
@@ -238,14 +316,13 @@ const ToonlyStudio = () => {
                       <span className="text-3xl font-black">{starBalance.toLocaleString()}</span>
                     </div>
                   </div>
-                  <Button variant="outline" size="sm" onClick={() => navigate('/leaderboard')} className="gap-1">
-                    <Trophy className="h-4 w-4" />
-                    Leaderboard
+                  <Button variant="outline" size="sm" onClick={() => handleTabChange('stars')} className="gap-1">
+                    <Star className="h-4 w-4" />
+                    View Stars
                   </Button>
                 </div>
               </div>
 
-              {/* Quick Actions */}
               <div className="grid grid-cols-2 gap-3">
                 <Button variant="outline" onClick={() => navigate('/upload')} className="h-auto py-3 flex-col gap-1">
                   <Upload className="h-5 w-5" />
@@ -321,7 +398,6 @@ const ToonlyStudio = () => {
                 </Card>
               </div>
 
-              {/* Top Videos Chart */}
               <Card className="p-4">
                 <h3 className="font-bold text-sm mb-3">Top 5 Toonz by Views</h3>
                 {chartData.length > 0 ? (
@@ -339,7 +415,6 @@ const ToonlyStudio = () => {
                 )}
               </Card>
 
-              {/* Engagement Chart */}
               {chartData.length > 0 && (
                 <Card className="p-4">
                   <h3 className="font-bold text-sm mb-3">Engagement Rate</h3>
@@ -358,7 +433,6 @@ const ToonlyStudio = () => {
 
             {/* ===== MONETIZE ===== */}
             <TabsContent value="monetize" className="mt-4 space-y-4">
-              {/* Stars Balance */}
               <div className="bg-gradient-to-br from-yellow-500/20 to-orange-500/20 rounded-2xl p-5 border border-yellow-500/30">
                 <p className="text-sm text-muted-foreground mb-1">Your Star Balance</p>
                 <div className="flex items-center gap-2">
@@ -383,7 +457,6 @@ const ToonlyStudio = () => {
                 )}
               </div>
 
-              {/* Eligibility */}
               <Card className="p-5">
                 <div className="flex items-center gap-2 mb-4">
                   {monetization?.is_eligible ? <CheckCircle className="h-5 w-5 text-green-500" /> : <Lock className="h-5 w-5 text-muted-foreground" />}
@@ -431,7 +504,6 @@ const ToonlyStudio = () => {
                 )}
               </Card>
 
-              {/* How it works */}
               <Card className="p-5">
                 <h2 className="font-bold mb-3">How Stars Work</h2>
                 <div className="space-y-3 text-sm text-muted-foreground">
@@ -441,8 +513,81 @@ const ToonlyStudio = () => {
                   <div className="flex gap-3"><span className="text-lg">📈</span><p>Track your earnings and Star gifts in real-time.</p></div>
                 </div>
               </Card>
+            </TabsContent>
 
-              {/* Recent Transactions */}
+            {/* ===== MILESTONES ===== */}
+            <TabsContent value="milestones" className="mt-4 space-y-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="font-bold text-lg">Milestone Badges</h2>
+                  <p className="text-xs text-muted-foreground">{achievedCount} of {allMilestones.length} achieved</p>
+                </div>
+                <div className="flex items-center gap-2 bg-gradient-to-r from-yellow-500 to-orange-500 text-white px-3 py-1.5 rounded-full">
+                  <Trophy className="w-4 h-4" />
+                  <span className="font-bold text-sm">{achievedCount}</span>
+                </div>
+              </div>
+
+              {Object.entries(groupedMilestones).map(([type, milestones]) => {
+                const icons: Record<string, React.ReactNode> = {
+                  likes: <Heart className="w-4 h-4 text-red-500" />,
+                  views: <Eye className="w-4 h-4 text-amber-500" />,
+                  followers: <Users className="w-4 h-4 text-blue-500" />,
+                  uploads: <Video className="w-4 h-4 text-green-500" />,
+                };
+                return (
+                  <section key={type}>
+                    <div className="flex items-center gap-2 mb-3">
+                      {icons[type]}
+                      <h3 className="text-sm font-semibold capitalize">{type} Milestones</h3>
+                    </div>
+                    <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                      {milestones.map((m) => (
+                        <Card
+                          key={m.id}
+                          className={`relative p-3 flex flex-col items-center justify-center aspect-square transition-all duration-300 ${
+                            m.achieved
+                              ? 'bg-gradient-to-br ' + m.color + ' text-white shadow-lg'
+                              : 'bg-muted/50 text-muted-foreground opacity-60'
+                          }`}
+                        >
+                          {!m.achieved && (
+                            <div className="absolute inset-0 flex items-center justify-center bg-background/80 rounded-lg">
+                              <Lock className="w-5 h-5 text-muted-foreground" />
+                            </div>
+                          )}
+                          <div className="mb-1">{m.icon}</div>
+                          <span className="text-[10px] font-bold text-center leading-tight">{m.label}</span>
+                          {m.achieved && (
+                            <div className="absolute -top-1 -right-1 w-4 h-4 bg-yellow-400 rounded-full flex items-center justify-center shadow-md">
+                              <span className="text-[8px]">✓</span>
+                            </div>
+                          )}
+                        </Card>
+                      ))}
+                    </div>
+                  </section>
+                );
+              })}
+            </TabsContent>
+
+            {/* ===== STARS ===== */}
+            <TabsContent value="stars" className="mt-4 space-y-4">
+              <div className="bg-gradient-to-br from-yellow-500/20 to-orange-500/20 rounded-2xl p-5 border border-yellow-500/30">
+                <p className="text-sm text-muted-foreground mb-1">Your Star Balance</p>
+                <div className="flex items-center gap-2">
+                  <Star className="h-8 w-8 text-yellow-500 fill-yellow-500" />
+                  <span className="text-4xl font-black">{starBalance.toLocaleString()}</span>
+                </div>
+              </div>
+
+              <div className="flex gap-2">
+                <Button variant="outline" className="flex-1 gap-1" onClick={() => navigate('/leaderboard')}>
+                  <Trophy className="h-4 w-4" />
+                  Leaderboard
+                </Button>
+              </div>
+
               <Card className="p-5">
                 <h2 className="font-bold mb-3">Recent Star Gifts</h2>
                 {transactions.length === 0 ? (
