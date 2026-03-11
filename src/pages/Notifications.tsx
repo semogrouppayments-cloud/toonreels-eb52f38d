@@ -11,7 +11,7 @@ import ResponsiveLayout from '@/components/ResponsiveLayout';
 interface Notification {
   id: string;
   actor_id: string;
-  type: 'like' | 'comment' | 'follow' | 'reply' | 'new_video';
+  type: string;
   video_id: string | null;
   comment_id: string | null;
   is_read: boolean;
