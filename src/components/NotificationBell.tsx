@@ -12,7 +12,7 @@ import NotificationVideoModal from './NotificationVideoModal';
 interface Notification {
   id: string;
   actor_id: string;
-  type: 'like' | 'comment' | 'follow' | 'reply' | 'new_video';
+  type: string;
   video_id: string | null;
   comment_id: string | null;
   is_read: boolean;
@@ -272,6 +272,8 @@ const NotificationBell = () => {
         return `${username} started following you`;
       case 'new_video':
         return `${username} uploaded a new video${notification.video?.title ? ` "${notification.video.title}"` : ''}`;
+      case 'star_gift':
+        return `${username} sent you stars! ⭐`;
       default:
         return 'New notification';
     }
@@ -289,6 +291,8 @@ const NotificationBell = () => {
         return '👤';
       case 'new_video':
         return '🎬';
+      case 'star_gift':
+        return '⭐';
       default:
         return '🔔';
     }
