@@ -205,7 +205,7 @@ const Upload = () => {
     setLoading(true);
     setUploadProgress(0);
 
-    let progressInterval: NodeJS.Timeout | null = null;
+    let progressInterval: ReturnType<typeof setInterval> | null = null;
 
     try {
       // Simulate progress based on estimated upload time

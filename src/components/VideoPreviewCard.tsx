@@ -31,7 +31,7 @@ const VideoPreviewCard = ({
   const [videoLoaded, setVideoLoaded] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
-  const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Intersection Observer for mobile auto-preview only
   useEffect(() => {
     // Skip intersection observer on desktop - only use hover
