@@ -160,7 +160,7 @@ const VideoAnalytics = () => {
           <Button
             size="icon"
             variant="ghost"
-            onClick={() => navigate('/profile')}
+            onClick={() => navigate(-1)}
             className="rounded-full"
           >
             <ArrowLeft className="h-5 w-5" />
