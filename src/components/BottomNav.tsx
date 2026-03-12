@@ -143,6 +143,20 @@ const BottomNav = () => {
           </button>
         )}
 
+        {isLoaded && isCreative && (
+          <button
+            onClick={() => navigate('/toonly-studio')}
+            className={`flex flex-col items-center gap-1 px-3 py-2 rounded-2xl transition-all ${
+              isActive('/toonly-studio')
+                ? 'text-primary bg-primary/10'
+                : 'text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            <BarChart3 className="h-5 w-5" />
+            <span className="text-[10px] font-semibold">Studio</span>
+          </button>
+        )}
+
         <button
           onClick={() => navigate('/notifications')}
           className={`flex flex-col items-center gap-1 px-3 py-2 rounded-2xl transition-all ${
