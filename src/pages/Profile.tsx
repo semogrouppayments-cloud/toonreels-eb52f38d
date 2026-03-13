@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { LogOut, Settings, Video, Camera, Edit, BarChart3, Bookmark, Eye, Heart, Trash2, BadgeCheck, Trophy, Flag } from 'lucide-react';
+import { LogOut, Settings, Video, Camera, Edit, BarChart3, Bookmark, Eye, Heart, Trash2, BadgeCheck, Flag } from 'lucide-react';
 
 import SocialLinksDisplay from '@/components/SocialLinksDisplay';
 import SocialLinksEditor from '@/components/SocialLinksEditor';
@@ -626,7 +626,7 @@ const Profile = () => {
       >
         <div className="max-w-2xl mx-auto">
         {/* Header with Cover Photo */}
-        <div className="relative bg-gradient-to-br from-primary via-accent to-fun-yellow h-64 overflow-hidden rounded-3xl mx-4 mt-4">
+        <div className="relative bg-gradient-to-br from-primary via-accent to-fun-yellow h-72 md:h-64 rounded-3xl mx-4 mt-4 overflow-hidden">
           {/* Cover Photo - fills the entire header with gradient overlay */}
           {profile?.cover_photo_url && (
             <>
@@ -675,18 +675,8 @@ const Profile = () => {
                     variant="secondary"
                     size="icon"
                     className="rounded-full"
-                    onClick={() => navigate('/milestones')}
-                    title="View Milestones"
-                  >
-                    <Trophy className="h-5 w-5" />
-                  </Button>
-                )}
-                {isCreative && (
-                  <Button
-                    variant="secondary"
-                    size="icon"
-                    className="rounded-full"
-                    onClick={() => navigate('/creator-dashboard')}
+                    onClick={() => navigate('/toonly-studio')}
+                    title="ToonlyStudio"
                   >
                     <BarChart3 className="h-5 w-5" />
                   </Button>
