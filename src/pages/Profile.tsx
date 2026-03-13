@@ -956,6 +956,42 @@ const Profile = () => {
           </div>
         </div>
 
+        {/* Quick-access Studio Stats Card for creators (mobile) */}
+        {isOwnProfile && isCreative && (
+          <div className="px-4 pt-3 md:hidden">
+            <button
+              onClick={() => navigate('/toonly-studio')}
+              className="w-full bg-gradient-to-r from-primary/10 via-accent/10 to-primary/10 border border-primary/20 rounded-2xl p-3 hover:border-primary/40 transition-all"
+            >
+              <div className="flex items-center justify-between mb-2.5">
+                <div className="flex items-center gap-2">
+                  <BarChart3 className="h-4 w-4 text-primary" />
+                  <span className="text-xs font-bold">ToonlyStudio</span>
+                </div>
+                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+              </div>
+              <div className="grid grid-cols-4 gap-2">
+                <div className="text-center">
+                  <p className="text-sm font-black">{totalViews}</p>
+                  <p className="text-[9px] text-muted-foreground">Views</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-sm font-black">{totalLikes}</p>
+                  <p className="text-[9px] text-muted-foreground">Likes</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-sm font-black">{followersCount}</p>
+                  <p className="text-[9px] text-muted-foreground">Followers</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-sm font-black">{videos.length}</p>
+                  <p className="text-[9px] text-muted-foreground">Toonz</p>
+                </div>
+              </div>
+            </button>
+          </div>
+        )}
+
         {/* Videos Grid */}
         {profile.user_type === 'creative' && (
           <div className="p-4">
