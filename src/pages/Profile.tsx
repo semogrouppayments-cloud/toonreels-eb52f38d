@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { LogOut, Settings, Video, Camera, Edit, BarChart3, Bookmark, Eye, Heart, Trash2, BadgeCheck, Flag, Users, Star, ChevronRight } from 'lucide-react';
+import { LogOut, Settings, Video, Camera, Edit, BarChart3, Bookmark, Eye, Heart, Trash2, BadgeCheck, Flag, ChevronRight } from 'lucide-react';
 
 import SocialLinksDisplay from '@/components/SocialLinksDisplay';
 import SocialLinksEditor from '@/components/SocialLinksEditor';
