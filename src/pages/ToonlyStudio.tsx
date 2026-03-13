@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import ResponsiveLayout from '@/components/ResponsiveLayout';
@@ -255,82 +255,96 @@ const ToonlyStudio = () => {
           </Button>
         </div>
 
-        <div className="max-w-6xl mx-auto p-4 space-y-4">
+        <div className="max-w-6xl mx-auto px-3 md:px-4 space-y-3">
           <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-            <TabsList className="w-full grid grid-cols-6">
-              <TabsTrigger value="overview" className="text-xs">Overview</TabsTrigger>
-              <TabsTrigger value="content" className="text-xs">Content</TabsTrigger>
-              <TabsTrigger value="analytics" className="text-xs">Analytics</TabsTrigger>
-              <TabsTrigger value="monetize" className="text-xs">Monetize</TabsTrigger>
-              <TabsTrigger value="milestones" className="text-xs">Milestones</TabsTrigger>
-              <TabsTrigger value="stars" className="text-xs">Stars</TabsTrigger>
-            </TabsList>
+            {/* Scrollable pill tabs on mobile */}
+            <div className="overflow-x-auto -mx-3 px-3 scrollbar-hide">
+              <TabsList className="inline-flex w-auto min-w-full md:grid md:grid-cols-6 gap-1 bg-muted/50 p-1 rounded-2xl">
+                <TabsTrigger value="overview" className="text-[11px] rounded-xl px-3 py-1.5 whitespace-nowrap">Overview</TabsTrigger>
+                <TabsTrigger value="content" className="text-[11px] rounded-xl px-3 py-1.5 whitespace-nowrap">Content</TabsTrigger>
+                <TabsTrigger value="analytics" className="text-[11px] rounded-xl px-3 py-1.5 whitespace-nowrap">Analytics</TabsTrigger>
+                <TabsTrigger value="monetize" className="text-[11px] rounded-xl px-3 py-1.5 whitespace-nowrap">Monetize</TabsTrigger>
+                <TabsTrigger value="milestones" className="text-[11px] rounded-xl px-3 py-1.5 whitespace-nowrap">Milestones</TabsTrigger>
+                <TabsTrigger value="stars" className="text-[11px] rounded-xl px-3 py-1.5 whitespace-nowrap">Stars</TabsTrigger>
+              </TabsList>
+            </div>
 
             {/* ===== OVERVIEW ===== */}
-            <TabsContent value="overview" className="mt-4 space-y-4">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                <Card className="p-4">
-                  <div className="flex items-center gap-2 mb-1">
+            <TabsContent value="overview" className="mt-3 space-y-3">
+              {/* Compact 2x2 stat grid */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                <Card className="p-3 flex items-center gap-2.5">
+                  <div className="h-8 w-8 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
                     <Video className="h-4 w-4 text-primary" />
-                    <span className="text-xs text-muted-foreground">Toonz</span>
                   </div>
-                  <p className="text-2xl font-black">{videos.length}</p>
+                  <div className="min-w-0">
+                    <p className="text-[10px] text-muted-foreground leading-none">Toonz</p>
+                    <p className="text-lg font-black leading-tight">{videos.length}</p>
+                  </div>
                 </Card>
-                <Card className="p-4">
-                  <div className="flex items-center gap-2 mb-1">
+                <Card className="p-3 flex items-center gap-2.5">
+                  <div className="h-8 w-8 rounded-xl bg-accent/10 flex items-center justify-center shrink-0">
                     <Eye className="h-4 w-4 text-accent" />
-                    <span className="text-xs text-muted-foreground">Total Views</span>
                   </div>
-                  <p className="text-2xl font-black">{totalViews.toLocaleString()}</p>
+                  <div className="min-w-0">
+                    <p className="text-[10px] text-muted-foreground leading-none">Views</p>
+                    <p className="text-lg font-black leading-tight">{totalViews.toLocaleString()}</p>
+                  </div>
                 </Card>
-                <Card className="p-4">
-                  <div className="flex items-center gap-2 mb-1">
+                <Card className="p-3 flex items-center gap-2.5">
+                  <div className="h-8 w-8 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
                     <Heart className="h-4 w-4 text-primary" />
-                    <span className="text-xs text-muted-foreground">Total Likes</span>
                   </div>
-                  <p className="text-2xl font-black">{totalLikes.toLocaleString()}</p>
+                  <div className="min-w-0">
+                    <p className="text-[10px] text-muted-foreground leading-none">Likes</p>
+                    <p className="text-lg font-black leading-tight">{totalLikes.toLocaleString()}</p>
+                  </div>
                 </Card>
-                <Card className="p-4">
-                  <div className="flex items-center gap-2 mb-1">
+                <Card className="p-3 flex items-center gap-2.5">
+                  <div className="h-8 w-8 rounded-xl bg-accent/10 flex items-center justify-center shrink-0">
                     <Users className="h-4 w-4 text-accent" />
-                    <span className="text-xs text-muted-foreground">Followers</span>
                   </div>
-                  <p className="text-2xl font-black">{followers.toLocaleString()}</p>
+                  <div className="min-w-0">
+                    <p className="text-[10px] text-muted-foreground leading-none">Followers</p>
+                    <p className="text-lg font-black leading-tight">{followers.toLocaleString()}</p>
+                  </div>
                 </Card>
               </div>
 
-              <Card className="p-4">
-                <div className="flex items-center gap-2 mb-1">
-                  <Clock className="h-4 w-4 text-primary" />
-                  <span className="text-xs text-muted-foreground">Total Watch Hours</span>
-                </div>
-                <p className="text-2xl font-black">{totalWatchHours.toLocaleString()}</p>
-              </Card>
-
-              <div className="bg-gradient-to-br from-yellow-500/20 to-orange-500/20 rounded-2xl p-4 border border-yellow-500/30">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-xs text-muted-foreground">Star Balance</p>
-                    <div className="flex items-center gap-2 mt-1">
-                      <Star className="h-6 w-6 text-yellow-500 fill-yellow-500" />
-                      <span className="text-3xl font-black">{starBalance.toLocaleString()}</span>
-                    </div>
+              {/* Watch hours + Stars side by side */}
+              <div className="grid grid-cols-2 gap-2">
+                <Card className="p-3 flex items-center gap-2.5">
+                  <div className="h-8 w-8 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                    <Clock className="h-4 w-4 text-primary" />
                   </div>
-                  <Button variant="outline" size="sm" onClick={() => handleTabChange('stars')} className="gap-1">
-                    <Star className="h-4 w-4" />
-                    View Stars
-                  </Button>
-                </div>
+                  <div className="min-w-0">
+                    <p className="text-[10px] text-muted-foreground leading-none">Watch Hrs</p>
+                    <p className="text-lg font-black leading-tight">{totalWatchHours.toLocaleString()}</p>
+                  </div>
+                </Card>
+                <button 
+                  onClick={() => handleTabChange('stars')}
+                  className="bg-gradient-to-br from-yellow-500/15 to-orange-500/15 border border-yellow-500/25 rounded-xl p-3 flex items-center gap-2.5 hover:border-yellow-500/40 transition-colors text-left"
+                >
+                  <div className="h-8 w-8 rounded-xl bg-yellow-500/20 flex items-center justify-center shrink-0">
+                    <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[10px] text-muted-foreground leading-none">Stars</p>
+                    <p className="text-lg font-black leading-tight">{starBalance.toLocaleString()}</p>
+                  </div>
+                </button>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <Button variant="outline" onClick={() => navigate('/upload')} className="h-auto py-3 flex-col gap-1">
-                  <Upload className="h-5 w-5" />
-                  <span className="text-xs">Upload Toonz</span>
+              {/* Quick actions */}
+              <div className="grid grid-cols-2 gap-2">
+                <Button variant="outline" onClick={() => navigate('/upload')} className="h-10 gap-1.5 rounded-xl text-xs">
+                  <Upload className="h-4 w-4" />
+                  Upload Toonz
                 </Button>
-                <Button variant="outline" onClick={() => navigate('/leaderboard')} className="h-auto py-3 flex-col gap-1">
-                  <Trophy className="h-5 w-5" />
-                  <span className="text-xs">Leaderboard</span>
+                <Button variant="outline" onClick={() => navigate('/leaderboard')} className="h-10 gap-1.5 rounded-xl text-xs">
+                  <Trophy className="h-4 w-4" />
+                  Leaderboard
                 </Button>
               </div>
             </TabsContent>
@@ -516,54 +530,54 @@ const ToonlyStudio = () => {
             </TabsContent>
 
             {/* ===== MILESTONES ===== */}
-            <TabsContent value="milestones" className="mt-4 space-y-6">
+            <TabsContent value="milestones" className="mt-3 space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <h2 className="font-bold text-lg">Milestone Badges</h2>
-                  <p className="text-xs text-muted-foreground">{achievedCount} of {allMilestones.length} achieved</p>
+                  <h2 className="font-bold text-sm">Milestone Badges</h2>
+                  <p className="text-[10px] text-muted-foreground">{achievedCount} of {allMilestones.length} achieved</p>
                 </div>
-                <div className="flex items-center gap-2 bg-gradient-to-r from-yellow-500 to-orange-500 text-white px-3 py-1.5 rounded-full">
-                  <Trophy className="w-4 h-4" />
-                  <span className="font-bold text-sm">{achievedCount}</span>
+                <div className="flex items-center gap-1.5 bg-gradient-to-r from-yellow-500 to-orange-500 text-white px-2.5 py-1 rounded-full">
+                  <Trophy className="w-3 h-3" />
+                  <span className="font-bold text-xs">{achievedCount}</span>
                 </div>
               </div>
 
               {Object.entries(groupedMilestones).map(([type, milestones]) => {
                 const icons: Record<string, React.ReactNode> = {
-                  likes: <Heart className="w-4 h-4 text-red-500" />,
-                  views: <Eye className="w-4 h-4 text-amber-500" />,
-                  followers: <Users className="w-4 h-4 text-blue-500" />,
-                  uploads: <Video className="w-4 h-4 text-green-500" />,
+                  likes: <Heart className="w-3.5 h-3.5 text-red-500" />,
+                  views: <Eye className="w-3.5 h-3.5 text-amber-500" />,
+                  followers: <Users className="w-3.5 h-3.5 text-blue-500" />,
+                  uploads: <Video className="w-3.5 h-3.5 text-green-500" />,
                 };
                 return (
                   <section key={type}>
-                    <div className="flex items-center gap-2 mb-3">
+                    <div className="flex items-center gap-1.5 mb-2">
                       {icons[type]}
-                      <h3 className="text-sm font-semibold capitalize">{type} Milestones</h3>
+                      <h3 className="text-xs font-semibold capitalize">{type}</h3>
                     </div>
-                    <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                    <div className="grid grid-cols-4 sm:grid-cols-5 gap-1.5">
                       {milestones.map((m) => (
-                        <Card
+                        <div
                           key={m.id}
-                          className={`relative p-3 flex flex-col items-center justify-center aspect-square transition-all duration-300 ${
+                          className={`relative p-2 flex flex-col items-center justify-center aspect-square rounded-xl transition-all duration-300 ${
                             m.achieved
-                              ? 'bg-gradient-to-br ' + m.color + ' text-white shadow-lg'
-                              : 'bg-muted/50 text-muted-foreground opacity-60'
+                              ? 'bg-gradient-to-br ' + m.color + ' text-white shadow-md'
+                              : 'bg-muted/40 text-muted-foreground opacity-50'
                           }`}
                         >
                           {!m.achieved && (
-                            <div className="absolute inset-0 flex items-center justify-center bg-background/80 rounded-lg">
-                              <Lock className="w-5 h-5 text-muted-foreground" />
+                            <div className="absolute inset-0 flex items-center justify-center bg-background/70 rounded-xl">
+                              <Lock className="w-3.5 h-3.5 text-muted-foreground" />
                             </div>
                           )}
-                          <div className="mb-1">{m.icon}</div>
-                          <span className="text-[10px] font-bold text-center leading-tight">{m.label}</span>
+                          <div className="mb-0.5">{React.cloneElement(m.icon as React.ReactElement, { className: 'w-4 h-4' })}</div>
+                          <span className="text-[8px] font-bold text-center leading-tight">{m.label}</span>
                           {m.achieved && (
-                            <div className="absolute -top-1 -right-1 w-4 h-4 bg-yellow-400 rounded-full flex items-center justify-center shadow-md">
-                              <span className="text-[8px]">✓</span>
+                            <div className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 bg-yellow-400 rounded-full flex items-center justify-center shadow-sm">
+                              <span className="text-[7px]">✓</span>
                             </div>
                           )}
-                        </Card>
+                        </div>
                       ))}
                     </div>
                   </section>
