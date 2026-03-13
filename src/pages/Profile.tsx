@@ -675,18 +675,8 @@ const Profile = () => {
                     variant="secondary"
                     size="icon"
                     className="rounded-full"
-                    onClick={() => navigate('/milestones')}
-                    title="View Milestones"
-                  >
-                    <Trophy className="h-5 w-5" />
-                  </Button>
-                )}
-                {isCreative && (
-                  <Button
-                    variant="secondary"
-                    size="icon"
-                    className="rounded-full"
-                    onClick={() => navigate('/creator-dashboard')}
+                    onClick={() => navigate('/toonly-studio')}
+                    title="ToonlyStudio"
                   >
                     <BarChart3 className="h-5 w-5" />
                   </Button>

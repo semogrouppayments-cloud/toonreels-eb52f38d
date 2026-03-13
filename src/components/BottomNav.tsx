@@ -104,7 +104,7 @@ const BottomNav = () => {
 
   return (
     <nav className="fixed bottom-4 left-4 right-4 bg-card/95 backdrop-blur-lg border-2 border-border rounded-3xl shadow-2xl z-50 max-w-lg mx-auto">
-      <div className="flex items-center justify-around h-16 px-2">
+      <div className="flex items-center justify-around h-16 px-2 relative">
         <button
           onClick={() => navigate('/feed')}
           className={`flex flex-col items-center gap-1 px-3 py-2 rounded-2xl transition-all ${
@@ -129,31 +129,13 @@ const BottomNav = () => {
           <span className="text-[10px] font-semibold">Explore</span>
         </button>
 
+        {/* TikTok-style centered Upload FAB */}
         {isLoaded && isCreative && (
           <button
             onClick={() => navigate('/upload')}
-            className={`flex flex-col items-center gap-1 px-3 py-2 rounded-2xl transition-all ${
-              isActive('/upload')
-                ? 'text-primary bg-primary/10'
-                : 'text-muted-foreground hover:text-foreground'
-            }`}
+            className="flex items-center justify-center -mt-8 w-14 h-14 rounded-2xl bg-gradient-to-br from-primary to-accent text-primary-foreground shadow-lg hover:scale-110 active:scale-95 transition-all"
           >
-            <Upload className="h-5 w-5" />
-            <span className="text-[10px] font-semibold">Upload</span>
-          </button>
-        )}
-
-        {isLoaded && isCreative && (
-          <button
-            onClick={() => navigate('/toonly-studio')}
-            className={`flex flex-col items-center gap-1 px-3 py-2 rounded-2xl transition-all ${
-              isActive('/toonly-studio')
-                ? 'text-primary bg-primary/10'
-                : 'text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            <BarChart3 className="h-5 w-5" />
-            <span className="text-[10px] font-semibold">Studio</span>
+            <Upload className="h-6 w-6" />
           </button>
         )}
 
