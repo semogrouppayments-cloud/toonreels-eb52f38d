@@ -255,82 +255,96 @@ const ToonlyStudio = () => {
           </Button>
         </div>
 
-        <div className="max-w-6xl mx-auto p-4 space-y-4">
+        <div className="max-w-6xl mx-auto px-3 md:px-4 space-y-3">
           <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-            <TabsList className="w-full grid grid-cols-6">
-              <TabsTrigger value="overview" className="text-xs">Overview</TabsTrigger>
-              <TabsTrigger value="content" className="text-xs">Content</TabsTrigger>
-              <TabsTrigger value="analytics" className="text-xs">Analytics</TabsTrigger>
-              <TabsTrigger value="monetize" className="text-xs">Monetize</TabsTrigger>
-              <TabsTrigger value="milestones" className="text-xs">Milestones</TabsTrigger>
-              <TabsTrigger value="stars" className="text-xs">Stars</TabsTrigger>
-            </TabsList>
+            {/* Scrollable pill tabs on mobile */}
+            <div className="overflow-x-auto -mx-3 px-3 scrollbar-hide">
+              <TabsList className="inline-flex w-auto min-w-full md:grid md:grid-cols-6 gap-1 bg-muted/50 p-1 rounded-2xl">
+                <TabsTrigger value="overview" className="text-[11px] rounded-xl px-3 py-1.5 whitespace-nowrap">Overview</TabsTrigger>
+                <TabsTrigger value="content" className="text-[11px] rounded-xl px-3 py-1.5 whitespace-nowrap">Content</TabsTrigger>
+                <TabsTrigger value="analytics" className="text-[11px] rounded-xl px-3 py-1.5 whitespace-nowrap">Analytics</TabsTrigger>
+                <TabsTrigger value="monetize" className="text-[11px] rounded-xl px-3 py-1.5 whitespace-nowrap">Monetize</TabsTrigger>
+                <TabsTrigger value="milestones" className="text-[11px] rounded-xl px-3 py-1.5 whitespace-nowrap">Milestones</TabsTrigger>
+                <TabsTrigger value="stars" className="text-[11px] rounded-xl px-3 py-1.5 whitespace-nowrap">Stars</TabsTrigger>
+              </TabsList>
+            </div>
 
             {/* ===== OVERVIEW ===== */}
-            <TabsContent value="overview" className="mt-4 space-y-4">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                <Card className="p-4">
-                  <div className="flex items-center gap-2 mb-1">
+            <TabsContent value="overview" className="mt-3 space-y-3">
+              {/* Compact 2x2 stat grid */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                <Card className="p-3 flex items-center gap-2.5">
+                  <div className="h-8 w-8 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
                     <Video className="h-4 w-4 text-primary" />
-                    <span className="text-xs text-muted-foreground">Toonz</span>
                   </div>
-                  <p className="text-2xl font-black">{videos.length}</p>
+                  <div className="min-w-0">
+                    <p className="text-[10px] text-muted-foreground leading-none">Toonz</p>
+                    <p className="text-lg font-black leading-tight">{videos.length}</p>
+                  </div>
                 </Card>
-                <Card className="p-4">
-                  <div className="flex items-center gap-2 mb-1">
+                <Card className="p-3 flex items-center gap-2.5">
+                  <div className="h-8 w-8 rounded-xl bg-accent/10 flex items-center justify-center shrink-0">
                     <Eye className="h-4 w-4 text-accent" />
-                    <span className="text-xs text-muted-foreground">Total Views</span>
                   </div>
-                  <p className="text-2xl font-black">{totalViews.toLocaleString()}</p>
+                  <div className="min-w-0">
+                    <p className="text-[10px] text-muted-foreground leading-none">Views</p>
+                    <p className="text-lg font-black leading-tight">{totalViews.toLocaleString()}</p>
+                  </div>
                 </Card>
-                <Card className="p-4">
-                  <div className="flex items-center gap-2 mb-1">
+                <Card className="p-3 flex items-center gap-2.5">
+                  <div className="h-8 w-8 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
                     <Heart className="h-4 w-4 text-primary" />
-                    <span className="text-xs text-muted-foreground">Total Likes</span>
                   </div>
-                  <p className="text-2xl font-black">{totalLikes.toLocaleString()}</p>
+                  <div className="min-w-0">
+                    <p className="text-[10px] text-muted-foreground leading-none">Likes</p>
+                    <p className="text-lg font-black leading-tight">{totalLikes.toLocaleString()}</p>
+                  </div>
                 </Card>
-                <Card className="p-4">
-                  <div className="flex items-center gap-2 mb-1">
+                <Card className="p-3 flex items-center gap-2.5">
+                  <div className="h-8 w-8 rounded-xl bg-accent/10 flex items-center justify-center shrink-0">
                     <Users className="h-4 w-4 text-accent" />
-                    <span className="text-xs text-muted-foreground">Followers</span>
                   </div>
-                  <p className="text-2xl font-black">{followers.toLocaleString()}</p>
+                  <div className="min-w-0">
+                    <p className="text-[10px] text-muted-foreground leading-none">Followers</p>
+                    <p className="text-lg font-black leading-tight">{followers.toLocaleString()}</p>
+                  </div>
                 </Card>
               </div>
 
-              <Card className="p-4">
-                <div className="flex items-center gap-2 mb-1">
-                  <Clock className="h-4 w-4 text-primary" />
-                  <span className="text-xs text-muted-foreground">Total Watch Hours</span>
-                </div>
-                <p className="text-2xl font-black">{totalWatchHours.toLocaleString()}</p>
-              </Card>
-
-              <div className="bg-gradient-to-br from-yellow-500/20 to-orange-500/20 rounded-2xl p-4 border border-yellow-500/30">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-xs text-muted-foreground">Star Balance</p>
-                    <div className="flex items-center gap-2 mt-1">
-                      <Star className="h-6 w-6 text-yellow-500 fill-yellow-500" />
-                      <span className="text-3xl font-black">{starBalance.toLocaleString()}</span>
-                    </div>
+              {/* Watch hours + Stars side by side */}
+              <div className="grid grid-cols-2 gap-2">
+                <Card className="p-3 flex items-center gap-2.5">
+                  <div className="h-8 w-8 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                    <Clock className="h-4 w-4 text-primary" />
                   </div>
-                  <Button variant="outline" size="sm" onClick={() => handleTabChange('stars')} className="gap-1">
-                    <Star className="h-4 w-4" />
-                    View Stars
-                  </Button>
-                </div>
+                  <div className="min-w-0">
+                    <p className="text-[10px] text-muted-foreground leading-none">Watch Hrs</p>
+                    <p className="text-lg font-black leading-tight">{totalWatchHours.toLocaleString()}</p>
+                  </div>
+                </Card>
+                <button 
+                  onClick={() => handleTabChange('stars')}
+                  className="bg-gradient-to-br from-yellow-500/15 to-orange-500/15 border border-yellow-500/25 rounded-xl p-3 flex items-center gap-2.5 hover:border-yellow-500/40 transition-colors text-left"
+                >
+                  <div className="h-8 w-8 rounded-xl bg-yellow-500/20 flex items-center justify-center shrink-0">
+                    <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[10px] text-muted-foreground leading-none">Stars</p>
+                    <p className="text-lg font-black leading-tight">{starBalance.toLocaleString()}</p>
+                  </div>
+                </button>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <Button variant="outline" onClick={() => navigate('/upload')} className="h-auto py-3 flex-col gap-1">
-                  <Upload className="h-5 w-5" />
-                  <span className="text-xs">Upload Toonz</span>
+              {/* Quick actions */}
+              <div className="grid grid-cols-2 gap-2">
+                <Button variant="outline" onClick={() => navigate('/upload')} className="h-10 gap-1.5 rounded-xl text-xs">
+                  <Upload className="h-4 w-4" />
+                  Upload Toonz
                 </Button>
-                <Button variant="outline" onClick={() => navigate('/leaderboard')} className="h-auto py-3 flex-col gap-1">
-                  <Trophy className="h-5 w-5" />
-                  <span className="text-xs">Leaderboard</span>
+                <Button variant="outline" onClick={() => navigate('/leaderboard')} className="h-10 gap-1.5 rounded-xl text-xs">
+                  <Trophy className="h-4 w-4" />
+                  Leaderboard
                 </Button>
               </div>
             </TabsContent>
