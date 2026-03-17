@@ -296,45 +296,53 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
     const videoEl = videoRef.current;
     if (!videoEl) return;
 
-    // Immediately pause non-active videos
+    videoEl.playbackRate = playbackSpeed;
+    videoEl.loop = isLooping;
+    videoEl.preload = activeVideoPreload;
+
     if (!isActive) {
       videoEl.pause();
       videoEl.muted = true;
       setIsMuted(true);
       setIsPlaying(false);
-      // Track analytics when leaving
+      setIsBuffering(false);
       if (!analyticsTrackedRef.current && hasTrackedViewRef.current) {
         trackVideoAnalytics(false);
       }
       return;
     }
 
-    // Video is active - attempt to play immediately
+    if (!autoplayEnabled) {
+      videoEl.pause();
+      videoEl.muted = shouldStartMuted;
+      setIsMuted(shouldStartMuted);
+      setIsPlaying(false);
+      setIsBuffering(false);
+      return;
+    }
+
     let isCancelled = false;
     
     const attemptPlay = async () => {
       if (isCancelled) return;
       playAttemptRef.current++;
-      const currentAttempt = playAttemptRef.current;
       
       try {
-        // Ensure video source is set
         if (!videoEl.src && video.video_url) {
           videoEl.src = video.video_url;
           videoEl.load();
         }
         
-        // On mobile, don't wait for full buffer - play as soon as possible
         if (videoEl.readyState < 2) {
           await new Promise<void>((resolve) => {
-            const timeoutId = setTimeout(() => {
+            const timeoutId = window.setTimeout(() => {
               videoEl.removeEventListener('canplay', onReady);
               videoEl.removeEventListener('loadeddata', onReady);
-              resolve(); // Continue anyway after timeout
-            }, 1000);
+              resolve();
+            }, effectiveVideoQuality === 'high' ? 900 : 1400);
             
             const onReady = () => {
-              clearTimeout(timeoutId);
+              window.clearTimeout(timeoutId);
               videoEl.removeEventListener('canplay', onReady);
               videoEl.removeEventListener('loadeddata', onReady);
               resolve();
@@ -347,14 +355,12 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
         
         if (isCancelled) return;
         
-        // Reset video position for fresh start only if at the end
         if (videoEl.duration && videoEl.currentTime >= videoEl.duration - 0.5) {
           videoEl.currentTime = 0;
         }
         
-        // First play muted (always works on mobile)
-        videoEl.muted = true;
-        setIsMuted(true);
+        videoEl.muted = shouldStartMuted;
+        setIsMuted(shouldStartMuted);
         
         const playPromise = videoEl.play();
         if (playPromise !== undefined) {
@@ -365,38 +371,25 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
         setIsPlaying(true);
         setIsBuffering(false);
         
-        // Track view only once per video
         if (!hasTrackedViewRef.current) {
           incrementViewCount();
           hasTrackedViewRef.current = true;
           watchStartTimeRef.current = Date.now();
           analyticsTrackedRef.current = false;
         }
-        
-        // After successful play, unmute quickly
-        if (currentAttempt === playAttemptRef.current && !isCancelled) {
-          // Use requestAnimationFrame for faster unmute
-          requestAnimationFrame(() => {
-            if (videoEl && currentAttempt === playAttemptRef.current && isActive && !isCancelled) {
-              videoEl.muted = false;
-              setIsMuted(false);
-            }
-          });
-        }
-      } catch (err) {
-        console.log('Autoplay failed, waiting for user interaction');
+      } catch (playError) {
+        console.log('Autoplay failed, waiting for user interaction', playError);
         setIsPlaying(false);
         setIsBuffering(false);
       }
     };
 
-    // Play immediately - no delay for active video
     attemptPlay();
     
     return () => {
       isCancelled = true;
     };
-  }, [isActive, video.video_url]);
+  }, [isActive, video.video_url, autoplayEnabled, shouldStartMuted, effectiveVideoQuality, playbackSpeed, isLooping, activeVideoPreload]);
 
   // Handle video events for better mobile playback
   useEffect(() => {
