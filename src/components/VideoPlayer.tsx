@@ -839,9 +839,29 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const handleQualityChange = (quality: 'HD' | 'SD') => {
+  const handleQualityChange = async (quality: PlaybackQuality) => {
     setVideoQuality(quality);
-    toast.success(`Video quality set to ${quality}`);
+
+    if (currentUserId) {
+      const cached = playbackSettingsCache.get(currentUserId);
+      playbackSettingsCache.set(currentUserId, {
+        autoplay: cached?.autoplay ?? autoplayEnabled,
+        videoQuality: quality,
+        subtitlesEnabled: cached?.subtitlesEnabled ?? subtitlesEnabled,
+        subtitlesSize: cached?.subtitlesSize ?? subtitlesSize,
+        fetchedAt: Date.now(),
+      });
+
+      await supabase.from('playback_settings').upsert({
+        user_id: currentUserId,
+        autoplay: autoplayEnabled,
+        video_quality: quality,
+        subtitles_enabled: subtitlesEnabled,
+        subtitles_size: subtitlesSize,
+      });
+    }
+
+    toast.success(`Playback quality: ${quality === 'auto' ? 'Auto' : quality === 'high' ? 'HD' : 'SD'}`);
   };
 
   const handleSpeedChange = (speed: number) => {
