@@ -416,12 +416,25 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
       }
     };
     let stallRecoveryTimer: ReturnType<typeof setTimeout> | null = null;
+
+    const reloadVideoFromCurrentPosition = () => {
+      const resumeAt = Math.max(0, videoEl.currentTime || 0);
+      const restorePlayback = () => {
+        videoEl.removeEventListener('loadedmetadata', restorePlayback);
+        if (resumeAt > 0 && Number.isFinite(videoEl.duration)) {
+          videoEl.currentTime = Math.min(resumeAt, Math.max(0, videoEl.duration - 0.1));
+        }
+        videoEl.play().catch(() => {});
+      };
+
+      videoEl.addEventListener('loadedmetadata', restorePlayback, { once: true });
+      videoEl.load();
+    };
     
     const handleStalled = () => {
       if (!isActive) return;
       stallCountRef.current++;
       
-      // Progressive backoff: escalate recovery strategy
       const count = stallCountRef.current;
       const delay = Math.min(800 * count, 4000);
       
@@ -429,22 +442,15 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
       stallRecoveryTimer = setTimeout(() => {
         if (!videoEl || !isActive) return;
         
-        // Strategy 1: Just nudge playback (lightest)
         if (count <= 2 && !videoEl.paused) {
-          // Seek forward by a tiny amount to unstick the buffer
-          videoEl.currentTime = videoEl.currentTime + 0.01;
+          videoEl.currentTime = Math.min(videoEl.currentTime + 0.01, Math.max(videoEl.duration - 0.1, 0));
           return;
         }
         
-        // Strategy 2: Try play() if paused
         if (videoEl.paused || videoEl.readyState < 2) {
           videoEl.play().catch(() => {
-            // Strategy 3: Full reload only as last resort (count <= 4)
             if (count <= 4) {
-              const pos = videoEl.currentTime;
-              videoEl.load();
-              videoEl.currentTime = pos;
-              videoEl.play().catch(() => {});
+              reloadVideoFromCurrentPosition();
             }
           });
         }
@@ -453,13 +459,9 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
     
     const handleError = () => {
       if (!isActive) return;
-      // Only recover if we haven't exhausted retries
       if (stallCountRef.current > 5) return;
       stallCountRef.current++;
-      const currentPos = videoEl.currentTime || 0;
-      videoEl.load();
-      videoEl.currentTime = currentPos;
-      videoEl.play().catch(() => {});
+      reloadVideoFromCurrentPosition();
     };
 
     // Heavily throttled timeupdate - only setState when value visibly changes
