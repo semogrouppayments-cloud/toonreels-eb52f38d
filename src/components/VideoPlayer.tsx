@@ -63,6 +63,47 @@ interface VideoPlayerProps {
   onPositiveAction?: () => void;
 }
 
+type PlaybackQuality = 'auto' | 'high' | 'medium';
+
+interface CachedPlaybackSettings {
+  autoplay: boolean;
+  videoQuality: PlaybackQuality;
+  subtitlesEnabled: boolean;
+  subtitlesSize: 'small' | 'medium' | 'large';
+  fetchedAt: number;
+}
+
+const playbackSettingsCache = new Map<string, CachedPlaybackSettings>();
+const PLAYBACK_SETTINGS_TTL = 5 * 60 * 1000;
+
+const getPlaybackNetworkProfile = () => {
+  if (typeof navigator === 'undefined') {
+    return { saveData: false, isSlowConnection: false };
+  }
+
+  const connection = (navigator as Navigator & {
+    connection?: {
+      saveData?: boolean;
+      effectiveType?: string;
+    };
+  }).connection;
+
+  const effectiveType = connection?.effectiveType ?? '';
+
+  return {
+    saveData: Boolean(connection?.saveData),
+    isSlowConnection: effectiveType.includes('2g') || effectiveType === '3g',
+  };
+};
+
+const normalizePlaybackQuality = (value?: string | null): PlaybackQuality => {
+  if (value === 'auto' || value === 'high' || value === 'medium') {
+    return value;
+  }
+
+  return 'auto';
+};
+
 const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClick, onDelete, onPositiveAction }: VideoPlayerProps) => {
   const navigate = useNavigate();
   const { triggerLikeHaptic, triggerHaptic } = useHapticFeedback();
@@ -89,7 +130,8 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
   const isBufferingRef = useRef(false);
   const currentTimeRef = useRef(0);
   const bufferedPercentRef = useRef(0);
-  const [videoQuality, setVideoQuality] = useState<'HD' | 'SD'>('HD');
+  const [autoplayEnabled, setAutoplayEnabled] = useState(true);
+  const [videoQuality, setVideoQuality] = useState<PlaybackQuality>('auto');
   const [playbackSpeed, setPlaybackSpeed] = useState<number>(1);
   const [showSettingsMenu, setShowSettingsMenu] = useState(false);
   const [isLooping, setIsLooping] = useState(true);
@@ -119,14 +161,25 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
   const downloadControllerRef = useRef<WatermarkController | null>(null);
   const subtitleRef = useRef<HTMLDivElement>(null);
   const stallCountRef = useRef<number>(0);
+  const audioPreferenceRef = useRef<'auto' | 'muted' | 'unmuted'>('auto');
 
   const isOwnVideo = currentUserId === video.creator_id;
+  const networkProfile = getPlaybackNetworkProfile();
+  const effectiveVideoQuality: Exclude<PlaybackQuality, 'auto'> =
+    videoQuality === 'medium' ||
+    (videoQuality === 'auto' && (networkProfile.saveData || (isMobile && networkProfile.isSlowConnection)))
+      ? 'medium'
+      : 'high';
+  const shouldStartMuted =
+    audioPreferenceRef.current === 'muted' ||
+    (audioPreferenceRef.current !== 'unmuted' &&
+      (isMobile || effectiveVideoQuality === 'medium' || networkProfile.saveData || networkProfile.isSlowConnection));
+  const activeVideoPreload = isActive && effectiveVideoQuality === 'high' && !networkProfile.saveData ? 'auto' : 'metadata';
 
   // Initial data fetch - only fetch when active, batch all queries in parallel
   useEffect(() => {
     if (!isActive || !currentUserId) return;
     
-    // Fire all checks in parallel - no sequential awaits
     Promise.allSettled([
       checkIfFollowing(),
       checkIfLiked(),
@@ -134,7 +187,7 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
       checkIfBlocked(),
       fetchCommentsCount(),
       fetchSavesCount(),
-      fetchSubtitleSettings(),
+      fetchPlaybackSettings(),
     ]);
   }, [video.id, currentUserId, isActive]);
 
@@ -190,18 +243,37 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
     }));
   };
 
-  // Fetch user subtitle settings
-  const fetchSubtitleSettings = async () => {
+  const fetchPlaybackSettings = async () => {
     if (!currentUserId) return;
+
+    const cached = playbackSettingsCache.get(currentUserId);
+    if (cached && Date.now() - cached.fetchedAt < PLAYBACK_SETTINGS_TTL) {
+      setAutoplayEnabled(cached.autoplay);
+      setVideoQuality(cached.videoQuality);
+      setSubtitlesEnabled(cached.subtitlesEnabled);
+      setSubtitlesSize(cached.subtitlesSize);
+      return;
+    }
+
     const { data } = await supabase
       .from('playback_settings')
-      .select('subtitles_enabled, subtitles_size')
+      .select('autoplay, video_quality, subtitles_enabled, subtitles_size')
       .eq('user_id', currentUserId)
       .maybeSingle();
-    if (data) {
-      setSubtitlesEnabled(data.subtitles_enabled ?? true);
-      setSubtitlesSize((data.subtitles_size as 'small' | 'medium' | 'large') || 'medium');
-    }
+
+    const resolvedSettings: CachedPlaybackSettings = {
+      autoplay: data?.autoplay ?? true,
+      videoQuality: normalizePlaybackQuality(data?.video_quality),
+      subtitlesEnabled: data?.subtitles_enabled ?? true,
+      subtitlesSize: (data?.subtitles_size as 'small' | 'medium' | 'large') || 'medium',
+      fetchedAt: Date.now(),
+    };
+
+    playbackSettingsCache.set(currentUserId, resolvedSettings);
+    setAutoplayEnabled(resolvedSettings.autoplay);
+    setVideoQuality(resolvedSettings.videoQuality);
+    setSubtitlesEnabled(resolvedSettings.subtitlesEnabled);
+    setSubtitlesSize(resolvedSettings.subtitlesSize);
   };
 
   const fetchCommentsCount = async () => {
@@ -225,45 +297,53 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
     const videoEl = videoRef.current;
     if (!videoEl) return;
 
-    // Immediately pause non-active videos
+    videoEl.playbackRate = playbackSpeed;
+    videoEl.loop = isLooping;
+    videoEl.preload = activeVideoPreload;
+
     if (!isActive) {
       videoEl.pause();
       videoEl.muted = true;
       setIsMuted(true);
       setIsPlaying(false);
-      // Track analytics when leaving
+      setIsBuffering(false);
       if (!analyticsTrackedRef.current && hasTrackedViewRef.current) {
         trackVideoAnalytics(false);
       }
       return;
     }
 
-    // Video is active - attempt to play immediately
+    if (!autoplayEnabled) {
+      videoEl.pause();
+      videoEl.muted = shouldStartMuted;
+      setIsMuted(shouldStartMuted);
+      setIsPlaying(false);
+      setIsBuffering(false);
+      return;
+    }
+
     let isCancelled = false;
     
     const attemptPlay = async () => {
       if (isCancelled) return;
       playAttemptRef.current++;
-      const currentAttempt = playAttemptRef.current;
       
       try {
-        // Ensure video source is set
         if (!videoEl.src && video.video_url) {
           videoEl.src = video.video_url;
           videoEl.load();
         }
         
-        // On mobile, don't wait for full buffer - play as soon as possible
         if (videoEl.readyState < 2) {
           await new Promise<void>((resolve) => {
-            const timeoutId = setTimeout(() => {
+            const timeoutId = window.setTimeout(() => {
               videoEl.removeEventListener('canplay', onReady);
               videoEl.removeEventListener('loadeddata', onReady);
-              resolve(); // Continue anyway after timeout
-            }, 1000);
+              resolve();
+            }, effectiveVideoQuality === 'high' ? 900 : 1400);
             
             const onReady = () => {
-              clearTimeout(timeoutId);
+              window.clearTimeout(timeoutId);
               videoEl.removeEventListener('canplay', onReady);
               videoEl.removeEventListener('loadeddata', onReady);
               resolve();
@@ -276,14 +356,12 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
         
         if (isCancelled) return;
         
-        // Reset video position for fresh start only if at the end
         if (videoEl.duration && videoEl.currentTime >= videoEl.duration - 0.5) {
           videoEl.currentTime = 0;
         }
         
-        // First play muted (always works on mobile)
-        videoEl.muted = true;
-        setIsMuted(true);
+        videoEl.muted = shouldStartMuted;
+        setIsMuted(shouldStartMuted);
         
         const playPromise = videoEl.play();
         if (playPromise !== undefined) {
@@ -294,38 +372,25 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
         setIsPlaying(true);
         setIsBuffering(false);
         
-        // Track view only once per video
         if (!hasTrackedViewRef.current) {
           incrementViewCount();
           hasTrackedViewRef.current = true;
           watchStartTimeRef.current = Date.now();
           analyticsTrackedRef.current = false;
         }
-        
-        // After successful play, unmute quickly
-        if (currentAttempt === playAttemptRef.current && !isCancelled) {
-          // Use requestAnimationFrame for faster unmute
-          requestAnimationFrame(() => {
-            if (videoEl && currentAttempt === playAttemptRef.current && isActive && !isCancelled) {
-              videoEl.muted = false;
-              setIsMuted(false);
-            }
-          });
-        }
-      } catch (err) {
-        console.log('Autoplay failed, waiting for user interaction');
+      } catch (playError) {
+        console.log('Autoplay failed, waiting for user interaction', playError);
         setIsPlaying(false);
         setIsBuffering(false);
       }
     };
 
-    // Play immediately - no delay for active video
     attemptPlay();
     
     return () => {
       isCancelled = true;
     };
-  }, [isActive, video.video_url]);
+  }, [isActive, video.video_url, autoplayEnabled, shouldStartMuted, effectiveVideoQuality, playbackSpeed, isLooping, activeVideoPreload]);
 
   // Handle video events for better mobile playback
   useEffect(() => {
@@ -352,12 +417,25 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
       }
     };
     let stallRecoveryTimer: ReturnType<typeof setTimeout> | null = null;
+
+    const reloadVideoFromCurrentPosition = () => {
+      const resumeAt = Math.max(0, videoEl.currentTime || 0);
+      const restorePlayback = () => {
+        videoEl.removeEventListener('loadedmetadata', restorePlayback);
+        if (resumeAt > 0 && Number.isFinite(videoEl.duration)) {
+          videoEl.currentTime = Math.min(resumeAt, Math.max(0, videoEl.duration - 0.1));
+        }
+        videoEl.play().catch(() => {});
+      };
+
+      videoEl.addEventListener('loadedmetadata', restorePlayback, { once: true });
+      videoEl.load();
+    };
     
     const handleStalled = () => {
       if (!isActive) return;
       stallCountRef.current++;
       
-      // Progressive backoff: escalate recovery strategy
       const count = stallCountRef.current;
       const delay = Math.min(800 * count, 4000);
       
@@ -365,22 +443,15 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
       stallRecoveryTimer = setTimeout(() => {
         if (!videoEl || !isActive) return;
         
-        // Strategy 1: Just nudge playback (lightest)
         if (count <= 2 && !videoEl.paused) {
-          // Seek forward by a tiny amount to unstick the buffer
-          videoEl.currentTime = videoEl.currentTime + 0.01;
+          videoEl.currentTime = Math.min(videoEl.currentTime + 0.01, Math.max(videoEl.duration - 0.1, 0));
           return;
         }
         
-        // Strategy 2: Try play() if paused
         if (videoEl.paused || videoEl.readyState < 2) {
           videoEl.play().catch(() => {
-            // Strategy 3: Full reload only as last resort (count <= 4)
             if (count <= 4) {
-              const pos = videoEl.currentTime;
-              videoEl.load();
-              videoEl.currentTime = pos;
-              videoEl.play().catch(() => {});
+              reloadVideoFromCurrentPosition();
             }
           });
         }
@@ -389,13 +460,9 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
     
     const handleError = () => {
       if (!isActive) return;
-      // Only recover if we haven't exhausted retries
       if (stallCountRef.current > 5) return;
       stallCountRef.current++;
-      const currentPos = videoEl.currentTime || 0;
-      videoEl.load();
-      videoEl.currentTime = currentPos;
-      videoEl.play().catch(() => {});
+      reloadVideoFromCurrentPosition();
     };
 
     // Heavily throttled timeupdate - only setState when value visibly changes
@@ -741,8 +808,10 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
   const toggleMute = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (videoRef.current) {
-      videoRef.current.muted = !isMuted;
-      setIsMuted(!isMuted);
+      const nextMuted = !isMuted;
+      videoRef.current.muted = nextMuted;
+      audioPreferenceRef.current = nextMuted ? 'muted' : 'unmuted';
+      setIsMuted(nextMuted);
     }
   };
 
@@ -771,9 +840,29 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const handleQualityChange = (quality: 'HD' | 'SD') => {
+  const handleQualityChange = async (quality: PlaybackQuality) => {
     setVideoQuality(quality);
-    toast.success(`Video quality set to ${quality}`);
+
+    if (currentUserId) {
+      const cached = playbackSettingsCache.get(currentUserId);
+      playbackSettingsCache.set(currentUserId, {
+        autoplay: cached?.autoplay ?? autoplayEnabled,
+        videoQuality: quality,
+        subtitlesEnabled: cached?.subtitlesEnabled ?? subtitlesEnabled,
+        subtitlesSize: cached?.subtitlesSize ?? subtitlesSize,
+        fetchedAt: Date.now(),
+      });
+
+      await supabase.from('playback_settings').upsert({
+        user_id: currentUserId,
+        autoplay: autoplayEnabled,
+        video_quality: quality,
+        subtitles_enabled: subtitlesEnabled,
+        subtitles_size: subtitlesSize,
+      });
+    }
+
+    toast.success(`Playback quality: ${quality === 'auto' ? 'Auto' : quality === 'high' ? 'HD' : 'SD'}`);
   };
 
   const handleSpeedChange = (speed: number) => {
@@ -1040,8 +1129,9 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
             webkit-playsinline="true"
             x5-playsinline="true"
             x5-video-player-type="h5"
-            preload={isActive ? 'auto' : 'metadata'}
+            preload={activeVideoPreload}
             autoPlay={false}
+            disablePictureInPicture
             style={{ 
               maxHeight: '100vh',
               marginBottom: '0',
@@ -1110,14 +1200,20 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
           <DropdownMenuContent align="end" className="min-w-[140px] bg-background z-50" onClick={(e) => e.stopPropagation()}>
             <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">Quality</div>
             <DropdownMenuItem 
-              onClick={() => handleQualityChange('HD')}
-              className={videoQuality === 'HD' ? 'bg-primary/10 text-primary' : ''}
+              onClick={() => handleQualityChange('auto')}
+              className={videoQuality === 'auto' ? 'bg-primary/10 text-primary' : ''}
+            >
+              Auto (Recommended)
+            </DropdownMenuItem>
+            <DropdownMenuItem 
+              onClick={() => handleQualityChange('high')}
+              className={videoQuality === 'high' ? 'bg-primary/10 text-primary' : ''}
             >
               HD (720p+)
             </DropdownMenuItem>
             <DropdownMenuItem 
-              onClick={() => handleQualityChange('SD')}
-              className={videoQuality === 'SD' ? 'bg-primary/10 text-primary' : ''}
+              onClick={() => handleQualityChange('medium')}
+              className={videoQuality === 'medium' ? 'bg-primary/10 text-primary' : ''}
             >
               SD (480p)
             </DropdownMenuItem>

@@ -277,26 +277,39 @@ const Feed = () => {
     }
   };
 
-  // Preload next video - lightweight approach for mobile
+  // Preload next video conservatively to avoid PWA/mobile freezes
   const preloadVideo = useCallback((videoUrl: string) => {
     if (preloadedVideosRef.current.has(videoUrl)) return;
+
+    const connection = (navigator as Navigator & {
+      connection?: {
+        saveData?: boolean;
+        effectiveType?: string;
+      };
+    }).connection;
+
+    const isStandalonePwa = typeof window !== 'undefined' && window.matchMedia?.('(display-mode: standalone)').matches;
+    const isConstrainedNetwork = Boolean(connection?.saveData) || ['slow-2g', '2g', '3g'].includes(connection?.effectiveType || '');
+
+    if (isStandalonePwa || isConstrainedNetwork) {
+      return;
+    }
+
     preloadedVideosRef.current.add(videoUrl);
-    
-    // Use link preload for lighter resource usage on mobile
     const link = document.createElement('link');
-    link.rel = 'preload';
-    link.as = 'fetch';
+    link.rel = 'prefetch';
+    link.as = 'video';
     link.href = videoUrl;
     link.crossOrigin = 'anonymous';
     document.head.appendChild(link);
-    
-    // Remove after 5s to keep DOM clean
+
     setTimeout(() => link.remove(), 5000);
-    
-    // Keep cache small
-    if (preloadedVideosRef.current.size > 3) {
+
+    if (preloadedVideosRef.current.size > 1) {
       const firstKey = preloadedVideosRef.current.values().next().value;
-      preloadedVideosRef.current.delete(firstKey);
+      if (firstKey) {
+        preloadedVideosRef.current.delete(firstKey);
+      }
     }
   }, []);
 
@@ -314,12 +327,9 @@ const Feed = () => {
       activeIndexRef.current = newIndex;
       setActiveIndex(newIndex);
       
-      // Preload next videos
+      // Preload only the next video to reduce memory/network pressure
       if (vids[newIndex + 1]) {
         preloadVideo(vids[newIndex + 1].video_url);
-      }
-      if (vids[newIndex + 2]) {
-        preloadVideo(vids[newIndex + 2].video_url);
       }
     }
     
