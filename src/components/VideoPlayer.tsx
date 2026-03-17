@@ -63,6 +63,47 @@ interface VideoPlayerProps {
   onPositiveAction?: () => void;
 }
 
+type PlaybackQuality = 'auto' | 'high' | 'medium';
+
+interface CachedPlaybackSettings {
+  autoplay: boolean;
+  videoQuality: PlaybackQuality;
+  subtitlesEnabled: boolean;
+  subtitlesSize: 'small' | 'medium' | 'large';
+  fetchedAt: number;
+}
+
+const playbackSettingsCache = new Map<string, CachedPlaybackSettings>();
+const PLAYBACK_SETTINGS_TTL = 5 * 60 * 1000;
+
+const getPlaybackNetworkProfile = () => {
+  if (typeof navigator === 'undefined') {
+    return { saveData: false, isSlowConnection: false };
+  }
+
+  const connection = (navigator as Navigator & {
+    connection?: {
+      saveData?: boolean;
+      effectiveType?: string;
+    };
+  }).connection;
+
+  const effectiveType = connection?.effectiveType ?? '';
+
+  return {
+    saveData: Boolean(connection?.saveData),
+    isSlowConnection: effectiveType.includes('2g') || effectiveType === '3g',
+  };
+};
+
+const normalizePlaybackQuality = (value?: string | null): PlaybackQuality => {
+  if (value === 'auto' || value === 'high' || value === 'medium') {
+    return value;
+  }
+
+  return 'auto';
+};
+
 const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClick, onDelete, onPositiveAction }: VideoPlayerProps) => {
   const navigate = useNavigate();
   const { triggerLikeHaptic, triggerHaptic } = useHapticFeedback();
@@ -89,7 +130,8 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
   const isBufferingRef = useRef(false);
   const currentTimeRef = useRef(0);
   const bufferedPercentRef = useRef(0);
-  const [videoQuality, setVideoQuality] = useState<'HD' | 'SD'>('HD');
+  const [autoplayEnabled, setAutoplayEnabled] = useState(true);
+  const [videoQuality, setVideoQuality] = useState<PlaybackQuality>('auto');
   const [playbackSpeed, setPlaybackSpeed] = useState<number>(1);
   const [showSettingsMenu, setShowSettingsMenu] = useState(false);
   const [isLooping, setIsLooping] = useState(true);
@@ -119,6 +161,7 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
   const downloadControllerRef = useRef<WatermarkController | null>(null);
   const subtitleRef = useRef<HTMLDivElement>(null);
   const stallCountRef = useRef<number>(0);
+  const audioPreferenceRef = useRef<'auto' | 'muted' | 'unmuted'>('auto');
 
   const isOwnVideo = currentUserId === video.creator_id;
 
