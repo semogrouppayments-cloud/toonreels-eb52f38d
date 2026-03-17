@@ -327,12 +327,9 @@ const Feed = () => {
       activeIndexRef.current = newIndex;
       setActiveIndex(newIndex);
       
-      // Preload next videos
+      // Preload only the next video to reduce memory/network pressure
       if (vids[newIndex + 1]) {
         preloadVideo(vids[newIndex + 1].video_url);
-      }
-      if (vids[newIndex + 2]) {
-        preloadVideo(vids[newIndex + 2].video_url);
       }
     }
     

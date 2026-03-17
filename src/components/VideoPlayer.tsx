@@ -1199,14 +1199,20 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
           <DropdownMenuContent align="end" className="min-w-[140px] bg-background z-50" onClick={(e) => e.stopPropagation()}>
             <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">Quality</div>
             <DropdownMenuItem 
-              onClick={() => handleQualityChange('HD')}
-              className={videoQuality === 'HD' ? 'bg-primary/10 text-primary' : ''}
+              onClick={() => handleQualityChange('auto')}
+              className={videoQuality === 'auto' ? 'bg-primary/10 text-primary' : ''}
+            >
+              Auto (Recommended)
+            </DropdownMenuItem>
+            <DropdownMenuItem 
+              onClick={() => handleQualityChange('high')}
+              className={videoQuality === 'high' ? 'bg-primary/10 text-primary' : ''}
             >
               HD (720p+)
             </DropdownMenuItem>
             <DropdownMenuItem 
-              onClick={() => handleQualityChange('SD')}
-              className={videoQuality === 'SD' ? 'bg-primary/10 text-primary' : ''}
+              onClick={() => handleQualityChange('medium')}
+              className={videoQuality === 'medium' ? 'bg-primary/10 text-primary' : ''}
             >
               SD (480p)
             </DropdownMenuItem>
