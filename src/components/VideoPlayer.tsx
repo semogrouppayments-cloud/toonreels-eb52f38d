@@ -163,13 +163,22 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
   const stallCountRef = useRef<number>(0);
   const audioPreferenceRef = useRef<'auto' | 'muted' | 'unmuted'>('auto');
 
-  const isOwnVideo = currentUserId === video.creator_id;
+  const networkProfile = getPlaybackNetworkProfile();
+  const effectiveVideoQuality: Exclude<PlaybackQuality, 'auto'> =
+    videoQuality === 'medium' ||
+    (videoQuality === 'auto' && (networkProfile.saveData || (isMobile && networkProfile.isSlowConnection)))
+      ? 'medium'
+      : 'high';
+  const shouldStartMuted =
+    audioPreferenceRef.current === 'muted' ||
+    (audioPreferenceRef.current !== 'unmuted' &&
+      (isMobile || effectiveVideoQuality === 'medium' || networkProfile.saveData || networkProfile.isSlowConnection));
+  const activeVideoPreload = isActive && effectiveVideoQuality === 'high' && !networkProfile.saveData ? 'auto' : 'metadata';
 
   // Initial data fetch - only fetch when active, batch all queries in parallel
   useEffect(() => {
     if (!isActive || !currentUserId) return;
     
-    // Fire all checks in parallel - no sequential awaits
     Promise.allSettled([
       checkIfFollowing(),
       checkIfLiked(),
@@ -177,7 +186,7 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
       checkIfBlocked(),
       fetchCommentsCount(),
       fetchSavesCount(),
-      fetchSubtitleSettings(),
+      fetchPlaybackSettings(),
     ]);
   }, [video.id, currentUserId, isActive]);
 
@@ -233,18 +242,37 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
     }));
   };
 
-  // Fetch user subtitle settings
-  const fetchSubtitleSettings = async () => {
+  const fetchPlaybackSettings = async () => {
     if (!currentUserId) return;
+
+    const cached = playbackSettingsCache.get(currentUserId);
+    if (cached && Date.now() - cached.fetchedAt < PLAYBACK_SETTINGS_TTL) {
+      setAutoplayEnabled(cached.autoplay);
+      setVideoQuality(cached.videoQuality);
+      setSubtitlesEnabled(cached.subtitlesEnabled);
+      setSubtitlesSize(cached.subtitlesSize);
+      return;
+    }
+
     const { data } = await supabase
       .from('playback_settings')
-      .select('subtitles_enabled, subtitles_size')
+      .select('autoplay, video_quality, subtitles_enabled, subtitles_size')
       .eq('user_id', currentUserId)
       .maybeSingle();
-    if (data) {
-      setSubtitlesEnabled(data.subtitles_enabled ?? true);
-      setSubtitlesSize((data.subtitles_size as 'small' | 'medium' | 'large') || 'medium');
-    }
+
+    const resolvedSettings: CachedPlaybackSettings = {
+      autoplay: data?.autoplay ?? true,
+      videoQuality: normalizePlaybackQuality(data?.video_quality),
+      subtitlesEnabled: data?.subtitles_enabled ?? true,
+      subtitlesSize: (data?.subtitles_size as 'small' | 'medium' | 'large') || 'medium',
+      fetchedAt: Date.now(),
+    };
+
+    playbackSettingsCache.set(currentUserId, resolvedSettings);
+    setAutoplayEnabled(resolvedSettings.autoplay);
+    setVideoQuality(resolvedSettings.videoQuality);
+    setSubtitlesEnabled(resolvedSettings.subtitlesEnabled);
+    setSubtitlesSize(resolvedSettings.subtitlesSize);
   };
 
   const fetchCommentsCount = async () => {
