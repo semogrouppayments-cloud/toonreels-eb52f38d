@@ -1128,8 +1128,9 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
             webkit-playsinline="true"
             x5-playsinline="true"
             x5-video-player-type="h5"
-            preload={isActive ? 'auto' : 'metadata'}
+            preload={activeVideoPreload}
             autoPlay={false}
+            disablePictureInPicture
             style={{ 
               maxHeight: '100vh',
               marginBottom: '0',
