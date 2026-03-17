@@ -163,6 +163,7 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
   const stallCountRef = useRef<number>(0);
   const audioPreferenceRef = useRef<'auto' | 'muted' | 'unmuted'>('auto');
 
+  const isOwnVideo = currentUserId === video.creator_id;
   const networkProfile = getPlaybackNetworkProfile();
   const effectiveVideoQuality: Exclude<PlaybackQuality, 'auto'> =
     videoQuality === 'medium' ||
