@@ -807,8 +807,10 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
   const toggleMute = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (videoRef.current) {
-      videoRef.current.muted = !isMuted;
-      setIsMuted(!isMuted);
+      const nextMuted = !isMuted;
+      videoRef.current.muted = nextMuted;
+      audioPreferenceRef.current = nextMuted ? 'muted' : 'unmuted';
+      setIsMuted(nextMuted);
     }
   };
 
