@@ -73,8 +73,26 @@ interface CachedPlaybackSettings {
   fetchedAt: number;
 }
 
+interface CachedVideoEngagement {
+  commentsCount: number;
+  savesCount: number;
+  fetchedAt: number;
+}
+
+interface CachedViewerVideoState {
+  liked: boolean;
+  saved: boolean;
+  following: boolean;
+  blocked: boolean;
+  fetchedAt: number;
+}
+
 const playbackSettingsCache = new Map<string, CachedPlaybackSettings>();
+const videoEngagementCache = new Map<string, CachedVideoEngagement>();
+const viewerVideoStateCache = new Map<string, CachedViewerVideoState>();
 const PLAYBACK_SETTINGS_TTL = 5 * 60 * 1000;
+const VIDEO_ENGAGEMENT_TTL = 60 * 1000;
+const VIEWER_VIDEO_STATE_TTL = 60 * 1000;
 
 const getPlaybackNetworkProfile = () => {
   if (typeof navigator === 'undefined') {
@@ -162,34 +180,83 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
   const subtitleRef = useRef<HTMLDivElement>(null);
   const stallCountRef = useRef<number>(0);
   const audioPreferenceRef = useRef<'auto' | 'muted' | 'unmuted'>('auto');
+  const deferredDataFetchTimerRef = useRef<number | null>(null);
+  const stallRecoveryTimerRef = useRef<number | null>(null);
+  const lastRecoveryAtRef = useRef<number>(0);
 
   const isOwnVideo = currentUserId === video.creator_id;
   const networkProfile = getPlaybackNetworkProfile();
+  const isTouchPlaybackDevice =
+    isMobile ||
+    (typeof window !== 'undefined' && typeof navigator !== 'undefined' && navigator.maxTouchPoints > 0 && window.innerWidth <= 1024);
   const effectiveVideoQuality: Exclude<PlaybackQuality, 'auto'> =
     videoQuality === 'medium' ||
-    (videoQuality === 'auto' && (networkProfile.saveData || (isMobile && networkProfile.isSlowConnection)))
+    (videoQuality === 'auto' && (networkProfile.saveData || (isTouchPlaybackDevice && networkProfile.isSlowConnection)))
       ? 'medium'
       : 'high';
   const shouldStartMuted =
     audioPreferenceRef.current === 'muted' ||
     (audioPreferenceRef.current !== 'unmuted' &&
       (isMobile || effectiveVideoQuality === 'medium' || networkProfile.saveData || networkProfile.isSlowConnection));
-  const activeVideoPreload = isActive && effectiveVideoQuality === 'high' && !networkProfile.saveData ? 'auto' : 'metadata';
+  const activeVideoPreload = isActive
+    ? effectiveVideoQuality === 'high' && !networkProfile.saveData && !isTouchPlaybackDevice
+      ? 'auto'
+      : 'metadata'
+    : 'none';
 
   // Initial data fetch - only fetch when active, batch all queries in parallel
   useEffect(() => {
     if (!isActive || !currentUserId) return;
-    
-    Promise.allSettled([
-      checkIfFollowing(),
-      checkIfLiked(),
-      checkIfSaved(),
-      checkIfBlocked(),
-      fetchCommentsCount(),
-      fetchSavesCount(),
-      fetchPlaybackSettings(),
-    ]);
-  }, [video.id, currentUserId, isActive]);
+
+    fetchPlaybackSettings();
+
+    const viewerStateKey = `${currentUserId}:${video.id}:${video.creator_id}`;
+    const cachedViewerState = viewerVideoStateCache.get(viewerStateKey);
+    if (cachedViewerState && Date.now() - cachedViewerState.fetchedAt < VIEWER_VIDEO_STATE_TTL) {
+      setLiked(cachedViewerState.liked);
+      setIsSaved(cachedViewerState.saved);
+      setIsFollowing(cachedViewerState.following);
+      setIsBlocked(cachedViewerState.blocked);
+    }
+
+    const cachedEngagement = videoEngagementCache.get(video.id);
+    if (cachedEngagement && Date.now() - cachedEngagement.fetchedAt < VIDEO_ENGAGEMENT_TTL) {
+      setCommentsCount(cachedEngagement.commentsCount);
+      setSavesCount(cachedEngagement.savesCount);
+    }
+
+    if (deferredDataFetchTimerRef.current) {
+      window.clearTimeout(deferredDataFetchTimerRef.current);
+    }
+
+    deferredDataFetchTimerRef.current = window.setTimeout(() => {
+      const viewerStateNeedsRefresh = !cachedViewerState || Date.now() - cachedViewerState.fetchedAt >= VIEWER_VIDEO_STATE_TTL;
+      const engagementNeedsRefresh = !cachedEngagement || Date.now() - cachedEngagement.fetchedAt >= VIDEO_ENGAGEMENT_TTL;
+
+      const tasks: Promise<unknown>[] = [];
+
+      if (viewerStateNeedsRefresh) {
+        tasks.push(
+          Promise.allSettled([checkIfFollowing(), checkIfLiked(), checkIfSaved(), checkIfBlocked()])
+        );
+      }
+
+      if (engagementNeedsRefresh) {
+        tasks.push(Promise.allSettled([fetchCommentsCount(), fetchSavesCount()]));
+      }
+
+      if (tasks.length > 0) {
+        Promise.allSettled(tasks);
+      }
+    }, isTouchPlaybackDevice ? 400 : 0);
+
+    return () => {
+      if (deferredDataFetchTimerRef.current) {
+        window.clearTimeout(deferredDataFetchTimerRef.current);
+        deferredDataFetchTimerRef.current = null;
+      }
+    };
+  }, [video.id, video.creator_id, currentUserId, isActive, isTouchPlaybackDevice]);
 
   // Fetch trending tags only once and cache them
   useEffect(() => {
@@ -281,7 +348,15 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
       .from('comments')
       .select('*', { count: 'exact', head: true })
       .eq('video_id', video.id);
-    setCommentsCount(count || 0);
+
+    const nextCommentsCount = count || 0;
+    const existingCache = videoEngagementCache.get(video.id);
+    videoEngagementCache.set(video.id, {
+      commentsCount: nextCommentsCount,
+      savesCount: existingCache?.savesCount ?? savesCount,
+      fetchedAt: Date.now(),
+    });
+    setCommentsCount(nextCommentsCount);
   };
 
   const fetchSavesCount = async () => {
@@ -289,7 +364,15 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
       .from('saved_videos')
       .select('*', { count: 'exact', head: true })
       .eq('video_id', video.id);
-    setSavesCount(count || 0);
+
+    const nextSavesCount = count || 0;
+    const existingCache = videoEngagementCache.get(video.id);
+    videoEngagementCache.set(video.id, {
+      commentsCount: existingCache?.commentsCount ?? commentsCount,
+      savesCount: nextSavesCount,
+      fetchedAt: Date.now(),
+    });
+    setSavesCount(nextSavesCount);
   };
 
   // Handle active state - play/pause based on visibility with better mobile support
@@ -307,13 +390,26 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
       setIsMuted(true);
       setIsPlaying(false);
       setIsBuffering(false);
+      if (stallRecoveryTimerRef.current) {
+        window.clearTimeout(stallRecoveryTimerRef.current);
+        stallRecoveryTimerRef.current = null;
+      }
       if (!analyticsTrackedRef.current && hasTrackedViewRef.current) {
         trackVideoAnalytics(false);
       }
+
+      if (isTouchPlaybackDevice) {
+        videoEl.removeAttribute('src');
+        videoEl.load();
+      }
+
       return;
     }
 
     if (!autoplayEnabled) {
+      if (videoEl.getAttribute('src') !== video.video_url) {
+        videoEl.src = video.video_url;
+      }
       videoEl.pause();
       videoEl.muted = shouldStartMuted;
       setIsMuted(shouldStartMuted);
@@ -329,7 +425,7 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
       playAttemptRef.current++;
       
       try {
-        if (!videoEl.src && video.video_url) {
+        if (videoEl.getAttribute('src') !== video.video_url && video.video_url) {
           videoEl.src = video.video_url;
           videoEl.load();
         }
@@ -390,7 +486,7 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
     return () => {
       isCancelled = true;
     };
-  }, [isActive, video.video_url, autoplayEnabled, shouldStartMuted, effectiveVideoQuality, playbackSpeed, isLooping, activeVideoPreload]);
+  }, [isActive, video.video_url, autoplayEnabled, shouldStartMuted, effectiveVideoQuality, playbackSpeed, isLooping, activeVideoPreload, isTouchPlaybackDevice]);
 
   // Handle video events for better mobile playback
   useEffect(() => {
@@ -416,9 +512,11 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
         setIsBuffering(false);
       }
     };
-    let stallRecoveryTimer: ReturnType<typeof setTimeout> | null = null;
-
     const reloadVideoFromCurrentPosition = () => {
+      const now = Date.now();
+      if (now - lastRecoveryAtRef.current < 2500) return;
+      lastRecoveryAtRef.current = now;
+
       const resumeAt = Math.max(0, videoEl.currentTime || 0);
       const restorePlayback = () => {
         videoEl.removeEventListener('loadedmetadata', restorePlayback);
@@ -437,30 +535,35 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
       stallCountRef.current++;
       
       const count = stallCountRef.current;
-      const delay = Math.min(800 * count, 4000);
+      const delay = Math.min(600 * count, 2200);
       
-      if (stallRecoveryTimer) clearTimeout(stallRecoveryTimer);
-      stallRecoveryTimer = setTimeout(() => {
+      if (stallRecoveryTimerRef.current) {
+        window.clearTimeout(stallRecoveryTimerRef.current);
+      }
+
+      stallRecoveryTimerRef.current = window.setTimeout(() => {
         if (!videoEl || !isActive) return;
-        
-        if (count <= 2 && !videoEl.paused) {
-          videoEl.currentTime = Math.min(videoEl.currentTime + 0.01, Math.max(videoEl.duration - 0.1, 0));
+
+        if (count <= 2) {
+          if (videoEl.readyState >= 2) {
+            videoEl.play().catch(() => {});
+          }
           return;
         }
-        
-        if (videoEl.paused || videoEl.readyState < 2) {
-          videoEl.play().catch(() => {
-            if (count <= 4) {
-              reloadVideoFromCurrentPosition();
-            }
-          });
+
+        if (count <= 4 && Number.isFinite(videoEl.duration) && videoEl.duration > 0) {
+          videoEl.currentTime = Math.min(videoEl.currentTime + 0.05, Math.max(videoEl.duration - 0.1, 0));
+          videoEl.play().catch(() => {});
+          return;
         }
+
+        reloadVideoFromCurrentPosition();
       }, delay);
     };
     
     const handleError = () => {
       if (!isActive) return;
-      if (stallCountRef.current > 5) return;
+      if (stallCountRef.current > 4) return;
       stallCountRef.current++;
       reloadVideoFromCurrentPosition();
     };
@@ -517,7 +620,10 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
     videoEl.addEventListener('progress', handleProgress);
 
     return () => {
-      if (stallRecoveryTimer) clearTimeout(stallRecoveryTimer);
+      if (stallRecoveryTimerRef.current) {
+        window.clearTimeout(stallRecoveryTimerRef.current);
+        stallRecoveryTimerRef.current = null;
+      }
       videoEl.removeEventListener('waiting', handleWaiting);
       videoEl.removeEventListener('playing', handlePlaying);
       videoEl.removeEventListener('canplay', handleCanPlay);
@@ -539,6 +645,7 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
 
   const checkIfLiked = async () => {
     if (!currentUserId) return;
+    const viewerStateKey = `${currentUserId}:${video.id}:${video.creator_id}`;
     
     const { data } = await supabase
       .from('likes')
@@ -546,12 +653,23 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
       .eq('video_id', video.id)
       .eq('user_id', currentUserId)
       .maybeSingle();
-    
-    setLiked(!!data);
+
+    const existingCache = viewerVideoStateCache.get(viewerStateKey);
+    const nextLiked = !!data;
+    viewerVideoStateCache.set(viewerStateKey, {
+      liked: nextLiked,
+      saved: existingCache?.saved ?? isSaved,
+      following: existingCache?.following ?? isFollowing,
+      blocked: existingCache?.blocked ?? isBlocked,
+      fetchedAt: Date.now(),
+    });
+
+    setLiked(nextLiked);
   };
 
   const checkIfSaved = async () => {
     if (!currentUserId) return;
+    const viewerStateKey = `${currentUserId}:${video.id}:${video.creator_id}`;
     
     const { data } = await supabase
       .from('saved_videos')
@@ -559,8 +677,18 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
       .eq('video_id', video.id)
       .eq('user_id', currentUserId)
       .maybeSingle();
-    
-    setIsSaved(!!data);
+
+    const existingCache = viewerVideoStateCache.get(viewerStateKey);
+    const nextSaved = !!data;
+    viewerVideoStateCache.set(viewerStateKey, {
+      liked: existingCache?.liked ?? liked,
+      saved: nextSaved,
+      following: existingCache?.following ?? isFollowing,
+      blocked: existingCache?.blocked ?? isBlocked,
+      fetchedAt: Date.now(),
+    });
+
+    setIsSaved(nextSaved);
   };
 
   const incrementViewCount = async () => {
@@ -607,6 +735,7 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
 
   const checkIfFollowing = async () => {
     if (!currentUserId || currentUserId === video.creator_id) return;
+    const viewerStateKey = `${currentUserId}:${video.id}:${video.creator_id}`;
     
     const { data } = await supabase
       .from('follows')
@@ -614,12 +743,23 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
       .eq('follower_id', currentUserId)
       .eq('following_id', video.creator_id)
       .maybeSingle();
-    
-    setIsFollowing(!!data);
+
+    const existingCache = viewerVideoStateCache.get(viewerStateKey);
+    const nextFollowing = !!data;
+    viewerVideoStateCache.set(viewerStateKey, {
+      liked: existingCache?.liked ?? liked,
+      saved: existingCache?.saved ?? isSaved,
+      following: nextFollowing,
+      blocked: existingCache?.blocked ?? isBlocked,
+      fetchedAt: Date.now(),
+    });
+
+    setIsFollowing(nextFollowing);
   };
 
   const checkIfBlocked = async () => {
     if (!currentUserId || currentUserId === video.creator_id) return;
+    const viewerStateKey = `${currentUserId}:${video.id}:${video.creator_id}`;
     
     const { data } = await supabase
       .from('blocks')
@@ -627,8 +767,18 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
       .eq('blocker_id', currentUserId)
       .eq('blocked_id', video.creator_id)
       .maybeSingle();
-    
-    setIsBlocked(!!data);
+
+    const existingCache = viewerVideoStateCache.get(viewerStateKey);
+    const nextBlocked = !!data;
+    viewerVideoStateCache.set(viewerStateKey, {
+      liked: existingCache?.liked ?? liked,
+      saved: existingCache?.saved ?? isSaved,
+      following: existingCache?.following ?? isFollowing,
+      blocked: nextBlocked,
+      fetchedAt: Date.now(),
+    });
+
+    setIsBlocked(nextBlocked);
   };
 
   const handleBlock = async (e: React.MouseEvent) => {
@@ -667,12 +817,22 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
       return;
     }
 
+    const viewerStateKey = `${currentUserId}:${video.id}:${video.creator_id}`;
+
     const nextLiked = !liked;
     const nextCount = Math.max(0, likesCount + (nextLiked ? 1 : -1));
 
     // Optimistic UI (instant feedback)
     setLiked(nextLiked);
     setLikesCount(nextCount);
+    const existingCache = viewerVideoStateCache.get(viewerStateKey);
+    viewerVideoStateCache.set(viewerStateKey, {
+      liked: nextLiked,
+      saved: existingCache?.saved ?? isSaved,
+      following: existingCache?.following ?? isFollowing,
+      blocked: existingCache?.blocked ?? isBlocked,
+      fetchedAt: Date.now(),
+    });
 
     try {
       // Just insert/delete the like - database trigger handles counter atomically
@@ -688,6 +848,13 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
       // Rollback
       setLiked(liked);
       setLikesCount(likesCount);
+      viewerVideoStateCache.set(viewerStateKey, {
+        liked,
+        saved: existingCache?.saved ?? isSaved,
+        following: existingCache?.following ?? isFollowing,
+        blocked: existingCache?.blocked ?? isBlocked,
+        fetchedAt: Date.now(),
+      });
       toast.error('Failed to like video');
     }
   };
@@ -884,6 +1051,9 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
     }
 
     try {
+      const viewerStateKey = `${currentUserId}:${video.id}:${video.creator_id}`;
+      const existingCache = viewerVideoStateCache.get(viewerStateKey);
+
       if (isFollowing) {
         await supabase
           .from('follows')
@@ -891,12 +1061,26 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
           .eq('follower_id', currentUserId)
           .eq('following_id', video.creator_id);
         setIsFollowing(false);
+        viewerVideoStateCache.set(viewerStateKey, {
+          liked: existingCache?.liked ?? liked,
+          saved: existingCache?.saved ?? isSaved,
+          following: false,
+          blocked: existingCache?.blocked ?? isBlocked,
+          fetchedAt: Date.now(),
+        });
         toast.success('Unfollowed creator');
       } else {
         await supabase
           .from('follows')
           .insert({ follower_id: currentUserId, following_id: video.creator_id });
         setIsFollowing(true);
+        viewerVideoStateCache.set(viewerStateKey, {
+          liked: existingCache?.liked ?? liked,
+          saved: existingCache?.saved ?? isSaved,
+          following: true,
+          blocked: existingCache?.blocked ?? isBlocked,
+          fetchedAt: Date.now(),
+        });
         toast.success('Following creator!');
       }
     } catch (error) {
@@ -913,6 +1097,10 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
     }
 
     try {
+      const viewerStateKey = `${currentUserId}:${video.id}:${video.creator_id}`;
+      const existingStateCache = viewerVideoStateCache.get(viewerStateKey);
+      const existingEngagementCache = videoEngagementCache.get(video.id);
+
       if (isSaved) {
         await supabase
           .from('saved_videos')
@@ -921,6 +1109,18 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
           .eq('video_id', video.id);
         setIsSaved(false);
         setSavesCount(prev => Math.max(0, prev - 1));
+        viewerVideoStateCache.set(viewerStateKey, {
+          liked: existingStateCache?.liked ?? liked,
+          saved: false,
+          following: existingStateCache?.following ?? isFollowing,
+          blocked: existingStateCache?.blocked ?? isBlocked,
+          fetchedAt: Date.now(),
+        });
+        videoEngagementCache.set(video.id, {
+          commentsCount: existingEngagementCache?.commentsCount ?? commentsCount,
+          savesCount: Math.max(0, (existingEngagementCache?.savesCount ?? savesCount) - 1),
+          fetchedAt: Date.now(),
+        });
         toast.success('Removed from saved');
       } else {
         await supabase
@@ -928,6 +1128,18 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
           .insert({ user_id: currentUserId, video_id: video.id });
         setIsSaved(true);
         setSavesCount(prev => prev + 1);
+        viewerVideoStateCache.set(viewerStateKey, {
+          liked: existingStateCache?.liked ?? liked,
+          saved: true,
+          following: existingStateCache?.following ?? isFollowing,
+          blocked: existingStateCache?.blocked ?? isBlocked,
+          fetchedAt: Date.now(),
+        });
+        videoEngagementCache.set(video.id, {
+          commentsCount: existingEngagementCache?.commentsCount ?? commentsCount,
+          savesCount: (existingEngagementCache?.savesCount ?? savesCount) + 1,
+          fetchedAt: Date.now(),
+        });
         toast.success('Saved to watch later!');
       }
     } catch (error) {
@@ -1121,7 +1333,7 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
       >
           <video
             ref={videoRef}
-            src={video.video_url}
+            src={isTouchPlaybackDevice ? undefined : video.video_url}
             className="w-full h-full object-contain"
             loop={isLooping}
             muted={isMuted}
@@ -1132,6 +1344,7 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
             preload={activeVideoPreload}
             autoPlay={false}
             disablePictureInPicture
+            disableRemotePlayback
             style={{ 
               maxHeight: '100vh',
               marginBottom: '0',
