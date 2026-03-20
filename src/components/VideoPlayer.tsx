@@ -1122,7 +1122,7 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
           <video
             ref={videoRef}
             src={video.video_url}
-            className="w-full h-full object-cover md:object-contain"
+            className="w-full h-full object-contain"
             loop={isLooping}
             muted={isMuted}
             playsInline
