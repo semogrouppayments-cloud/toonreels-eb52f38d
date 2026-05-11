@@ -57,27 +57,26 @@ const VerificationRequestDialog = ({ open, onOpenChange, onSuccess }: Verificati
       let idDocumentUrl = null;
       let businessDocumentUrl = null;
 
-      // Upload ID document
+      // Upload ID document to PRIVATE verification-documents bucket
       const idFileName = `${user.id}/id-document-${Date.now()}.${idDocument.name.split('.').pop()}`;
       const { error: idUploadError } = await supabase.storage
-        .from('avatars')
+        .from('verification-documents')
         .upload(idFileName, idDocument, { upsert: true });
 
       if (idUploadError) throw idUploadError;
 
-      const { data: idUrlData } = supabase.storage.from('avatars').getPublicUrl(idFileName);
-      idDocumentUrl = idUrlData.publicUrl;
+      // Store the storage path (not a public URL); admins generate signed URLs on demand
+      idDocumentUrl = idFileName;
 
       // Upload business document if provided
       if (businessDocument) {
         const bizFileName = `${user.id}/business-document-${Date.now()}.${businessDocument.name.split('.').pop()}`;
         const { error: bizUploadError } = await supabase.storage
-          .from('avatars')
+          .from('verification-documents')
           .upload(bizFileName, businessDocument, { upsert: true });
 
         if (!bizUploadError) {
-          const { data: bizUrlData } = supabase.storage.from('avatars').getPublicUrl(bizFileName);
-          businessDocumentUrl = bizUrlData.publicUrl;
+          businessDocumentUrl = bizFileName;
         }
       }
 
