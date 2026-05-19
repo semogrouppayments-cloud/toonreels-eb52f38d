@@ -362,6 +362,9 @@ const Upload = () => {
       
       // Trigger transcription in background (don't wait for it)
       if (insertedVideo?.id) {
+        uploadPlaybackVariants(user.id, insertedVideo.id, videoFile, fileName).catch((variantError) => {
+          console.warn('Mobile playback variant generation failed:', variantError);
+        });
         triggerTranscription(insertedVideo.id, videoUrl);
       }
       
