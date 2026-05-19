@@ -282,7 +282,9 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
           setTrendingTags(tags);
           return;
         }
-      } catch {}
+      } catch {
+        sessionStorage.removeItem('toonreels_trending_tags');
+      }
     }
     
     fetchTrendingTags();
@@ -950,10 +952,10 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
     
     // Add global listeners for drag
     if ('touches' in e) {
-      document.addEventListener('touchmove', handleSubtitleDragMove as any);
+      document.addEventListener('touchmove', handleSubtitleDragMove as EventListener);
       document.addEventListener('touchend', handleSubtitleDragEnd);
     } else {
-      document.addEventListener('mousemove', handleSubtitleDragMove as any);
+      document.addEventListener('mousemove', handleSubtitleDragMove as EventListener);
       document.addEventListener('mouseup', handleSubtitleDragEnd);
     }
   };
@@ -977,9 +979,9 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
   const handleSubtitleDragEnd = () => {
     setIsDraggingSubtitle(false);
     subtitleDragStart.current = null;
-    document.removeEventListener('mousemove', handleSubtitleDragMove as any);
+    document.removeEventListener('mousemove', handleSubtitleDragMove as EventListener);
     document.removeEventListener('mouseup', handleSubtitleDragEnd);
-    document.removeEventListener('touchmove', handleSubtitleDragMove as any);
+    document.removeEventListener('touchmove', handleSubtitleDragMove as EventListener);
     document.removeEventListener('touchend', handleSubtitleDragEnd);
   };
 
