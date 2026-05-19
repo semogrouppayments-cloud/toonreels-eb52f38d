@@ -875,6 +875,7 @@ export type Database = {
           transcription_status: string | null
           updated_at: string
           video_url: string
+          video_variants: Json
           views_count: number
         }
         Insert: {
@@ -891,6 +892,7 @@ export type Database = {
           transcription_status?: string | null
           updated_at?: string
           video_url: string
+          video_variants?: Json
           views_count?: number
         }
         Update: {
@@ -907,6 +909,7 @@ export type Database = {
           transcription_status?: string | null
           updated_at?: string
           video_url?: string
+          video_variants?: Json
           views_count?: number
         }
         Relationships: [
