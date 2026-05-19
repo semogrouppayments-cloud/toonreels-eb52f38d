@@ -369,17 +369,18 @@ const Upload = () => {
       }
       
       setTimeout(() => navigate('/feed'), 500);
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (progressInterval) clearInterval(progressInterval);
       console.error('Upload error:', error);
       
       let errorMessage = 'Upload failed';
-      if (error.message?.includes('Failed to fetch')) {
+      const message = error instanceof Error ? error.message : '';
+      if (message.includes('Failed to fetch')) {
         errorMessage = 'Network error. Check your connection and try again.';
-      } else if (error.message?.includes('payload')) {
+      } else if (message.includes('payload')) {
         errorMessage = 'File too large. Maximum size is 250MB.';
-      } else if (error.message) {
-        errorMessage = error.message;
+      } else if (message) {
+        errorMessage = message;
       }
       
       toast.error(errorMessage);
