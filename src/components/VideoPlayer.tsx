@@ -13,6 +13,7 @@ import { useFullscreen } from '@/hooks/useFullscreen';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useSoundEffects } from '@/hooks/useSoundEffects';
 import { addWatermarkToVideo, WatermarkController } from '@/lib/videoWatermark';
+import { chooseToonPlaybackSource, variantKeysWithFallback, type PlaybackQuality } from '@/lib/toonPlayback';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -49,6 +50,7 @@ interface VideoPlayerProps {
     views_count: number;
     tags?: string[] | null;
     subtitles?: SubtitleSegment[] | null;
+    video_variants?: unknown;
     profiles: {
       username: string;
       avatar_url: string;
@@ -62,8 +64,6 @@ interface VideoPlayerProps {
   onDelete?: () => void;
   onPositiveAction?: () => void;
 }
-
-type PlaybackQuality = 'auto' | 'high' | 'medium';
 
 interface CachedPlaybackSettings {
   autoplay: boolean;
