@@ -575,6 +575,12 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
     
     const handleError = () => {
       if (!isActive) return;
+      const fallbackUrl = variantKeysWithFallback(video.video_variants, video.video_url)
+        .find((url) => url !== videoEl.currentSrc && url !== videoEl.getAttribute('src'));
+      if (fallbackUrl) {
+        setSourceOverrideUrl(fallbackUrl);
+        return;
+      }
       if (stallCountRef.current > 4) return;
       stallCountRef.current++;
       reloadVideoFromCurrentPosition();
@@ -646,7 +652,7 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
       videoEl.removeEventListener('durationchange', handleDurationChange);
       videoEl.removeEventListener('progress', handleProgress);
     };
-  }, [isActive, video.video_url]);
+  }, [isActive, video.video_url, video.video_variants]);
 
   // Reset tracking when video changes
   useEffect(() => {
