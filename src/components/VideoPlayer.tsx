@@ -1356,7 +1356,7 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
       >
           <video
             ref={videoRef}
-            src={isTouchPlaybackDevice ? undefined : video.video_url}
+            src={isTouchPlaybackDevice ? undefined : selectedVideoUrl}
             className="w-full h-full object-contain"
             loop={isLooping}
             muted={isMuted}
