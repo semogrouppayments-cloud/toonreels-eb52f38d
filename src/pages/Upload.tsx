@@ -10,6 +10,7 @@ import { Switch } from '@/components/ui/switch';
 import { Upload as UploadIcon, ArrowLeft, X, Hash, Stamp } from 'lucide-react';
 import ResponsiveLayout from '@/components/ResponsiveLayout';
 import { toast } from 'sonner';
+import { canCreateToonPlaybackVariants, createToonPlaybackVariants } from '@/lib/toonVariantGenerator';
 
 const Upload = () => {
   const navigate = useNavigate();
@@ -24,6 +25,54 @@ const Upload = () => {
   const [videoPreview, setVideoPreview] = useState<string | null>(null);
   const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
   const [applyWatermark, setApplyWatermark] = useState(false);
+
+  const uploadPlaybackVariants = async (userId: string, videoId: string, sourceFile: File, sourceFileName: string) => {
+    if (!canCreateToonPlaybackVariants()) return;
+
+    setUploadProgress(96);
+    toast.info('Creating lighter mobile playback version...');
+
+    const generatedVariants = await createToonPlaybackVariants(sourceFile);
+    if (generatedVariants.length === 0) return;
+
+    const variants: Record<string, { url: string; width: number; height: number; bitrate: number; mimeType: string }> = {};
+    const baseName = sourceFileName.replace(/\.[^.]+$/, '');
+
+    for (const variant of generatedVariants) {
+      const variantPath = `${userId}/variants/${baseName}_${variant.key}.webm`;
+      const { error: variantUploadError } = await supabase.storage
+        .from('videos')
+        .upload(variantPath, variant.blob, {
+          cacheControl: '86400',
+          contentType: variant.mimeType,
+          upsert: false,
+        });
+
+      if (variantUploadError) {
+        console.warn(`Failed to upload ${variant.key} playback variant`, variantUploadError);
+        continue;
+      }
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('videos')
+        .getPublicUrl(variantPath);
+
+      variants[variant.key] = {
+        url: publicUrl,
+        width: variant.width,
+        height: variant.height,
+        bitrate: variant.bitrate,
+        mimeType: variant.mimeType,
+      };
+    }
+
+    if (Object.keys(variants).length > 0) {
+      await supabase.rpc('update_video_variants', {
+        _video_id: videoId,
+        _variants: variants,
+      });
+    }
+  };
 
   const addHashtag = () => {
     const tag = hashtagInput.trim().replace(/^#/, '').toLowerCase();
