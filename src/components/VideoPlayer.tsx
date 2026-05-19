@@ -145,6 +145,7 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [bufferedPercent, setBufferedPercent] = useState(0);
+  const [sourceOverrideUrl, setSourceOverrideUrl] = useState<string | null>(null);
   const isBufferingRef = useRef(false);
   const currentTimeRef = useRef(0);
   const bufferedPercentRef = useRef(0);
@@ -204,7 +205,7 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
     isTouchDevice: isTouchPlaybackDevice,
     isStandalonePwa,
   });
-  const selectedVideoUrl = selectedPlaybackSource.url;
+  const selectedVideoUrl = sourceOverrideUrl || selectedPlaybackSource.url;
   const shouldStartMuted =
     audioPreferenceRef.current === 'muted' ||
     (audioPreferenceRef.current !== 'unmuted' &&
@@ -652,7 +653,12 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
     hasTrackedViewRef.current = false;
     analyticsTrackedRef.current = false;
     playAttemptRef.current = 0;
+    setSourceOverrideUrl(null);
   }, [video.id]);
+
+  useEffect(() => {
+    setSourceOverrideUrl(null);
+  }, [videoQuality]);
 
   const checkIfLiked = async () => {
     if (!currentUserId) return;
