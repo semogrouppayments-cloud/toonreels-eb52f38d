@@ -951,6 +951,10 @@ export type Database = {
         Args: { _raw_pin: string; _user_id: string }
         Returns: undefined
       }
+      update_video_variants: {
+        Args: { _variants: Json; _video_id: string }
+        Returns: undefined
+      }
       verify_parental_pin: {
         Args: { _raw_pin: string; _user_id: string }
         Returns: boolean
