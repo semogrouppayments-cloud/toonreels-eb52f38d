@@ -15,6 +15,9 @@ export default defineConfig(({ mode }) => ({
     mode === "development" && componentTagger(),
     VitePWA({
       registerType: 'autoUpdate',
+      devOptions: {
+        enabled: false,
+      },
       includeAssets: ['favicon.ico', 'robots.txt'],
       manifest: {
         name: 'ToonlyReels - Animated Fun for Kids',
@@ -47,29 +50,26 @@ export default defineConfig(({ mode }) => ({
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
         runtimeCaching: [
           {
-            urlPattern: /^https:\/\/.*\.supabase\.co\/storage\/.*\.(mp4|webm|mov)(\?.*)?$/i,
-            handler: 'CacheFirst',
+            urlPattern: ({ request }) => request.mode === 'navigate',
+            handler: 'NetworkFirst',
             options: {
-              cacheName: 'video-cache',
+              cacheName: 'html-navigation-cache',
+              networkTimeoutSeconds: 3,
               expiration: {
-                maxEntries: 15,
-                maxAgeSeconds: 24 * 60 * 60 // 24 hours
-              },
-              cacheableResponse: {
-                statuses: [0, 200]
-              },
-              rangeRequests: true
+                maxEntries: 5,
+                maxAgeSeconds: 60 * 60
+              }
             }
           },
           {
-            urlPattern: /^https:\/\/.*\.supabase\.co\/.*/i,
+            urlPattern: /^https:\/\/.*\.supabase\.co\/rest\/v1\/.*/i,
             handler: 'NetworkFirst',
             options: {
-              cacheName: 'supabase-cache',
+              cacheName: 'app-data-cache',
               networkTimeoutSeconds: 5,
               expiration: {
-                maxEntries: 20,
-                maxAgeSeconds: 60 * 60 // 1 hour
+                maxEntries: 30,
+                maxAgeSeconds: 10 * 60
               }
             }
           }

@@ -10,6 +10,7 @@ import { Switch } from '@/components/ui/switch';
 import { Upload as UploadIcon, ArrowLeft, X, Hash, Stamp } from 'lucide-react';
 import ResponsiveLayout from '@/components/ResponsiveLayout';
 import { toast } from 'sonner';
+import { canCreateToonPlaybackVariants, createToonPlaybackVariants } from '@/lib/toonVariantGenerator';
 
 const Upload = () => {
   const navigate = useNavigate();
@@ -24,6 +25,54 @@ const Upload = () => {
   const [videoPreview, setVideoPreview] = useState<string | null>(null);
   const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
   const [applyWatermark, setApplyWatermark] = useState(false);
+
+  const uploadPlaybackVariants = async (userId: string, videoId: string, sourceFile: File, sourceFileName: string) => {
+    if (!canCreateToonPlaybackVariants()) return;
+
+    setUploadProgress(96);
+    toast.info('Creating lighter mobile playback version...');
+
+    const generatedVariants = await createToonPlaybackVariants(sourceFile);
+    if (generatedVariants.length === 0) return;
+
+    const variants: Record<string, { url: string; width: number; height: number; bitrate: number; mimeType: string }> = {};
+    const baseName = sourceFileName.replace(/\.[^.]+$/, '');
+
+    for (const variant of generatedVariants) {
+      const variantPath = `${userId}/variants/${baseName}_${variant.key}.webm`;
+      const { error: variantUploadError } = await supabase.storage
+        .from('videos')
+        .upload(variantPath, variant.blob, {
+          cacheControl: '86400',
+          contentType: variant.mimeType,
+          upsert: false,
+        });
+
+      if (variantUploadError) {
+        console.warn(`Failed to upload ${variant.key} playback variant`, variantUploadError);
+        continue;
+      }
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('videos')
+        .getPublicUrl(variantPath);
+
+      variants[variant.key] = {
+        url: publicUrl,
+        width: variant.width,
+        height: variant.height,
+        bitrate: variant.bitrate,
+        mimeType: variant.mimeType,
+      };
+    }
+
+    if (Object.keys(variants).length > 0) {
+      await supabase.rpc('update_video_variants', {
+        _video_id: videoId,
+        _variants: variants,
+      });
+    }
+  };
 
   const addHashtag = () => {
     const tag = hashtagInput.trim().replace(/^#/, '').toLowerCase();
@@ -313,21 +362,25 @@ const Upload = () => {
       
       // Trigger transcription in background (don't wait for it)
       if (insertedVideo?.id) {
+        uploadPlaybackVariants(user.id, insertedVideo.id, videoFile, fileName).catch((variantError) => {
+          console.warn('Mobile playback variant generation failed:', variantError);
+        });
         triggerTranscription(insertedVideo.id, videoUrl);
       }
       
       setTimeout(() => navigate('/feed'), 500);
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (progressInterval) clearInterval(progressInterval);
       console.error('Upload error:', error);
       
       let errorMessage = 'Upload failed';
-      if (error.message?.includes('Failed to fetch')) {
+      const message = error instanceof Error ? error.message : '';
+      if (message.includes('Failed to fetch')) {
         errorMessage = 'Network error. Check your connection and try again.';
-      } else if (error.message?.includes('payload')) {
+      } else if (message.includes('payload')) {
         errorMessage = 'File too large. Maximum size is 250MB.';
-      } else if (error.message) {
-        errorMessage = error.message;
+      } else if (message) {
+        errorMessage = message;
       }
       
       toast.error(errorMessage);

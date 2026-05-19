@@ -875,6 +875,7 @@ export type Database = {
           transcription_status: string | null
           updated_at: string
           video_url: string
+          video_variants: Json
           views_count: number
         }
         Insert: {
@@ -891,6 +892,7 @@ export type Database = {
           transcription_status?: string | null
           updated_at?: string
           video_url: string
+          video_variants?: Json
           views_count?: number
         }
         Update: {
@@ -907,6 +909,7 @@ export type Database = {
           transcription_status?: string | null
           updated_at?: string
           video_url?: string
+          video_variants?: Json
           views_count?: number
         }
         Relationships: [
@@ -946,6 +949,10 @@ export type Database = {
       }
       set_profile_pin_admin: {
         Args: { _raw_pin: string; _user_id: string }
+        Returns: undefined
+      }
+      update_video_variants: {
+        Args: { _variants: Json; _video_id: string }
         Returns: undefined
       }
       verify_parental_pin: {

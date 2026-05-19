@@ -13,6 +13,7 @@ import { useFullscreen } from '@/hooks/useFullscreen';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useSoundEffects } from '@/hooks/useSoundEffects';
 import { addWatermarkToVideo, WatermarkController } from '@/lib/videoWatermark';
+import { chooseToonPlaybackSource, variantKeysWithFallback, type PlaybackQuality } from '@/lib/toonPlayback';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -49,6 +50,7 @@ interface VideoPlayerProps {
     views_count: number;
     tags?: string[] | null;
     subtitles?: SubtitleSegment[] | null;
+    video_variants?: unknown;
     profiles: {
       username: string;
       avatar_url: string;
@@ -62,8 +64,6 @@ interface VideoPlayerProps {
   onDelete?: () => void;
   onPositiveAction?: () => void;
 }
-
-type PlaybackQuality = 'auto' | 'high' | 'medium';
 
 interface CachedPlaybackSettings {
   autoplay: boolean;
@@ -145,6 +145,7 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [bufferedPercent, setBufferedPercent] = useState(0);
+  const [sourceOverrideUrl, setSourceOverrideUrl] = useState<string | null>(null);
   const isBufferingRef = useRef(false);
   const currentTimeRef = useRef(0);
   const bufferedPercentRef = useRef(0);
@@ -189,11 +190,22 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
   const isTouchPlaybackDevice =
     isMobile ||
     (typeof window !== 'undefined' && typeof navigator !== 'undefined' && navigator.maxTouchPoints > 0 && window.innerWidth <= 1024);
+  const isStandalonePwa = typeof window !== 'undefined' && window.matchMedia?.('(display-mode: standalone)').matches;
   const effectiveVideoQuality: Exclude<PlaybackQuality, 'auto'> =
     videoQuality === 'medium' ||
-    (videoQuality === 'auto' && (networkProfile.saveData || (isTouchPlaybackDevice && networkProfile.isSlowConnection)))
+    (videoQuality === 'auto' && (networkProfile.saveData || isStandalonePwa || isTouchPlaybackDevice || networkProfile.isSlowConnection))
       ? 'medium'
       : 'high';
+  const selectedPlaybackSource = chooseToonPlaybackSource({
+    originalUrl: video.video_url,
+    variants: video.video_variants,
+    quality: videoQuality,
+    saveData: networkProfile.saveData,
+    isSlowConnection: networkProfile.isSlowConnection,
+    isTouchDevice: isTouchPlaybackDevice,
+    isStandalonePwa,
+  });
+  const selectedVideoUrl = sourceOverrideUrl || selectedPlaybackSource.url;
   const shouldStartMuted =
     audioPreferenceRef.current === 'muted' ||
     (audioPreferenceRef.current !== 'unmuted' &&
@@ -270,7 +282,9 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
           setTrendingTags(tags);
           return;
         }
-      } catch {}
+      } catch {
+        sessionStorage.removeItem('toonreels_trending_tags');
+      }
     }
     
     fetchTrendingTags();
@@ -407,8 +421,8 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
     }
 
     if (!autoplayEnabled) {
-      if (videoEl.getAttribute('src') !== video.video_url) {
-        videoEl.src = video.video_url;
+      if (videoEl.getAttribute('src') !== selectedVideoUrl) {
+        videoEl.src = selectedVideoUrl;
       }
       videoEl.pause();
       videoEl.muted = shouldStartMuted;
@@ -425,8 +439,8 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
       playAttemptRef.current++;
       
       try {
-        if (videoEl.getAttribute('src') !== video.video_url && video.video_url) {
-          videoEl.src = video.video_url;
+        if (videoEl.getAttribute('src') !== selectedVideoUrl && selectedVideoUrl) {
+          videoEl.src = selectedVideoUrl;
           videoEl.load();
         }
         
@@ -486,7 +500,7 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
     return () => {
       isCancelled = true;
     };
-  }, [isActive, video.video_url, autoplayEnabled, shouldStartMuted, effectiveVideoQuality, playbackSpeed, isLooping, activeVideoPreload, isTouchPlaybackDevice]);
+  }, [isActive, selectedVideoUrl, autoplayEnabled, shouldStartMuted, effectiveVideoQuality, playbackSpeed, isLooping, activeVideoPreload, isTouchPlaybackDevice]);
 
   // Handle video events for better mobile playback
   useEffect(() => {
@@ -563,6 +577,12 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
     
     const handleError = () => {
       if (!isActive) return;
+      const fallbackUrl = variantKeysWithFallback(video.video_variants, video.video_url)
+        .find((url) => url !== videoEl.currentSrc && url !== videoEl.getAttribute('src'));
+      if (fallbackUrl) {
+        setSourceOverrideUrl(fallbackUrl);
+        return;
+      }
       if (stallCountRef.current > 4) return;
       stallCountRef.current++;
       reloadVideoFromCurrentPosition();
@@ -634,14 +654,19 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
       videoEl.removeEventListener('durationchange', handleDurationChange);
       videoEl.removeEventListener('progress', handleProgress);
     };
-  }, [isActive, video.video_url]);
+  }, [isActive, video.video_url, video.video_variants]);
 
   // Reset tracking when video changes
   useEffect(() => {
     hasTrackedViewRef.current = false;
     analyticsTrackedRef.current = false;
     playAttemptRef.current = 0;
+    setSourceOverrideUrl(null);
   }, [video.id]);
+
+  useEffect(() => {
+    setSourceOverrideUrl(null);
+  }, [videoQuality]);
 
   const checkIfLiked = async () => {
     if (!currentUserId) return;
@@ -927,10 +952,10 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
     
     // Add global listeners for drag
     if ('touches' in e) {
-      document.addEventListener('touchmove', handleSubtitleDragMove as any);
+      document.addEventListener('touchmove', handleSubtitleDragMove as EventListener);
       document.addEventListener('touchend', handleSubtitleDragEnd);
     } else {
-      document.addEventListener('mousemove', handleSubtitleDragMove as any);
+      document.addEventListener('mousemove', handleSubtitleDragMove as EventListener);
       document.addEventListener('mouseup', handleSubtitleDragEnd);
     }
   };
@@ -954,9 +979,9 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
   const handleSubtitleDragEnd = () => {
     setIsDraggingSubtitle(false);
     subtitleDragStart.current = null;
-    document.removeEventListener('mousemove', handleSubtitleDragMove as any);
+    document.removeEventListener('mousemove', handleSubtitleDragMove as EventListener);
     document.removeEventListener('mouseup', handleSubtitleDragEnd);
-    document.removeEventListener('touchmove', handleSubtitleDragMove as any);
+    document.removeEventListener('touchmove', handleSubtitleDragMove as EventListener);
     document.removeEventListener('touchend', handleSubtitleDragEnd);
   };
 
@@ -1333,7 +1358,7 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
       >
           <video
             ref={videoRef}
-            src={isTouchPlaybackDevice ? undefined : video.video_url}
+            src={isTouchPlaybackDevice ? undefined : selectedVideoUrl}
             className="w-full h-full object-contain"
             loop={isLooping}
             muted={isMuted}
