@@ -189,11 +189,22 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
   const isTouchPlaybackDevice =
     isMobile ||
     (typeof window !== 'undefined' && typeof navigator !== 'undefined' && navigator.maxTouchPoints > 0 && window.innerWidth <= 1024);
+  const isStandalonePwa = typeof window !== 'undefined' && window.matchMedia?.('(display-mode: standalone)').matches;
   const effectiveVideoQuality: Exclude<PlaybackQuality, 'auto'> =
     videoQuality === 'medium' ||
-    (videoQuality === 'auto' && (networkProfile.saveData || (isTouchPlaybackDevice && networkProfile.isSlowConnection)))
+    (videoQuality === 'auto' && (networkProfile.saveData || isStandalonePwa || isTouchPlaybackDevice || networkProfile.isSlowConnection))
       ? 'medium'
       : 'high';
+  const selectedPlaybackSource = chooseToonPlaybackSource({
+    originalUrl: video.video_url,
+    variants: video.video_variants,
+    quality: videoQuality,
+    saveData: networkProfile.saveData,
+    isSlowConnection: networkProfile.isSlowConnection,
+    isTouchDevice: isTouchPlaybackDevice,
+    isStandalonePwa,
+  });
+  const selectedVideoUrl = selectedPlaybackSource.url;
   const shouldStartMuted =
     audioPreferenceRef.current === 'muted' ||
     (audioPreferenceRef.current !== 'unmuted' &&
@@ -407,8 +418,8 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
     }
 
     if (!autoplayEnabled) {
-      if (videoEl.getAttribute('src') !== video.video_url) {
-        videoEl.src = video.video_url;
+      if (videoEl.getAttribute('src') !== selectedVideoUrl) {
+        videoEl.src = selectedVideoUrl;
       }
       videoEl.pause();
       videoEl.muted = shouldStartMuted;
@@ -425,8 +436,8 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
       playAttemptRef.current++;
       
       try {
-        if (videoEl.getAttribute('src') !== video.video_url && video.video_url) {
-          videoEl.src = video.video_url;
+        if (videoEl.getAttribute('src') !== selectedVideoUrl && selectedVideoUrl) {
+          videoEl.src = selectedVideoUrl;
           videoEl.load();
         }
         
@@ -486,7 +497,7 @@ const VideoPlayer = ({ video, currentUserId, isPremium, isActive, onCommentsClic
     return () => {
       isCancelled = true;
     };
-  }, [isActive, video.video_url, autoplayEnabled, shouldStartMuted, effectiveVideoQuality, playbackSpeed, isLooping, activeVideoPreload, isTouchPlaybackDevice]);
+  }, [isActive, selectedVideoUrl, autoplayEnabled, shouldStartMuted, effectiveVideoQuality, playbackSpeed, isLooping, activeVideoPreload, isTouchPlaybackDevice]);
 
   // Handle video events for better mobile playback
   useEffect(() => {
