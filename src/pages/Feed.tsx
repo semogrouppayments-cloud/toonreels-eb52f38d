@@ -16,6 +16,7 @@ import { useSoundEffects } from '@/hooks/useSoundEffects';
 import { useAppRating } from '@/hooks/useAppRating';
 import { useChangelog } from '@/hooks/useChangelog';
 import { useScreenTime } from '@/hooks/useScreenTime';
+import { chooseToonPreloadSource } from '@/lib/toonPlayback';
 
 interface SubtitleSegment {
   id: number;
@@ -34,6 +35,7 @@ interface Video {
   views_count: number;
   tags?: string[] | null;
   subtitles?: SubtitleSegment[] | null;
+  video_variants?: unknown;
   profiles: {
     username: string;
     avatar_url: string;
@@ -278,9 +280,7 @@ const Feed = () => {
   };
 
   // Preload next video conservatively to avoid PWA/mobile freezes
-  const preloadVideo = useCallback((videoUrl: string) => {
-    if (preloadedVideosRef.current.has(videoUrl)) return;
-
+  const preloadVideo = useCallback((video: Video) => {
     const connection = (navigator as Navigator & {
       connection?: {
         saveData?: boolean;
@@ -289,9 +289,13 @@ const Feed = () => {
     }).connection;
 
     const isStandalonePwa = typeof window !== 'undefined' && window.matchMedia?.('(display-mode: standalone)').matches;
+    const isTouchDevice = typeof navigator !== 'undefined' && navigator.maxTouchPoints > 0;
     const isConstrainedNetwork = Boolean(connection?.saveData) || ['slow-2g', '2g', '3g'].includes(connection?.effectiveType || '');
+    const videoUrl = chooseToonPreloadSource(video.video_url, video.video_variants, isStandalonePwa || isTouchDevice || isConstrainedNetwork);
 
-    if (isStandalonePwa || isConstrainedNetwork) {
+    if (preloadedVideosRef.current.has(videoUrl)) return;
+
+    if (isStandalonePwa || isTouchDevice || isConstrainedNetwork) {
       return;
     }
 
@@ -329,7 +333,7 @@ const Feed = () => {
       
       // Preload only the next video to reduce memory/network pressure
       if (vids[newIndex + 1]) {
-        preloadVideo(vids[newIndex + 1].video_url);
+        preloadVideo(vids[newIndex + 1]);
       }
     }
     
